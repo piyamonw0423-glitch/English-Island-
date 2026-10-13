@@ -477,6 +477,20 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 .diff{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .insight .tips{display:flex;flex-direction:column;gap:8px}.insight .tip{display:flex;gap:10px;align-items:center;padding:10px 12px;border:2px solid var(--edge);border-radius:18px;background:var(--card)}.insight .tiles{grid-template-columns:repeat(2,1fr)}.flip{cursor:pointer}
 .story-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.story-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:12px;border:2.5px solid var(--edge);border-radius:20px;background:var(--card);color:var(--ink);cursor:pointer;font:inherit}.story-tile.started{background:var(--lav)}.story-tile.done{background:var(--mint)}.story-tile:hover{transform:translateY(-2px)}
+.mic-wrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mic-boo{position:relative;width:44px;height:44px;flex:0 0 44px;border-radius:50%;border:2.5px solid var(--edge);background:radial-gradient(circle at 35% 30%,#FFF3F9,#FFC9E2);display:grid;place-items:center;padding:0;cursor:pointer;box-shadow:0 3px 0 var(--edge);transition:transform .15s}
+.mic-boo:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.mic-boo .mascot{width:32px;height:34px;margin-top:2px;pointer-events:none}
+.mic-boo .mascot .halo,.mic-boo .mascot .shadow,.mic-boo .mascot .twk{display:none}
+.mic-badge{position:absolute;right:-5px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--lav-d);color:#fff;display:grid;place-items:center;border:2px solid var(--card)}
+.mic-badge .ico{width:12px;height:12px}
+.mic-boo.off .mic-badge{background:var(--ink2)}
+.mic-boo.on{background:radial-gradient(circle at 35% 30%,#fff,#FF9EC6);animation:micPulse 1.2s ease-in-out infinite}
+.mic-boo.on .mic-badge{background:var(--pink-d)}
+@keyframes micPulse{0%,100%{box-shadow:0 3px 0 var(--edge),0 0 0 0 rgba(255,111,174,.55)}50%{box-shadow:0 3px 0 var(--edge),0 0 0 9px rgba(255,111,174,0)}}
+.mic-chip{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--pink);color:var(--ink);border:2px solid var(--edge)}
+.tip.hl{outline:2.5px solid var(--lav-d)}
+.composer{grid-template-columns:1fr auto auto;align-items:center}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -1017,7 +1031,7 @@ function vTest() {
       h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: 'Tell me about yourself and your job.' }), sayBtn('Tell me about yourself and your job.')),
       h('p', { class: 'small', text: 'พูดออกเสียงให้ได้ประมาณ 30–60 วินาที เท่าที่พูดได้จริง แล้วพิมพ์ตามที่พูด ไม่ต้องแก้ให้สวย เจลลี่บูจะประเมินระดับการพูดให้' }),
       h('textarea', { id: 'pt-ans', rows: 5, 'aria-label': 'คำตอบของคุณ', placeholder: 'My name is… I work as…', oninput: e => { T.ans = e.target.value; } }, T.ans),
-      SR ? h('div', { class: 'row' }, micBtn(() => $('#pt-ans'))) : null,
+      h('div', { class: 'row' }, micBtn(() => $('#pt-ans'))),
       T.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: T.err }) : null,
       h('div', { class: 'row between' },
         h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }),
@@ -1791,10 +1805,23 @@ async function doCheck() {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let micState = null; // { rec, start, target, onStop }
 function note2(msg) { const el = h('div', { class: 'toast', role: 'status' }, h('div', { class: 'small', text: msg })); document.body.append(el); setTimeout(() => el.remove(), 3600); }
+let micAllowed = !!SR && !(document.featurePolicy && document.featurePolicy.allowsFeature && !document.featurePolicy.allowsFeature('microphone'));
+function micHelp() {
+  const isMac = /Mac/.test(navigator.platform || ''); const isWin = /Win/.test(navigator.platform || '');
+  modal([mascot('think'), h('h3', { text: 'ใช้ไมค์บนคีย์บอร์ดแทนนะ' }),
+    h('p', { class: 'small muted', text: 'หน้านี้ไม่ได้รับสิทธิ์ใช้ไมค์โดยตรง แต่พิมพ์ด้วยเสียงผ่านคีย์บอร์ดได้เหมือนกัน แตะในช่องพิมพ์ก่อน แล้ว:' }),
+    h('div', { class: 'tips', style: 'text-align:left;width:100%' },
+      h('div', { class: 'tip' }, h('div', {}, h('div', { class: 'qt', text: 'iPhone / iPad' }), h('div', { class: 'small muted', text: 'แตะไอคอนไมค์ 🎤 บนคีย์บอร์ด (ตั้งภาษาคีย์บอร์ดเป็น English)' }))),
+      h('div', { class: 'tip' }, h('div', {}, h('div', { class: 'qt', text: 'Android (Gboard)' }), h('div', { class: 'small muted', text: 'แตะไอคอนไมค์ 🎤 มุมขวาบนของคีย์บอร์ด' }))),
+      h('div', { class: 'tip' + (isWin ? ' hl' : '') }, h('div', {}, h('div', { class: 'qt', text: 'Windows' }), h('div', { class: 'small muted', text: 'กด ⊞ Win + H เพื่อพิมพ์ด้วยเสียง' }))),
+      h('div', { class: 'tip' + (isMac ? ' hl' : '') }, h('div', {}, h('div', { class: 'qt', text: 'Mac' }), h('div', { class: 'small muted', text: 'กดปุ่ม Fn (🌐) สองครั้ง หรือเปิด Dictation ในการตั้งค่า' })))),
+    h('p', { class: 'small muted', text: 'ปุ่มบูไมค์ใช้ได้เต็มรูปแบบบนเว็บเวอร์ชันที่เปิดด้วย Chrome / Edge' })], 'เข้าใจแล้ว');
+}
 function micBtn(getBox, onStop) {
-  if (!SR) return null;
   const on = !!micState;
-  return h('button', { class: 'btn ' + (on ? 'pink' : ''), type: 'button', 'aria-pressed': String(!!on), onclick: () => toggleMic(getBox, onStop) }, ico('mic'), on ? ' หยุดพูด' : ' กดแล้วพูด');
+  const b = h('button', { class: 'mic-boo' + (on ? ' on' : '') + (micAllowed ? '' : ' off'), type: 'button', title: on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-label': on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-pressed': String(on), onclick: () => micAllowed ? toggleMic(getBox, onStop) : micHelp() },
+    mascot(on ? 'cheer' : 'happy'), h('span', { class: 'mic-badge' }, ico('mic')));
+  return h('span', { class: 'mic-wrap' }, b, on ? h('span', { class: 'mic-chip', text: 'บูกำลังฟัง… แตะบูเพื่อหยุด' }) : null);
 }
 function toggleMic(getBox, onStop) {
   if (micState) { const m = micState; micState = null; try { m.rec.stop(); } catch {} return; }
@@ -1805,9 +1832,9 @@ function toggleMic(getBox, onStop) {
     let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; }
     const b = getBox(); if (b) { b.value = (base ? base + ' ' : '') + finalText + interim; b.dispatchEvent(new Event('input')); }
   };
-  rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') note2('หน้านี้ใช้ไมค์ไม่ได้ ลองใช้ปุ่มไมค์บนคีย์บอร์ดมือถือแทน หรือเปิดแอปบนเว็บ'); };
+  rec.onerror = e => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) { micAllowed = false; setTimeout(micHelp, 100); } else if (e.error === 'network') note2('ไมค์ต้องใช้อินเทอร์เน็ต ลองใหม่อีกครั้ง'); };
   rec.onend = () => { const secs = Math.max(1, Math.round((Date.now() - st.start) / 1000)); if (micState === st) micState = null; render(); if (st.onStop) st.onStop(secs); };
-  micState = st; try { rec.start(); } catch { micState = null; note2('เริ่มไมค์ไม่ได้'); } render();
+  micState = st; try { rec.start(); } catch { micState = null; micAllowed = false; micHelp(); } render();
 }
 
 // ---------- corrections become review cards ----------
@@ -1863,7 +1890,7 @@ function vStory() {
     const box = h('textarea', { id: 'st-draft', rows: 6, placeholder: 'เล่าเป็นภาษาอังกฤษ หรือผสมไทยก็ได้ ใส่ข้อมูลจริงของคุณ เช่น ทำงานอะไร ที่ไหน กี่ปี ทำอะไรบ้าง', 'aria-label': 'ร่างเรื่องเล่า', oninput: e => { U.draft = e.target.value; } }, U.draft != null ? U.draft : (s.draft || ''));
     return h('section', {}, back, h('div', { class: 'card' }, head,
       h('p', { class: 'small', text: 'ขั้นที่ 1: ร่างเรื่องของคุณ ไม่ต้องถูกไวยากรณ์ ยิ่งมีรายละเอียดจริงยิ่งดี' }), box,
-      h('div', { class: 'row' }, micBtn(() => $('#st-draft'))),
+      h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#st-draft')), h('span', { class: 'small muted', text: 'พูดร่างเรื่องแทนการพิมพ์ได้' })),
       U.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: U.err }) : null,
       h('div', { class: 'row' },
         sample && !aiOff ? h('button', { class: 'btn primary', disabled: U.busy ? true : null, onclick: () => polishStory(tp) }, U.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังขัดเกลา…'] : 'ให้เจลลี่บูขัดเกลา') : null,
@@ -1885,7 +1912,7 @@ function vStory() {
       h('div', { class: 'num', id: 'stClock', style: `font-size:44px;font-weight:700;text-align:center;color:var(--${live > target ? 'pink' : 'lav'}-d)`, text: fmt(Math.max(0, target - live)) }),
       h('div', { class: 'row', style: 'justify-content:center' },
         h('button', { class: U.running ? 'btn pink' : 'btn primary', onclick: () => storyRound(tp), text: U.running ? 'พูดจบรอบนี้' : `เริ่มรอบ ${r + 1}` }),
-        SR ? h('label', { class: 'small row', style: 'gap:6px' }, h('input', { type: 'checkbox', checked: U.useMic ? true : null, onchange: e => { U.useMic = e.target.checked; } }), 'ใช้ไมค์นับคำ') : null),
+        micAllowed ? h('label', { class: 'small row', style: 'gap:6px' }, h('input', { type: 'checkbox', checked: U.useMic ? true : null, onchange: e => { U.useMic = e.target.checked; } }), 'ใช้ไมค์นับคำ') : null),
       U.lastWords ? h('div', { class: 'small muted num', style: 'text-align:center', text: `รอบที่แล้ว ${U.lastSecs} วิ · ${U.lastWords} คำ · ≈ ${Math.round(U.lastWords / (U.lastSecs / 60))} คำ/นาที` }) : null,
       h('textarea', { id: 'st-said', rows: 2, hidden: !U.useMic ? true : null, 'aria-label': 'สิ่งที่พูด (จากไมค์)' }));
   return h('section', {}, back, h('div', { class: 'card' }, head, script, phrases,
@@ -1897,7 +1924,7 @@ function storyRound(tp) {
   if (!U.running) {
     U.running = true; U.start = Date.now(); clearInterval(storyTimer);
     storyTimer = setInterval(() => { const el = $('#stClock'); if (!el) return; const left = ROUNDS[Math.min(U.round, 2)] - Math.floor((Date.now() - U.start) / 1000); el.textContent = (left < 0 ? '+' : '') + fmt(Math.abs(left)); el.style.color = left < 0 ? 'var(--pink-d)' : 'var(--lav-d)'; }, 250);
-    if (U.useMic && SR) { const b = $('#st-said'); if (b) b.value = ''; toggleMic(() => $('#st-said')); }
+    if (U.useMic && micAllowed) { const b = $('#st-said'); if (b) b.value = ''; toggleMic(() => $('#st-said')); }
     render(); return;
   }
   clearInterval(storyTimer); if (micState) toggleMic();
@@ -1966,7 +1993,7 @@ function vChat() {
     : h('div', { class: 'msg ' + m.role }, h('div', { class: 'row', style: 'gap:6px;flex-wrap:nowrap;align-items:flex-start' }, h('div', { style: 'min-width:0;flex:1', text: m.en }), m.role === 'ai' ? sayBtn(m.en, 'sm') : null), m.th ? h('div', { class: 'th', text: m.th }) : null, m.hint && k === C.view.length - 1 ? h('div', { class: 'hint', text: 'ใบ้: ' + m.hint }) : null)),
     C.busy ? h('div', { class: 'msg ai' }, h('span', { class: 'spin', style: 'color:var(--lav-d);border-color:var(--lav)' }), ' เจลลี่บูกำลังพิมพ์…') : null);
   const comp = aiOff ? aiNeeded() : h('div', { class: 'composer' }, h('textarea', { id: 'chatIn', rows: 2, placeholder: 'พูดออกเสียงก่อน แล้วพิมพ์ตามที่พูด…', 'aria-label': 'ข้อความของคุณ', oninput: e => { C.draft = e.target.value; }, onkeydown: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } } }, C.draft || ''), h('button', { class: 'btn primary', disabled: C.busy ? true : null, onclick: sendChat, text: 'ส่ง' }));
-  if (!aiOff && SR) comp.append(micBtn(() => $('#chatIn')));
+  if (!aiOff) comp.append(micBtn(() => $('#chatIn')));
   const talkToday = questCounts().record;
   return [pick, h('div', { class: 'card' }, msgs, C.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: C.err }) : null, comp, h('div', { class: 'small muted', text: `วันนี้พูดรวม ${Math.min(talkToday, 999)} วินาที · ภารกิจ 60 วินาที (คุย 1 ประโยค ≈ 15 วิ)` }))];
 }
@@ -1981,7 +2008,7 @@ function vAnswer() {
       : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: sp.q }), sayBtn(sp.q)),
     h('div', { class: 'ringwrap' }, ring, h('div', { style: 'display:flex;flex-direction:column;gap:8px;min-width:0;flex:1' }, h('button', { class: sp.running ? 'btn pink' : 'btn primary', onclick: toggleTimer, text: sp.running ? 'หยุด' : (sp.secs ? 'เริ่มพูดใหม่' : 'เริ่มพูด!') }), h('div', { class: 'small muted', text: sp.boss ? 'วงแหวนเต็ม = ถึงเวลาขั้นต่ำของบอส' : 'ตอบ → because → For example → So' }))),
     h('label', { class: 'f' }, 'พิมพ์สิ่งที่คุณพูด (ผิดได้เต็มที่)', h('textarea', { id: 'sp-ans', rows: 4, oninput: e => { sp.ans = e.target.value; const m = $('#sp-meta'); if (m) m.textContent = metaText(); } }, sp.ans)),
-    SR ? h('div', { class: 'row' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: 'พูดแล้วแอปพิมพ์ให้ + จับเวลาเอง' })) : null,
+    h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: micAllowed ? 'แตะบูแล้วพูด แอปพิมพ์ให้ + จับเวลาเอง' : 'แตะบูเพื่อดูวิธีพิมพ์ด้วยเสียง' })),
     h('div', { class: 'small muted num', id: 'sp-meta', text: metaText() }),
     !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: sp.busy || sp.running ? true : null, onclick: () => { sp.ans = $('#sp-ans').value; doCheck(); } }, sp.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังตรวจ…'] : 'ให้ตรวจคำตอบ'), sp.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: sp.err }) : null) : aiNeeded());
   const out = [card];
