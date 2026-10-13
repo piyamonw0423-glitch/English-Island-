@@ -895,6 +895,22 @@ function testCard() {
     h('p', { class: 'small', text: 'ใช้เวลา 5–8 นาที: คำศัพท์ ไวยากรณ์ การฟัง และพูดแนะนำตัว 1 ข้อ เจลลี่บูจะเลือกบทที่เหมาะกับระดับจริงของคุณ' }),
     h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: startTest, text: 'เริ่มทดสอบระดับ' }), h('button', { class: 'btn ghost sm', onclick: () => { ui.test = null; savePlacement(0, { skipped: true }); }, text: 'ข้าม เริ่มจาก A1' })));
 }
+function offlinePlace(text) {
+  const t = text.replace(/\s+/g, ' ').trim(); const words = t.split(' ').filter(Boolean); const n = words.length;
+  const sents = t.split(/[.!?]+|\n/).map(x => x.trim()).filter(x => x.split(' ').length >= 2); const ns = Math.max(1, sents.length);
+  const avg = n / ns; const low = ' ' + t.toLowerCase() + ' ';
+  const has = list => list.filter(w => low.includes(' ' + w + ' ')).length;
+  const link = has(['because', 'but', 'so', 'when', 'if', 'also', 'then', 'which', 'who', 'although', 'however', 'while', 'since']);
+  const past = has(['was', 'were', 'did', 'had', 'went', 'started', 'worked', 'studied', 'graduated', 'moved', 'got']) + (low.match(/\b\w{3,}ed\b/g) || []).length;
+  const fut = has(['will', 'want to', 'plan to', 'going to', 'would like']) + (low.includes(' want to ') ? 1 : 0);
+  const adv = has(['although', 'however', 'which', 'while', 'responsible', 'experience', 'improve', 'currently']);
+  let pts = 0; pts += n >= 25 ? 1 : 0; pts += n >= 50 ? 1 : 0; pts += n >= 90 ? 1 : 0; pts += link >= 2 ? 1 : 0; pts += link >= 4 ? 1 : 0;
+  pts += past >= 1 ? 1 : 0; pts += fut >= 1 ? 1 : 0; pts += adv >= 2 ? 1 : 0; pts += avg >= 9 && avg <= 25 ? 1 : 0;
+  const idx = n < 8 ? 0 : pts <= 3 ? 0 : pts <= 6 ? 1 : pts <= 8 ? 2 : 3;
+  const strength = [n >= 25 ? `พูดได้ยาว ${n} คำ` : null, link >= 2 ? `ใช้คำเชื่อม ${link} แบบ` : null, past ? 'มีเล่าเรื่องในอดีต' : null, fut ? 'พูดถึงเป้าหมายในอนาคตได้' : null].filter(Boolean).join(' · ') || 'กล้าพูดออกมา เป็นจุดเริ่มต้นที่ดี';
+  const focus = [n < 50 ? 'ลองพูดให้ยาวขึ้นเป็น 50–80 คำ' : null, link < 3 ? 'เพิ่มคำเชื่อม because / so / when' : null, !past ? 'เล่าสิ่งที่เคยทำด้วย past tense' : null, ns < 3 ? 'แบ่งเป็นหลายประโยคสั้นๆ ให้ชัด' : null].filter(Boolean).join(' · ') || 'ฝึกความคล่อง พูดต่อเนื่องโดยไม่หยุดแปลในหัว';
+  return { cefr: LV[idx], idx, why: `ประเมินแบบออฟไลน์จากความยาว คำเชื่อม และ tense (คร่าวๆ) · เปิดใน Claude จะได้ AI ประเมินละเอียดกว่า`, strength, focus };
+}
 function vTest() {
   const T = ui.test;
   const exit = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.test = null; go(placement() ? 'course' : 'home'); }, text: '‹ ออก' });
@@ -935,6 +951,7 @@ function vTest() {
       T.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: T.err }) : null,
       h('div', { class: 'row' },
         !aiOff ? h('button', { class: 'btn primary', disabled: T.busy ? true : null, onclick: async () => { T.ans = $('#pt-ans').value; if (!T.ans.trim()) return; T.busy = true; T.err = ''; render(); try { const r = await aiPlace(T.ans.trim()); const i = LV.indexOf(String(r.cefr || '').toUpperCase()); T.speak = { cefr: i >= 0 ? LV[i] : null, idx: i, why: String(r.why_th || ''), strength: String(r.strength_th || ''), focus: String(r.focus_th || '') }; T.phase = 'result'; } catch (e) { T.err = aiErr(e); } T.busy = false; render(true); } }, T.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังประเมิน…'] : 'ส่งให้เจลลี่บูประเมิน') : null,
+        aiOff ? h('button', { class: 'btn primary', onclick: () => { T.ans = $('#pt-ans').value; if (!T.ans.trim()) { T.err = 'พิมพ์สิ่งที่พูดก่อนนะ'; render(); return; } T.err = ''; T.speak = offlinePlace(T.ans.trim()); T.phase = 'result'; render(true); }, text: 'ส่งคำตอบ ดูผล' }) : null,
         h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }))));
   }
   // result
