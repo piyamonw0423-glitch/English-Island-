@@ -947,6 +947,18 @@ function offlinePlace(text) {
   const focus = [n < 50 ? 'ลองพูดให้ยาวขึ้นเป็น 50–80 คำ' : null, link < 3 ? 'เพิ่มคำเชื่อม because / so / when' : null, !past ? 'เล่าสิ่งที่เคยทำด้วย past tense' : null, ns < 3 ? 'แบ่งเป็นหลายประโยคสั้นๆ ให้ชัด' : null].filter(Boolean).join(' · ') || 'ฝึกความคล่อง พูดต่อเนื่องโดยไม่หยุดแปลในหัว';
   return { cefr: LV[idx], idx, why: `ประเมินแบบออฟไลน์จากความยาว คำเชื่อม และ tense (คร่าวๆ) · เปิดใน Claude จะได้ AI ประเมินละเอียดกว่า`, strength, focus };
 }
+async function submitSpeak() {
+  const T = ui.test; const box = $('#pt-ans'); T.ans = box ? box.value : T.ans;
+  if (!T.ans.trim()) { T.err = 'พิมพ์สิ่งที่พูดก่อนนะ'; render(); return; }
+  T.err = ''; const text = T.ans.trim();
+  if (sample && !aiOff) {
+    T.busy = true; render();
+    try { const r = await aiPlace(text); const i = LV.indexOf(String(r.cefr || '').toUpperCase()); T.speak = { cefr: i >= 0 ? LV[i] : null, idx: i, why: String(r.why_th || ''), strength: String(r.strength_th || ''), focus: String(r.focus_th || '') }; }
+    catch (e) { T.speak = offlinePlace(text); }
+    T.busy = false;
+  } else T.speak = offlinePlace(text);
+  T.phase = 'result'; render(true);
+}
 function vTest() {
   const T = ui.test;
   const exit = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.test = null; go(placement() ? 'course' : 'home'); }, text: '‹ ออก' });
@@ -985,10 +997,9 @@ function vTest() {
       h('p', { class: 'small', text: 'พูดออกเสียงให้ได้ประมาณ 30–60 วินาที เท่าที่พูดได้จริง แล้วพิมพ์ตามที่พูด ไม่ต้องแก้ให้สวย เจลลี่บูจะประเมินระดับการพูดให้' }),
       h('textarea', { id: 'pt-ans', rows: 5, 'aria-label': 'คำตอบของคุณ', placeholder: 'My name is… I work as…', oninput: e => { T.ans = e.target.value; } }, T.ans),
       T.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: T.err }) : null,
-      h('div', { class: 'row' },
-        !aiOff ? h('button', { class: 'btn primary', disabled: T.busy ? true : null, onclick: async () => { T.ans = $('#pt-ans').value; if (!T.ans.trim()) return; T.busy = true; T.err = ''; render(); try { const r = await aiPlace(T.ans.trim()); const i = LV.indexOf(String(r.cefr || '').toUpperCase()); T.speak = { cefr: i >= 0 ? LV[i] : null, idx: i, why: String(r.why_th || ''), strength: String(r.strength_th || ''), focus: String(r.focus_th || '') }; T.phase = 'result'; } catch (e) { T.err = aiErr(e); } T.busy = false; render(true); } }, T.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังประเมิน…'] : 'ส่งให้เจลลี่บูประเมิน') : null,
-        aiOff ? h('button', { class: 'btn primary', onclick: () => { T.ans = $('#pt-ans').value; if (!T.ans.trim()) { T.err = 'พิมพ์สิ่งที่พูดก่อนนะ'; render(); return; } T.err = ''; T.speak = offlinePlace(T.ans.trim()); T.phase = 'result'; render(true); }, text: 'ส่งคำตอบ ดูผล' }) : null,
-        h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }))));
+      h('div', { class: 'row between' },
+        h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }),
+        h('button', { class: 'btn primary', disabled: T.busy ? true : null, onclick: submitSpeak }, T.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังประเมิน…'] : 'ส่งคำตอบ ดูผล'))));
   }
   // result
   const best = mcqBest(); const wMcq = Math.min(3, best + 1);
