@@ -19,3 +19,8 @@
 ## หมายเหตุ
 - ความคืบหน้าเก็บไว้ในเครื่องที่ใช้งาน
 - ฟีเจอร์ AI (คุยกับเจลลี่บู, ข้อสอบ AI) ใช้ได้เมื่อเปิดแอปใน Claude
+
+## Deploy ขึ้น Cloudflare
+repo นี้เป็นเว็บ static ไม่ต้อง build
+- **Cloudflare Pages:** Workers & Pages → Create → Pages → Connect to Git → เลือก repo นี้ → Framework preset: `None`, Build command: เว้นว่าง, Build output directory: `/`
+- **Cloudflare Workers:** Workers & Pages → Create → Import a repository → เลือก repo นี้ → Deploy command: `npx wrangler deploy` (ใช้ค่าใน `wrangler.jsonc`)
