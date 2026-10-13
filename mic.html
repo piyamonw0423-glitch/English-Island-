@@ -12,14 +12,14 @@ body{margin:0;min-height:100vh;background:radial-gradient(circle at 30% 0%,var(-
 .card{width:100%;max-width:440px;background:var(--card);border:3px solid var(--edge);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;box-shadow:0 12px 30px rgba(110,70,160,.25)}
 h1{font-size:19px;margin:0}
 p{margin:0;font-size:14px;color:var(--ink2)}
-.boo{width:118px;height:126px;border:none;background:none;cursor:pointer;position:relative;padding:0}
+.boo{width:96px;height:102px;border:none;background:none;cursor:pointer;position:relative;padding:0}
 .boo svg{width:100%;height:100%;overflow:visible}
 .boo .ring{position:absolute;inset:-6px;border-radius:50%;}
 .boo.on .ring{animation:pulse 1.2s ease-in-out infinite}
 .boo.on svg{animation:bob 1s ease-in-out infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,111,174,.5)}50%{box-shadow:0 0 0 16px rgba(255,111,174,0)}}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-textarea{width:100%;min-height:120px;border:2.5px solid var(--edge);border-radius:18px;padding:12px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);resize:vertical}
+textarea{width:100%;min-height:84px;border:2.5px solid var(--edge);border-radius:18px;padding:12px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);resize:vertical}
 .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
 button.btn{font:inherit;font-weight:700;border:2.5px solid var(--edge);border-radius:999px;padding:11px 18px;cursor:pointer;box-shadow:0 3px 0 var(--edge);background:var(--card);color:var(--ink)}
 button.primary{background:linear-gradient(180deg,#9B7BFF,var(--lav-d));color:#fff}
@@ -31,7 +31,7 @@ button.pink{background:var(--pink-d);color:#fff}
 <body>
 <div class="card">
   <h1>ไมค์ของเจลลี่บู</h1>
-  <p id="sub">แตะบูแล้วพูดภาษาอังกฤษ บูจะพิมพ์ให้ แล้วกด "ส่งกลับไปที่แอป"</p>
+  <p id="sub">พูดภาษาอังกฤษได้เลย หยุดพูด 2 วินาที บูจะส่งข้อความกลับเข้าแอปให้เอง</p>
   <button class="boo" id="boo" aria-label="เริ่มพูด"><span class="ring"></span>
     <svg viewBox="0 0 140 150" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FB"/><stop offset=".6" stop-color="#FFE3EF"/><stop offset="1" stop-color="#FFCFE4"/></linearGradient></defs>
       <ellipse cx="70" cy="144" rx="30" ry="4" fill="#E2559A" opacity=".16"/>
@@ -61,24 +61,26 @@ button.pink{background:var(--pink-d);color:#fff}
   const opener = window.opener;
   if (!opener) { $('send').textContent = 'คัดลอกข้อความ'; }
   if (!SR) { err.textContent = 'เบราว์เซอร์นี้ไม่รองรับการพูดเป็นข้อความ ลองเปิดด้วย Chrome หรือ Edge'; boo.disabled = true; }
-  let rec = null, start = 0, base = '', finalText = '', secs = 0;
+  let rec = null, start = 0, base = '', finalText = '', secs = 0, idle = null, heard = false;
+  const AUTO = !!opener; // opened from the app: send back automatically after a pause
   function stop() { if (rec) { try { rec.stop(); } catch {} } }
   function go() {
     if (rec) { stop(); return; }
     rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
     base = out.value.trim(); finalText = ''; start = Date.now(); err.textContent = '';
-    rec.onresult = e => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; } out.value = (base ? base + ' ' : '') + finalText + interim; };
+    rec.onresult = e => { heard = true; clearTimeout(idle); if (AUTO) idle = setTimeout(() => { status.textContent = 'กำลังส่งกลับ…'; stop(); }, 2000); let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; } out.value = (base ? base + ' ' : '') + finalText + interim; };
     rec.onerror = e => { err.textContent = e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'ยังไม่ได้อนุญาตไมค์ กดไอคอนกุญแจ/ไมค์ที่แถบที่อยู่เว็บ แล้วเลือก "อนุญาต"' : e.error === 'no-speech' ? 'ไม่ได้ยินเสียง ลองพูดใกล้ไมค์อีกนิด' : 'ไมค์มีปัญหา (' + e.error + ')'; };
-    rec.onend = () => { secs += Math.round((Date.now() - start) / 1000); rec = null; boo.classList.remove('on'); boo.setAttribute('aria-label', 'เริ่มพูด'); status.textContent = out.value.trim() ? 'พูดต่อได้ หรือกดส่งกลับไปที่แอป' : ''; };
+    rec.onend = () => { clearTimeout(idle); secs += Math.round((Date.now() - start) / 1000); rec = null; if (AUTO && heard && out.value.trim()) { send(); return; } boo.classList.remove('on'); boo.setAttribute('aria-label', 'เริ่มพูด'); status.textContent = out.value.trim() ? 'พูดต่อได้ หรือกดส่งกลับไปที่แอป' : ''; };
     try { rec.start(); boo.classList.add('on'); boo.setAttribute('aria-label', 'หยุดพูด'); status.textContent = 'บูกำลังฟัง… แตะบูอีกครั้งเพื่อหยุด'; } catch (e) { rec = null; err.textContent = 'เริ่มไมค์ไม่ได้'; }
   }
   boo.onclick = go;
   $('clear').onclick = () => { out.value = ''; secs = 0; };
-  $('send').onclick = async () => {
+  async function send() {
     stop(); const text = out.value.trim(); if (!text) { err.textContent = 'ยังไม่มีข้อความ'; return; }
     if (opener) { opener.postMessage({ type: 'jb-mic', text, secs }, '*'); status.textContent = 'ส่งแล้ว!'; setTimeout(() => window.close(), 250); }
     else { try { await navigator.clipboard.writeText(text); status.textContent = 'คัดลอกแล้ว นำไปวางในแอปได้เลย'; } catch { out.select(); } }
-  };
+  }
+  $('send').onclick = send;
   if (SR) setTimeout(go, 300); // start listening right away
 })();
 </script>

@@ -1838,7 +1838,7 @@ window.addEventListener('message', e => {
   note2('บูพิมพ์ให้แล้ว ✓');
 });
 function openMicWindow(getBox, onStop) {
-  const w = window.open(MIC_URL, 'jellyboo-mic', 'width=460,height=620');
+  const w = window.open(MIC_URL, 'jellyboo-mic', 'width=400,height=470,left=' + Math.max(0, (screen.availWidth || 800) - 440) + ',top=80');
   if (!w) { micHelp(); return; }
   micPopup = { getBox, onStop }; try { w.focus(); } catch {}
 }
