@@ -782,7 +782,25 @@ const QUESTS = () => [
   { id: 'shadow', title: 'Shadowing 1 บท', target: 1, unit: 'บท', icon: 'speaker', color: 'mint', go: 'shadow' },
   { id: 'record', title: 'คุยกับเจลลี่บู 3 ประโยค', target: 3, unit: 'ประโยค', icon: 'chat', color: 'peach', go: 'speak' },
 ];
-function markStep(step) { const t = today(); const d = S.days.get(t) || { steps: {} }; if (d.steps && d.steps[step]) return; put('days', t, { ...d, steps: { ...(d.steps || {}), [step]: true }, updated: Date.now() }); }
+function markStep(step) { const t = today(); const d = S.days.get(t) || { steps: {} }; if (d.steps && d.steps[step]) return; put('days', t, { ...d, steps: { ...(d.steps || {}), [step]: true }, updated: Date.now() }); questDoneSheet(step); }
+// After a daily quest is finished: celebrate, then offer the next mission (or the treasure) or let the learner keep going.
+let questSheetReady = false; setTimeout(() => { questSheetReady = true; }, 2500); // skip quests already finished before this visit
+function questDoneSheet(step) {
+  if (!loaded || !questSheetReady || document.querySelector('.overlay.qdone') || document.getElementById('splash')) return;
+  const stops = huntStops(); const me = stops.find(s => s.id === step); if (!me) return;
+  const doneN = stops.filter(s => s.done).length; const next = stops.find(s => !s.done);
+  const ov = h('div', { class: 'overlay qdone', onclick: e => { if (e.target === ov) ov.remove(); } });
+  const close = () => ov.remove();
+  const goNext = () => { close(); if (next) huntGo(next); else { go('home'); setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50); } };
+  ov.append(h('div', { class: 'modal' }, mascot('cheer'),
+    h('span', { class: 'pill mint', text: `ภารกิจสำเร็จ ${doneN}/${stops.length} ดาว` }),
+    h('h2', { text: me.title + ' ✓' }),
+    h('p', { class: 'small muted', text: next ? `ดาวถัดไป: ${next.title}` : 'ครบทุกดาวแล้ว! ไปเปิดหีบสมบัติวันนี้กัน' }),
+    h('div', { class: 'row', style: 'justify-content:center;flex-wrap:wrap' },
+      h('button', { class: 'btn primary', onclick: goNext, text: next ? 'ไปภารกิจถัดไป' : 'ไปเปิดหีบสมบัติ' }),
+      h('button', { class: 'btn ghost sm', onclick: close, text: 'เรียนต่ออีกหน่อย' }))));
+  document.body.append(ov); confetti(80);
+}
 function syncQuests() {
   if (!loaded) return; const c = questCounts(); const d = S.days.get(today()) || { steps: {} };
   for (const q of QUESTS()) if (q.id !== 'shadow' && c[q.id] >= q.target && !(d.steps && d.steps[q.id])) { markStep(q.id); return; }
