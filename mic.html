@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jelly Boo Mic</title>
+<style>
+:root{--bg:#FFF4F9;--card:#fff;--ink:#3F2D5C;--ink2:#7B6A93;--edge:#4A3566;--pink:#FFD6E7;--pink-d:#E2559A;--lav:#E3D6FF;--lav-d:#7C5CD6;--mint-d:#2FA57E}
+@media (prefers-color-scheme: dark){:root{--bg:#211A3D;--card:#2D2450;--ink:#FBF3FF;--ink2:#C9B9E6;--edge:#0F0A24;--pink:#5A2E4E;--lav:#3B2F6E}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 30% 0%,var(--pink),var(--bg) 60%);color:var(--ink);font-family:system-ui,"Segoe UI",sans-serif;display:flex;justify-content:center;padding:16px}
+.card{width:100%;max-width:440px;background:var(--card);border:3px solid var(--edge);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;box-shadow:0 12px 30px rgba(110,70,160,.25)}
+h1{font-size:19px;margin:0}
+p{margin:0;font-size:14px;color:var(--ink2)}
+.boo{width:118px;height:126px;border:none;background:none;cursor:pointer;position:relative;padding:0}
+.boo svg{width:100%;height:100%;overflow:visible}
+.boo .ring{position:absolute;inset:-6px;border-radius:50%;}
+.boo.on .ring{animation:pulse 1.2s ease-in-out infinite}
+.boo.on svg{animation:bob 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,111,174,.5)}50%{box-shadow:0 0 0 16px rgba(255,111,174,0)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+textarea{width:100%;min-height:120px;border:2.5px solid var(--edge);border-radius:18px;padding:12px;font:inherit;font-size:16px;background:var(--bg);color:var(--ink);resize:vertical}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
+button.btn{font:inherit;font-weight:700;border:2.5px solid var(--edge);border-radius:999px;padding:11px 18px;cursor:pointer;box-shadow:0 3px 0 var(--edge);background:var(--card);color:var(--ink)}
+button.primary{background:linear-gradient(180deg,#9B7BFF,var(--lav-d));color:#fff}
+button.pink{background:var(--pink-d);color:#fff}
+.status{font-weight:700;color:var(--lav-d);min-height:20px}
+.err{color:var(--pink-d);font-size:13px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>ไมค์ของเจลลี่บู</h1>
+  <p id="sub">แตะบูแล้วพูดภาษาอังกฤษ บูจะพิมพ์ให้ แล้วกด "ส่งกลับไปที่แอป"</p>
+  <button class="boo" id="boo" aria-label="เริ่มพูด"><span class="ring"></span>
+    <svg viewBox="0 0 140 150" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FB"/><stop offset=".6" stop-color="#FFE3EF"/><stop offset="1" stop-color="#FFCFE4"/></linearGradient></defs>
+      <ellipse cx="70" cy="144" rx="30" ry="4" fill="#E2559A" opacity=".16"/>
+      <ellipse cx="25" cy="92" rx="7" ry="10" fill="#FFE3EF" stroke="#E2559A" stroke-width="3" transform="rotate(28 25 92)"/>
+      <ellipse cx="115" cy="66" rx="7" ry="10" fill="#FFE3EF" stroke="#E2559A" stroke-width="3" transform="rotate(30 115 66)"/>
+      <path d="M28 76c0-30 18-52 42-52s42 22 42 52v42 q-7 10 -14 0q-7 10 -14 0q-7 10 -14 0q-7 10 -14 0q-7 10 -14 0q-7 10 -14 0z" fill="url(#g)" stroke="#E2559A" stroke-width="3.6" stroke-linejoin="round"/>
+      <path d="M40 52q6-16 22-20" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <g id="eyes"><circle cx="54" cy="74" r="6.8" fill="#B0306E"/><circle cx="86" cy="74" r="6.8" fill="#B0306E"/><circle cx="56.6" cy="71.4" r="2.6" fill="#fff"/><circle cx="88.6" cy="71.4" r="2.6" fill="#fff"/></g>
+      <path d="M65 85q5 6 10 0" stroke="#E2559A" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="43" cy="85" rx="7.5" ry="4.4" fill="#FF7EB6" opacity=".7"/><ellipse cx="97" cy="85" rx="7.5" ry="4.4" fill="#FF7EB6" opacity=".7"/>
+      <g transform="translate(104 40)"><rect x="-7" y="-14" width="14" height="22" rx="7" fill="#7C5CD6" stroke="#4A3566" stroke-width="2"/><path d="M-11 2a11 11 0 0 0 22 0M0 13v7" stroke="#4A3566" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+    </svg>
+  </button>
+  <div class="status" id="status" role="status"></div>
+  <textarea id="out" aria-label="ข้อความที่พูด" placeholder="ข้อความที่พูดจะขึ้นตรงนี้ แก้ไขได้"></textarea>
+  <div class="err" id="err"></div>
+  <div class="row">
+    <button class="btn" id="clear">ล้าง</button>
+    <button class="btn primary" id="send">ส่งกลับไปที่แอป</button>
+  </div>
+</div>
+<script>
+(() => {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const $ = id => document.getElementById(id);
+  const boo = $('boo'), out = $('out'), status = $('status'), err = $('err');
+  const opener = window.opener;
+  if (!opener) { $('send').textContent = 'คัดลอกข้อความ'; }
+  if (!SR) { err.textContent = 'เบราว์เซอร์นี้ไม่รองรับการพูดเป็นข้อความ ลองเปิดด้วย Chrome หรือ Edge'; boo.disabled = true; }
+  let rec = null, start = 0, base = '', finalText = '', secs = 0;
+  function stop() { if (rec) { try { rec.stop(); } catch {} } }
+  function go() {
+    if (rec) { stop(); return; }
+    rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
+    base = out.value.trim(); finalText = ''; start = Date.now(); err.textContent = '';
+    rec.onresult = e => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; } out.value = (base ? base + ' ' : '') + finalText + interim; };
+    rec.onerror = e => { err.textContent = e.error === 'not-allowed' || e.error === 'service-not-allowed' ? 'ยังไม่ได้อนุญาตไมค์ กดไอคอนกุญแจ/ไมค์ที่แถบที่อยู่เว็บ แล้วเลือก "อนุญาต"' : e.error === 'no-speech' ? 'ไม่ได้ยินเสียง ลองพูดใกล้ไมค์อีกนิด' : 'ไมค์มีปัญหา (' + e.error + ')'; };
+    rec.onend = () => { secs += Math.round((Date.now() - start) / 1000); rec = null; boo.classList.remove('on'); boo.setAttribute('aria-label', 'เริ่มพูด'); status.textContent = out.value.trim() ? 'พูดต่อได้ หรือกดส่งกลับไปที่แอป' : ''; };
+    try { rec.start(); boo.classList.add('on'); boo.setAttribute('aria-label', 'หยุดพูด'); status.textContent = 'บูกำลังฟัง… แตะบูอีกครั้งเพื่อหยุด'; } catch (e) { rec = null; err.textContent = 'เริ่มไมค์ไม่ได้'; }
+  }
+  boo.onclick = go;
+  $('clear').onclick = () => { out.value = ''; secs = 0; };
+  $('send').onclick = async () => {
+    stop(); const text = out.value.trim(); if (!text) { err.textContent = 'ยังไม่มีข้อความ'; return; }
+    if (opener) { opener.postMessage({ type: 'jb-mic', text, secs }, '*'); status.textContent = 'ส่งแล้ว!'; setTimeout(() => window.close(), 250); }
+    else { try { await navigator.clipboard.writeText(text); status.textContent = 'คัดลอกแล้ว นำไปวางในแอปได้เลย'; } catch { out.select(); } }
+  };
+  if (SR) setTimeout(go, 300); // start listening right away
+})();
+</script>
+</body>
+</html>

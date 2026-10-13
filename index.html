@@ -220,7 +220,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--in
 .ico svg{width:100%;height:100%;display:block;overflow:visible}
 
 /* HUD */
-.hud{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--card);border:2.5px solid var(--edge);border-radius:999px;padding:7px 16px 7px 7px;box-shadow:var(--glow);position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5}
+.hud{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;background:var(--card);border:2.5px solid var(--edge);border-radius:999px;padding:7px 16px 7px 7px;box-shadow:var(--glow);position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5}
 .lvl{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF6C8,#FFD24A 55%,#E9A800);border:2.5px solid var(--edge);display:grid;place-items:center;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12)}
 .lvl b{font-family:var(--num);font-size:21px;font-weight:700;color:#4A3566;line-height:1}
 .lvl::after{content:"";position:absolute;top:5px;left:10px;width:12px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);transform:rotate(-25deg)}
@@ -491,6 +491,13 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 .mic-chip{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--pink);color:var(--ink);border:2px solid var(--edge)}
 .tip.hl{outline:2.5px solid var(--lav-d)}
 .composer{grid-template-columns:1fr auto auto;align-items:center}
+
+.theme-btn{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--edge);background:var(--bg2);display:grid;place-items:center;padding:0;cursor:pointer;font-size:19px;line-height:1;box-shadow:0 2px 0 var(--edge);position:relative;overflow:hidden}
+.theme-btn span{position:absolute;transition:transform .45s var(--spring),opacity .3s}
+.theme-btn .moon{transform:translateY(130%);opacity:0}
+:root[data-theme="dark"] .theme-btn .sun{transform:translateY(-130%);opacity:0}
+:root[data-theme="dark"] .theme-btn .moon{transform:none;opacity:1}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme-btn .sun{transform:translateY(-130%);opacity:0}:root:not([data-theme="light"]) .theme-btn .moon{transform:none;opacity:1}}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -500,6 +507,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
     <div class="lvl" id="lvlRing"><b id="lvlNum">1</b></div>
     <div class="xpbox"><div class="t"><span id="lvlTitle">มือใหม่หัดพูด</span><span class="num" id="xpText">0 / 200 XP</span></div><div class="bar"><i id="xpBar" style="width:0%"></i></div></div>
     <div class="streak" id="streak" title="วันติดต่อกัน"><span class="ico" id="flame"></span><span id="streakN">0</span></div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="สลับโหมดกลางวัน/กลางคืน"><span class="sun">☀️</span><span class="moon">🌙</span></button>
   </div>
   <div id="modeNote" class="notice" hidden></div>
   <main id="main"></main>
@@ -1806,6 +1814,34 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let micState = null; // { rec, start, target, onStop }
 function note2(msg) { const el = h('div', { class: 'toast', role: 'status' }, h('div', { class: 'small', text: msg })); document.body.append(el); setTimeout(() => el.remove(), 3600); }
 let micAllowed = !!SR && !(document.featurePolicy && document.featurePolicy.allowsFeature && !document.featurePolicy.allowsFeature('microphone'));
+// ---------- light / dark toggle (remembered per device) ----------
+(function themeInit() {
+  const root = document.documentElement; let t = null; try { t = localStorage.getItem('epl-theme'); } catch {}
+  if (t === 'light' || t === 'dark') root.dataset.theme = t;
+  const btn = document.getElementById('themeBtn'); if (!btn) return;
+  btn.addEventListener('click', () => {
+    const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = cur === 'dark' ? 'light' : 'dark'; root.dataset.theme = next; try { localStorage.setItem('epl-theme', next); } catch {}
+    btn.setAttribute('aria-label', next === 'dark' ? 'เปลี่ยนเป็นโหมดกลางวัน' : 'เปลี่ยนเป็นโหมดกลางคืน');
+  });
+})();
+// ---------- mic window: when this frame may not use the mic, open Jelly Boo's mic page and take its text back ----------
+const MIC_URL = 'https://piyamonw0423-glitch.github.io/English-Island-/mic.html';
+const MIC_ORIGIN = 'https://piyamonw0423-glitch.github.io';
+let micPopup = null;
+window.addEventListener('message', e => {
+  if (e.origin !== MIC_ORIGIN || !e.data || e.data.type !== 'jb-mic' || !micPopup) return;
+  const { getBox, onStop } = micPopup; micPopup = null;
+  const b = getBox(); const text = String(e.data.text || '').trim(); if (!b || !text) return;
+  b.value = (b.value.trim() ? b.value.trim() + ' ' : '') + text; b.dispatchEvent(new Event('input')); b.focus();
+  if (onStop) onStop(Math.max(1, Number(e.data.secs) || 1));
+  note2('บูพิมพ์ให้แล้ว ✓');
+});
+function openMicWindow(getBox, onStop) {
+  const w = window.open(MIC_URL, 'jellyboo-mic', 'width=460,height=620');
+  if (!w) { micHelp(); return; }
+  micPopup = { getBox, onStop }; try { w.focus(); } catch {}
+}
 function micHelp() {
   const isMac = /Mac/.test(navigator.platform || ''); const isWin = /Win/.test(navigator.platform || '');
   modal([mascot('think'), h('h3', { text: 'ใช้ไมค์บนคีย์บอร์ดแทนนะ' }),
@@ -1815,11 +1851,11 @@ function micHelp() {
       h('div', { class: 'tip' }, h('div', {}, h('div', { class: 'qt', text: 'Android (Gboard)' }), h('div', { class: 'small muted', text: 'แตะไอคอนไมค์ 🎤 มุมขวาบนของคีย์บอร์ด' }))),
       h('div', { class: 'tip' + (isWin ? ' hl' : '') }, h('div', {}, h('div', { class: 'qt', text: 'Windows' }), h('div', { class: 'small muted', text: 'กด ⊞ Win + H เพื่อพิมพ์ด้วยเสียง' }))),
       h('div', { class: 'tip' + (isMac ? ' hl' : '') }, h('div', {}, h('div', { class: 'qt', text: 'Mac' }), h('div', { class: 'small muted', text: 'กดปุ่ม Fn (🌐) สองครั้ง หรือเปิด Dictation ในการตั้งค่า' })))),
-    h('p', { class: 'small muted', text: 'ปุ่มบูไมค์ใช้ได้เต็มรูปแบบบนเว็บเวอร์ชันที่เปิดด้วย Chrome / Edge' })], 'เข้าใจแล้ว');
+    h('p', { class: 'small muted', text: 'ถ้าเบราว์เซอร์บล็อกหน้าต่างไมค์ของบู ให้กดอนุญาตป๊อปอัปสำหรับหน้านี้' })], 'เข้าใจแล้ว');
 }
 function micBtn(getBox, onStop) {
   const on = !!micState;
-  const b = h('button', { class: 'mic-boo' + (on ? ' on' : '') + (micAllowed ? '' : ' off'), type: 'button', title: on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-label': on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-pressed': String(on), onclick: () => micAllowed ? toggleMic(getBox, onStop) : micHelp() },
+  const b = h('button', { class: 'mic-boo' + (on ? ' on' : '') + (micAllowed ? '' : ' off'), type: 'button', title: on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-label': on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-pressed': String(on), onclick: () => micAllowed ? toggleMic(getBox, onStop) : openMicWindow(getBox, onStop) },
     mascot(on ? 'cheer' : 'happy'), h('span', { class: 'mic-badge' }, ico('mic')));
   return h('span', { class: 'mic-wrap' }, b, on ? h('span', { class: 'mic-chip', text: 'บูกำลังฟัง… แตะบูเพื่อหยุด' }) : null);
 }
@@ -1832,7 +1868,7 @@ function toggleMic(getBox, onStop) {
     let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; }
     const b = getBox(); if (b) { b.value = (base ? base + ' ' : '') + finalText + interim; b.dispatchEvent(new Event('input')); }
   };
-  rec.onerror = e => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) { micAllowed = false; setTimeout(micHelp, 100); } else if (e.error === 'network') note2('ไมค์ต้องใช้อินเทอร์เน็ต ลองใหม่อีกครั้ง'); };
+  rec.onerror = e => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) { micAllowed = false; setTimeout(() => openMicWindow(st.target, st.onStop), 100); } else if (e.error === 'network') note2('ไมค์ต้องใช้อินเทอร์เน็ต ลองใหม่อีกครั้ง'); };
   rec.onend = () => { const secs = Math.max(1, Math.round((Date.now() - st.start) / 1000)); if (micState === st) micState = null; render(); if (st.onStop) st.onStop(secs); };
   micState = st; try { rec.start(); } catch { micState = null; micAllowed = false; micHelp(); } render();
 }
@@ -2008,7 +2044,7 @@ function vAnswer() {
       : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: sp.q }), sayBtn(sp.q)),
     h('div', { class: 'ringwrap' }, ring, h('div', { style: 'display:flex;flex-direction:column;gap:8px;min-width:0;flex:1' }, h('button', { class: sp.running ? 'btn pink' : 'btn primary', onclick: toggleTimer, text: sp.running ? 'หยุด' : (sp.secs ? 'เริ่มพูดใหม่' : 'เริ่มพูด!') }), h('div', { class: 'small muted', text: sp.boss ? 'วงแหวนเต็ม = ถึงเวลาขั้นต่ำของบอส' : 'ตอบ → because → For example → So' }))),
     h('label', { class: 'f' }, 'พิมพ์สิ่งที่คุณพูด (ผิดได้เต็มที่)', h('textarea', { id: 'sp-ans', rows: 4, oninput: e => { sp.ans = e.target.value; const m = $('#sp-meta'); if (m) m.textContent = metaText(); } }, sp.ans)),
-    h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: micAllowed ? 'แตะบูแล้วพูด แอปพิมพ์ให้ + จับเวลาเอง' : 'แตะบูเพื่อดูวิธีพิมพ์ด้วยเสียง' })),
+    h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: micAllowed ? 'แตะบูแล้วพูด แอปพิมพ์ให้ + จับเวลาเอง' : 'แตะบู → หน้าต่างไมค์จะเปิด พูดแล้วกดส่งกลับ' })),
     h('div', { class: 'small muted num', id: 'sp-meta', text: metaText() }),
     !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: sp.busy || sp.running ? true : null, onclick: () => { sp.ans = $('#sp-ans').value; doCheck(); } }, sp.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังตรวจ…'] : 'ให้ตรวจคำตอบ'), sp.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: sp.err }) : null) : aiNeeded());
   const out = [card];
