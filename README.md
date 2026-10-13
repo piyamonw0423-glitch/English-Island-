@@ -18,9 +18,20 @@
 
 ## หมายเหตุ
 - ความคืบหน้าเก็บไว้ในเครื่องที่ใช้งาน
-- ฟีเจอร์ AI (คุยกับเจลลี่บู, ข้อสอบ AI) ใช้ได้เมื่อเปิดแอปใน Claude
+- ฟีเจอร์ AI ใช้ได้บนเว็บเมื่อ Deploy ผ่าน Cloudflare และตั้งค่า API key แล้ว (ดูด้านล่าง)
 
 ## Deploy ขึ้น Cloudflare
 repo นี้เป็นเว็บ static ไม่ต้อง build
 - **Cloudflare Pages:** Workers & Pages → Create → Pages → Connect to Git → เลือก repo นี้ → Framework preset: `None`, Build command: เว้นว่าง, Build output directory: `/`
 - **Cloudflare Workers:** Workers & Pages → Create → Import a repository → เลือก repo นี้ → Deploy command: `npx wrangler deploy` (ใช้ค่าใน `wrangler.jsonc`)
+
+## เปิดใช้ AI บนเว็บ (ตรวจไวยากรณ์ คุยกับเจลลี่บู สร้างบทเรียน)
+AI ทำงานผ่าน `/api/ai` (ไฟล์ `functions/api/ai.js` และ `worker.js`) ซึ่งเรียก Claude API ด้วยคีย์ของเราเอง คีย์จะเก็บไว้ที่ Cloudflare ไม่อยู่ในโค้ด
+1. สร้าง API key ที่ https://console.anthropic.com (คิดเงินตามการใช้งาน)
+2. Cloudflare → project นี้ → **Settings → Variables and Secrets** → เพิ่มแบบ **Secret**
+   - `ANTHROPIC_API_KEY` = API key
+   - `APP_PASSCODE` = รหัสแอปที่ตั้งเอง (แนะนำ เพื่อไม่ให้คนอื่นใช้ AI ด้วยเงินของเรา)
+   - `MODEL` (ไม่บังคับ) ค่าเริ่มต้น `claude-sonnet-5-5`
+3. กด Deploy ใหม่ 1 ครั้ง แอปจะถามรหัสแอปครั้งแรกที่ใช้ AI แล้วจำไว้ในเครื่อง
+
+หมายเหตุ: GitHub Pages ไม่มีเซิร์ฟเวอร์ ฟีเจอร์ AI จึงใช้ได้เฉพาะลิงก์ Cloudflare

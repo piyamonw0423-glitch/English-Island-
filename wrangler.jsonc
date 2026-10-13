@@ -1,6 +1,8 @@
 {
-  // Cloudflare Workers static-assets config (used if the repo is imported as a Worker).
+  // Cloudflare Worker config: serves the app files and the /api/ai endpoint.
+  // Secrets (set in the dashboard, never in this file): ANTHROPIC_API_KEY, APP_PASSCODE (optional).
   "name": "english-island",
+  "main": "worker.js",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./" }
+  "assets": { "directory": "./", "binding": "ASSETS" }
 }
