@@ -476,6 +476,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 .exq .q{font-family:var(--display);font-weight:600;font-size:17px}
 .diff{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .insight .tips{display:flex;flex-direction:column;gap:8px}.insight .tip{display:flex;gap:10px;align-items:center;padding:10px 12px;border:2px solid var(--edge);border-radius:18px;background:var(--card)}.insight .tiles{grid-template-columns:repeat(2,1fr)}.flip{cursor:pointer}
+.story-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.story-tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:12px;border:2.5px solid var(--edge);border-radius:20px;background:var(--card);color:var(--ink);cursor:pointer;font:inherit}.story-tile.started{background:var(--lav)}.story-tile.done{background:var(--mint)}.story-tile:hover{transform:translateY(-2px)}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -775,13 +776,13 @@ function questCounts() {
   const learned = allWords().filter(w => dayOf(w.created) === t).length;
   const cs = [...S.checks.values()].filter(c => dayOf(c.created) === t);
   const talk = cs.filter(c => c.kind === 'chat').length + 3 * cs.filter(c => !c.kind || c.kind === 'answer').length;
-  return { learn: learned, review: seen, record: talk };
+  return { learn: learned, review: seen, record: speakSecsToday() };
 }
 const QUESTS = () => [
-  { id: 'learn', title: 'เรียนคำศัพท์ใหม่', target: Math.min(5, packSize()), unit: 'คำ', icon: 'learn', color: 'lav', go: 'course' },
+  { id: 'learn', title: 'เรียนคำศัพท์ใหม่', target: Math.min(3, packSize()), unit: 'คำ', icon: 'learn', color: 'lav', go: 'course' },
   { id: 'review', title: 'ทบทวนแบบ Active Recall', target: Math.max(1, Math.min(10, S.words.size + S.phrases.size)), unit: 'ใบ', icon: 'cards', color: 'pink', go: 'review' },
   { id: 'shadow', title: 'Shadowing 1 บท', target: 1, unit: 'บท', icon: 'speaker', color: 'mint', go: 'shadow' },
-  { id: 'record', title: 'คุยกับเจลลี่บู 3 ประโยค', target: 3, unit: 'ประโยค', icon: 'chat', color: 'peach', go: 'speak' },
+  { id: 'record', title: 'พูดรวม 1 นาที', target: 60, unit: 'วินาที', icon: 'mic', color: 'peach', go: 'speak' },
 ];
 function markStep(step) { const t = today(); const d = S.days.get(t) || { steps: {} }; if (d.steps && d.steps[step]) return; put('days', t, { ...d, steps: { ...(d.steps || {}), [step]: true }, updated: Date.now() }); questDoneSheet(step); }
 // After a daily quest is finished: celebrate, then offer the next mission (or the treasure) or let the learner keep going.
@@ -1016,6 +1017,7 @@ function vTest() {
       h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: 'Tell me about yourself and your job.' }), sayBtn('Tell me about yourself and your job.')),
       h('p', { class: 'small', text: 'พูดออกเสียงให้ได้ประมาณ 30–60 วินาที เท่าที่พูดได้จริง แล้วพิมพ์ตามที่พูด ไม่ต้องแก้ให้สวย เจลลี่บูจะประเมินระดับการพูดให้' }),
       h('textarea', { id: 'pt-ans', rows: 5, 'aria-label': 'คำตอบของคุณ', placeholder: 'My name is… I work as…', oninput: e => { T.ans = e.target.value; } }, T.ans),
+      SR ? h('div', { class: 'row' }, micBtn(() => $('#pt-ans'))) : null,
       T.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: T.err }) : null,
       h('div', { class: 'row between' },
         h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }),
@@ -1257,7 +1259,7 @@ const ui = {
   rate: lsGet('epl-rate', .9), world: null, unit: null, sub: null,
   learn: null, shadow: null, review: null, exam: null,
   chat: { unit: null, turns: [], view: [], busy: false, err: '' },
-  speakMode: 'chat',
+  speakMode: 'story', story: null,
   sp: { q: '', world: 0, boss: false, ans: '', busy: false, err: '', res: null, secs: 0, running: false, start: 0, pauses: '', saved: false, added: false },
   bank: { th: '', en: '', alt: '', note: '', busy: false, err: '' }, bankTab: 'words', filter: '', confirm: null,
 };
@@ -1461,7 +1463,7 @@ function vHome() {
   const DOW = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']; const mon = addDays(t, -((new Date(t + 'T00:00:00').getDay() + 6) % 7));
   const week = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'สัปดาห์นี้' }), h('span', { class: 'small muted', text: 'พลาด 1 วันได้ อย่าพลาด 2 วันติด' })),
     h('div', { class: 'week' }, DOW.map((nm, i) => { const day = addDays(mon, i); const l = dayLevel(S.days.get(day)); return h('div', {}, h('i', { class: (l ? 'l' + l : '') + (day === t ? ' today' : '') }, l ? ico(l === 2 ? 'check' : 'flame') : null), nm); })));
-  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), loaded && huntStops().every(x => x.done) ? insightCard(false) : null, weekCard(), cont);
+  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), loaded && huntStops().every(x => x.done) ? insightCard(false) : null, benchCard(), weekCard(), cont);
 }
 
 // ---------- COURSE ----------
@@ -1716,7 +1718,7 @@ function vReview() {
   }
   const front = it.mode === 'listen'
     ? [h('span', { class: 'pill', text: 'ฟังแล้วบอกความหมาย' }), h('button', { class: 'say', style: 'width:72px;height:72px', 'aria-label': 'ฟังอีกครั้ง', onclick: e => { e.stopPropagation(); say(it.w, ui.rate); } }, ico('speaker', 36)), h('div', { class: 'sub', text: 'พูดคำนี้ตาม แล้วบอกความหมายในใจ' })]
-    : [h('span', { class: 'pill', text: 'พูดเป็นภาษาอังกฤษ' }), h('div', { class: 'th', text: it.th || '' }), isW && it.chunk ? h('div', { class: 'sub', text: 'ใบ้: ขึ้นต้นด้วย "' + it.w.slice(0, 1) + '…"' }) : null, h('div', { class: 'sub', text: 'พูดออกเสียงก่อน แล้วแตะพลิก' })];
+    : [h('span', { class: 'pill', text: it.src === 'fix' ? 'พูดประโยคที่ถูกออกเสียง' : 'พูดเป็นภาษาอังกฤษ' }), h('div', { class: 'th', text: it.th || '' }), isW && it.chunk ? h('div', { class: 'sub', text: 'ใบ้: ขึ้นต้นด้วย "' + it.w.slice(0, 1) + '…"' }) : null, h('div', { class: 'sub', text: 'พูดออกเสียงก่อน แล้วแตะพลิก' })];
   const back = isW ? [h('div', { class: 'row', style: 'justify-content:center' }, h('div', { class: 'en', text: it.w }), sayBtn(it.w, 'sm')), h('div', { class: 'sub', text: `${it.th || ''}${it.chunk ? ' · ' + it.chunk : ''}` }), it.ex ? h('div', { class: 'sub', style: 'color:var(--ink)', text: it.ex }) : null]
     : [h('div', { class: 'row', style: 'justify-content:center' }, h('div', { class: 'en', text: it.en || '' }), sayBtn(it.en || '', 'sm')), it.alt ? h('div', { class: 'sub', text: 'หรือ: ' + it.alt }) : null, it.note ? h('div', { class: 'sub', text: it.note }) : null];
   const flip = h('div', { class: 'flip' }, h('div', { class: 'face front' }, front), h('div', { class: 'face back' }, back));
@@ -1759,7 +1761,7 @@ async function sendChat() {
   try {
     const r = await aiChat(u, C.turns.slice(-14));
     const fix = r && r.fix && r.fix.better ? { better: String(r.fix.better), why: String(r.fix.why_th || '') } : null;
-    if (fix) C.view.push({ role: 'fix', ...fix });
+    if (fix) { C.view.push({ role: 'fix', ...fix }); if (addFixCard(text, fix.better, fix.why)) fix.card = true; }
     const reply = String((r && r.reply) || '…'); C.view.push({ role: 'ai', en: reply, th: String((r && r.reply_th) || ''), hint: String((r && r.hint_th) || '') });
     C.turns.push({ role: 'assistant', content: reply });
     put('checks', uid(), { kind: 'chat', unit: u.id, said: text, better: fix ? fix.better : null, used: Array.isArray(r && r.used) ? r.used.slice(0, 10).map(String) : [], created: Date.now() }, true);
@@ -1778,15 +1780,180 @@ async function doCheck() {
     const W = WORLDS[sp.world]; const r = await aiCheck(sp.q, sp.ans.trim(), sp.world);
     const stars = Math.max(1, Math.min(3, Number(r.stars) || 1)); const pass = sp.boss && stars >= 2 && sp.secs >= W.secs;
     sp.res = { ...r, stars, pass };
+    (Array.isArray(r.mistakes) ? r.mistakes.slice(0, 3) : []).forEach(m => addFixCard(m.wrong, m.right, m.why_th));
     put('checks', uid(), { kind: 'answer', q: sp.q, answer: sp.ans.trim(), natural: String(r.natural || ''), stars, mistakes: Array.isArray(r.mistakes) ? r.mistakes.slice(0, 5) : [], secs: sp.secs || null, words: words(sp.ans), world: sp.world, boss: sp.boss, pass, created: Date.now() });
     if (pass) setTimeout(() => { confetti(220); modal([ico('crown', 72), h('h2', { text: 'ชนะบอสแล้ว!' }), h('p', { text: `ผ่านโลก ${W.lv}: ${W.name}` }), h('div', { class: 'big', text: '+100' }), h('p', { class: 'small muted', text: 'โลกถัดไปรอคุณอยู่ในคอร์ส' })]); }, 300);
     else if (stars === 3) confetti(80);
   } catch (e) { sp.err = aiErr(e); }
   sp.busy = false; render();
 }
+// ---------- microphone: browser speech-to-text (hidden where unsupported) ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let micState = null; // { rec, start, target, onStop }
+function note2(msg) { const el = h('div', { class: 'toast', role: 'status' }, h('div', { class: 'small', text: msg })); document.body.append(el); setTimeout(() => el.remove(), 3600); }
+function micBtn(getBox, onStop) {
+  if (!SR) return null;
+  const on = !!micState;
+  return h('button', { class: 'btn ' + (on ? 'pink' : ''), type: 'button', 'aria-pressed': String(!!on), onclick: () => toggleMic(getBox, onStop) }, ico('mic'), on ? ' หยุดพูด' : ' กดแล้วพูด');
+}
+function toggleMic(getBox, onStop) {
+  if (micState) { const m = micState; micState = null; try { m.rec.stop(); } catch {} return; }
+  const rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
+  const box = getBox(); const base = box ? box.value.trim() : ''; let finalText = '';
+  const st = { rec, start: Date.now(), target: getBox, onStop };
+  rec.onresult = e => {
+    let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; }
+    const b = getBox(); if (b) { b.value = (base ? base + ' ' : '') + finalText + interim; b.dispatchEvent(new Event('input')); }
+  };
+  rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') note2('หน้านี้ใช้ไมค์ไม่ได้ ลองใช้ปุ่มไมค์บนคีย์บอร์ดมือถือแทน หรือเปิดแอปบนเว็บ'); };
+  rec.onend = () => { const secs = Math.max(1, Math.round((Date.now() - st.start) / 1000)); if (micState === st) micState = null; render(); if (st.onStop) st.onStop(secs); };
+  micState = st; try { rec.start(); } catch { micState = null; note2('เริ่มไมค์ไม่ได้'); } render();
+}
+
+// ---------- corrections become review cards ----------
+function addFixCard(wrong, right, why) {
+  wrong = String(wrong || '').trim(); right = String(right || '').trim(); if (!wrong || !right || wrong.toLowerCase() === right.toLowerCase()) return false;
+  const key = right.toLowerCase(); if ([...S.phrases.values()].some(p => String(p.en || '').toLowerCase() === key)) return false;
+  put('phrases', uid(), { th: `แก้ให้ถูก: "${wrong}"`, en: right, alt: '', note: why || '', src: 'fix', box: 0, due: addDays(today(), 1), created: Date.now() }, true);
+  return true;
+}
+
+// ---------- Story Bank: personal stories polished, then drilled 4-3-2 ----------
+const STORY_TOPICS = [
+  { id: 'intro', th: 'แนะนำตัวเอง', q: 'Tell me about yourself.' },
+  { id: 'job', th: 'งานของฉัน', q: 'What do you do at work?' },
+  { id: 'day', th: 'วันทำงานทั่วไป', q: 'Describe a typical day at work.' },
+  { id: 'problem', th: 'ปัญหาที่เคยแก้ได้', q: 'Tell me about a problem you solved at work.' },
+  { id: 'abroad', th: 'ทำไมอยากไปทำงานต่างประเทศ', q: 'Why do you want to work abroad?' },
+  { id: 'strength', th: 'จุดแข็งและจุดที่กำลังพัฒนา', q: 'What are your strengths and weaknesses?' },
+  { id: 'free', th: 'วันหยุดของฉัน', q: 'What do you like to do in your free time?' },
+  { id: 'english', th: 'ทำไมฉันเรียนภาษาอังกฤษ', q: 'Why are you learning English?' },
+];
+const ROUNDS = [90, 60, 45];
+const storyDoc = id => S.meta.get('story-' + id) || null;
+const storyPracticeDays = s => new Set((s && s.practices || []).map(p => p.date)).size;
+const storyMastered = s => !!s && (s.practices || []).filter(p => p.hidden).map(p => p.date).filter((d, i, a) => a.indexOf(d) === i).length >= 3;
+function speakSecsToday() {
+  const t = today(); let secs = 0;
+  STORY_TOPICS.forEach(tp => { const s = storyDoc(tp.id); (s && s.practices || []).forEach(p => { if (p.date === t) secs += p.secs || 0; }); });
+  [...S.checks.values()].forEach(c => { if (dayOf(c.created) !== t) return; if (c.kind === 'chat') secs += 15; else if (!c.kind || c.kind === 'answer') secs += c.secs || 30; });
+  return secs;
+}
+async function aiPolish(tp, draft) {
+  return sample.json(`${ME}\n\nShe is building a personal "story bank" to answer real questions fluently. Question: "${tp.q}" (topic: ${tp.th}).\nHer draft (may mix Thai and English, may have mistakes):\n"""${draft}"""\n\nRewrite it as HER OWN spoken answer at about CEFR A2+/B1: only her facts (invent nothing important; if a detail is missing keep it general), first person, short clear sentences, natural linking words (because, so, for example, usually, last year), 80-120 words, easy to say out loud.\nReply with only JSON: {"polished": "the answer", "polished_th": "Thai translation", "key_phrases": [{"en": "useful reusable phrase from the answer", "th": "Thai meaning"}] (3-5 items), "tip_th": "one short Thai tip on how to say it well"}`);
+}
+function vStoryList() {
+  const tiles = STORY_TOPICS.map(tp => {
+    const s = storyDoc(tp.id); const days = storyPracticeDays(s); const done = storyMastered(s);
+    return h('button', { class: 'story-tile' + (done ? ' done' : s ? ' started' : ''), onclick: () => { ui.story = { id: tp.id, step: s && s.polished ? 'practice' : 'draft', round: 0, hide: false }; render(true); } },
+      h('div', { class: 'qt', text: tp.th }), h('div', { class: 'small muted', text: tp.q }),
+      h('span', { class: 'pill ' + (done ? 'mint' : s && s.polished ? 'lav' : 'butter'), text: done ? 'พูดได้คล่องแล้ว' : s && s.polished ? `ฝึกแล้ว ${days} วัน` : 'ยังไม่เริ่ม' }));
+  });
+  const n = STORY_TOPICS.filter(tp => storyMastered(storyDoc(tp.id))).length;
+  return [classPrepCard(), h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('h2', { text: 'เรื่องเล่าของฉัน' }), h('span', { class: 'pill mint', text: `คล่องแล้ว ${n}/${STORY_TOPICS.length}` })),
+    h('p', { class: 'small muted', text: 'เรื่องที่ต้องพูดบ่อยในชีวิตจริงและตอนสัมภาษณ์งาน เขียนร่างเป็นเรื่องของคุณเอง ให้เจลลี่บูขัดเกลา แล้วฝึกแบบ 4-3-2 (90 → 60 → 45 วินาที) จนพูดได้โดยไม่ต้องดูบท ฝึกแบบซ่อนบทครบ 3 วันถือว่าคล่อง' }),
+    h('div', { class: 'story-grid' }, tiles))];
+}
+function vStory() {
+  const U = ui.story; const tp = STORY_TOPICS.find(x => x.id === U.id); const s = storyDoc(tp.id) || {};
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { if (micState) toggleMic(); clearInterval(storyTimer); ui.story = null; render(true); }, text: '‹ เรื่องเล่าทั้งหมด' });
+  const head = h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'small muted', text: tp.th }), h('h2', { text: tp.q })), sayBtn(tp.q));
+  if (U.step === 'draft') {
+    const box = h('textarea', { id: 'st-draft', rows: 6, placeholder: 'เล่าเป็นภาษาอังกฤษ หรือผสมไทยก็ได้ ใส่ข้อมูลจริงของคุณ เช่น ทำงานอะไร ที่ไหน กี่ปี ทำอะไรบ้าง', 'aria-label': 'ร่างเรื่องเล่า', oninput: e => { U.draft = e.target.value; } }, U.draft != null ? U.draft : (s.draft || ''));
+    return h('section', {}, back, h('div', { class: 'card' }, head,
+      h('p', { class: 'small', text: 'ขั้นที่ 1: ร่างเรื่องของคุณ ไม่ต้องถูกไวยากรณ์ ยิ่งมีรายละเอียดจริงยิ่งดี' }), box,
+      h('div', { class: 'row' }, micBtn(() => $('#st-draft'))),
+      U.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: U.err }) : null,
+      h('div', { class: 'row' },
+        sample && !aiOff ? h('button', { class: 'btn primary', disabled: U.busy ? true : null, onclick: () => polishStory(tp) }, U.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังขัดเกลา…'] : 'ให้เจลลี่บูขัดเกลา') : null,
+        h('button', { class: 'btn' + (sample && !aiOff ? '' : ' primary'), onclick: () => { const d = ($('#st-draft') || {}).value || ''; if (!d.trim()) return; put('meta', 'story-' + tp.id, { ...s, draft: d, polished: s.polished || d, created: s.created || Date.now() }); U.step = 'practice'; render(true); }, text: sample && !aiOff ? 'ใช้ฉบับของฉันเอง' : 'บันทึกแล้วไปฝึก' }))));
+  }
+  // practice
+  const text = s.polished || s.draft || '';
+  const r = U.round; const target = ROUNDS[Math.min(r, 2)]; const live = U.running ? Math.floor((Date.now() - U.start) / 1000) : (U.secs || 0);
+  const script = U.hide ? h('div', { class: 'block', style: 'text-align:center' }, h('div', { class: 'small muted', text: 'ซ่อนบทอยู่ พูดจากความจำ' }), h('button', { class: 'btn ghost sm', onclick: () => { U.hide = false; render(); }, text: 'แอบดู' }))
+    : h('div', { class: 'block nat' }, h('div', { class: 'row between', style: 'flex-wrap:nowrap' }, h('div', { class: 'lbl', text: 'บทของคุณ (ฟังแล้วพูดตาม)' }), sayBtn(text, 'sm')), h('div', { style: 'font-weight:600;line-height:1.7', text: text }), s.polished_th ? h('details', {}, h('summary', { class: 'small muted', text: 'ดูคำแปล' }), h('div', { class: 'small', text: s.polished_th })) : null);
+  const phrases = Array.isArray(s.key_phrases) && s.key_phrases.length ? h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'วลีที่ใช้ซ้ำได้' }), s.key_phrases.map(p => h('div', { class: 'small' }, h('b', { text: p.en }), ' · ' + (p.th || ''))),
+    h('button', { class: 'btn sm', style: 'align-self:flex-start', disabled: U.phrasesAdded ? true : null, onclick: () => { let n = 0; s.key_phrases.forEach(p => { const key = String(p.en || '').toLowerCase(); if (!key || [...S.phrases.values()].some(x => String(x.en || '').toLowerCase() === key)) return; put('phrases', uid(), { th: String(p.th || ''), en: String(p.en), alt: '', note: 'จากเรื่องเล่า: ' + tp.th, box: 0, due: addDays(today(), 1), created: Date.now() }, true); n++; }); U.phrasesAdded = true; note2(n ? `เพิ่ม ${n} วลีเข้าการ์ดทบทวนแล้ว` : 'วลีเหล่านี้อยู่ในการ์ดแล้ว'); render(); }, text: U.phrasesAdded ? 'เพิ่มแล้ว' : 'เพิ่มเข้าการ์ดทบทวน' })) : null;
+  const roundsDone = r >= 3;
+  const timerCard = roundsDone ? h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('cheer'), h('h3', { text: 'ครบ 3 รอบแล้ว!' }), h('p', { class: 'small muted', text: U.hide ? 'วันนี้พูดแบบซ่อนบทได้ เยี่ยมมาก' : 'ครั้งหน้าลองกด "ซ่อนบท" แล้วพูดจากความจำ' }),
+      h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn', onclick: () => { U.round = 0; U.secs = 0; render(); }, text: 'ฝึกอีกชุด' }), h('button', { class: 'btn primary', onclick: () => { ui.story = null; render(true); }, text: 'เสร็จแล้ว' })))
+    : h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('span', { class: 'pill butter', text: `รอบ ${r + 1}/3 · พูดให้ครบใน ${target} วินาที` }), h('label', { class: 'small row', style: 'gap:6px' }, h('input', { type: 'checkbox', checked: U.hide ? true : null, onchange: e => { U.hide = e.target.checked; render(); } }), 'ซ่อนบท')),
+      h('p', { class: 'small muted', text: r === 0 ? 'เล่าเรื่องเดิมให้ครบ ไม่ต้องเหมือนบททุกคำ' : 'เรื่องเดิม แต่เวลาน้อยลง พูดให้ลื่นขึ้น ไม่หยุดแปลในหัว' }),
+      h('div', { class: 'num', id: 'stClock', style: `font-size:44px;font-weight:700;text-align:center;color:var(--${live > target ? 'pink' : 'lav'}-d)`, text: fmt(Math.max(0, target - live)) }),
+      h('div', { class: 'row', style: 'justify-content:center' },
+        h('button', { class: U.running ? 'btn pink' : 'btn primary', onclick: () => storyRound(tp), text: U.running ? 'พูดจบรอบนี้' : `เริ่มรอบ ${r + 1}` }),
+        SR ? h('label', { class: 'small row', style: 'gap:6px' }, h('input', { type: 'checkbox', checked: U.useMic ? true : null, onchange: e => { U.useMic = e.target.checked; } }), 'ใช้ไมค์นับคำ') : null),
+      U.lastWords ? h('div', { class: 'small muted num', style: 'text-align:center', text: `รอบที่แล้ว ${U.lastSecs} วิ · ${U.lastWords} คำ · ≈ ${Math.round(U.lastWords / (U.lastSecs / 60))} คำ/นาที` }) : null,
+      h('textarea', { id: 'st-said', rows: 2, hidden: !U.useMic ? true : null, 'aria-label': 'สิ่งที่พูด (จากไมค์)' }));
+  return h('section', {}, back, h('div', { class: 'card' }, head, script, phrases,
+    h('div', { class: 'row' }, h('button', { class: 'btn ghost sm', onclick: () => { U.step = 'draft'; U.draft = s.draft || text; render(); }, text: 'แก้ไขเรื่อง' }), s.tip_th ? h('span', { class: 'small muted', text: 'เคล็ดลับ: ' + s.tip_th }) : null)), timerCard);
+}
+let storyTimer = null;
+function storyRound(tp) {
+  const U = ui.story;
+  if (!U.running) {
+    U.running = true; U.start = Date.now(); clearInterval(storyTimer);
+    storyTimer = setInterval(() => { const el = $('#stClock'); if (!el) return; const left = ROUNDS[Math.min(U.round, 2)] - Math.floor((Date.now() - U.start) / 1000); el.textContent = (left < 0 ? '+' : '') + fmt(Math.abs(left)); el.style.color = left < 0 ? 'var(--pink-d)' : 'var(--lav-d)'; }, 250);
+    if (U.useMic && SR) { const b = $('#st-said'); if (b) b.value = ''; toggleMic(() => $('#st-said')); }
+    render(); return;
+  }
+  clearInterval(storyTimer); if (micState) toggleMic();
+  const secs = Math.max(1, Math.round((Date.now() - U.start) / 1000)); const said = ($('#st-said') || {}).value || '';
+  const w = said.trim() ? words(said) : null;
+  U.running = false; U.lastSecs = secs; U.lastWords = w; U.round++;
+  const s = storyDoc(tp.id) || {};
+  put('meta', 'story-' + tp.id, { ...s, practices: [...(s.practices || []).slice(-60), { date: today(), round: U.round, secs, words: w, hidden: !!U.hide }] });
+  if (U.round >= 3) confetti(90);
+  render();
+}
+async function polishStory(tp) {
+  const U = ui.story; const d = ($('#st-draft') || {}).value || ''; if (!d.trim()) { U.err = 'เขียนร่างก่อนนะ'; render(); return; }
+  U.busy = true; U.err = ''; render();
+  try {
+    const r = await aiPolish(tp, d.trim()); const s = storyDoc(tp.id) || {};
+    put('meta', 'story-' + tp.id, { ...s, draft: d, polished: String(r.polished || d), polished_th: String(r.polished_th || ''), key_phrases: Array.isArray(r.key_phrases) ? r.key_phrases.slice(0, 5).map(p => ({ en: String(p.en || ''), th: String(p.th || '') })) : [], tip_th: String(r.tip_th || ''), created: s.created || Date.now() });
+    U.step = 'practice'; U.round = 0;
+  } catch (e) { U.err = aiErr(e) || 'ขัดเกลาไม่สำเร็จ'; }
+  U.busy = false; render(true);
+}
+
+// ---------- class prep: before class rehearse, after class capture ----------
+function classPrepCard() {
+  const pick = STORY_TOPICS.map(tp => ({ tp, s: storyDoc(tp.id) })).filter(x => x.s && x.s.polished && !storyMastered(x.s))
+    .sort((a, b) => storyPracticeDays(a.s) - storyPracticeDays(b.s))[0];
+  const C = ui.cls || (ui.cls = { en: '', th: '' });
+  return h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('h3', { text: 'คลาสกับครู' }), h('span', { class: 'pill sky', text: 'จ.–ศ. 08:15' })),
+    h('div', { class: 'tip' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'qt', text: 'ก่อนคลาส: ซ้อม 3 นาที' }), h('div', { class: 'small muted', text: pick ? `ซ้อม "${pick.tp.th}" แล้วเล่าให้ครูฟังในคลาส` : 'เริ่มเรื่องเล่าเรื่องแรกด้านล่าง แล้วเอาไปเล่าให้ครูฟัง' })),
+      pick ? h('button', { class: 'btn sm primary', onclick: () => { ui.story = { id: pick.tp.id, step: 'practice', round: 0, hide: false }; render(true); }, text: 'ซ้อมเลย' }) : null),
+    h('div', { class: 'qt', style: 'margin-top:4px', text: 'หลังคลาส: จดประโยคใหม่จากครู' }),
+    h('div', { class: 'grid2' }, h('input', { type: 'text', placeholder: 'ภาษาอังกฤษ', 'aria-label': 'ประโยคภาษาอังกฤษจากครู', value: C.en, oninput: e => { C.en = e.target.value; } }), h('input', { type: 'text', placeholder: 'ความหมายภาษาไทย', 'aria-label': 'ความหมาย', value: C.th, oninput: e => { C.th = e.target.value; } })),
+    h('button', { class: 'btn sm', style: 'align-self:flex-start', onclick: () => { if (!C.en.trim()) return; put('phrases', uid(), { th: C.th.trim() || C.en.trim(), en: C.en.trim(), alt: '', note: 'จากคลาสครู ' + today(), box: 0, due: addDays(today(), 1), created: Date.now() }, true); note2('เพิ่มเข้าการ์ดทบทวนแล้ว'); ui.cls = { en: '', th: '' }; render(); }, text: 'เก็บเข้าการ์ด' }));
+}
+
+// ---------- monthly speaking benchmark ----------
+const BENCH_Q = 'Tell me about yourself and your job.';
+const benchThisMonth = () => sortedCps().some(c => (c.date || '').slice(0, 7) === today().slice(0, 7));
+function benchCard() {
+  if (!loaded || !placement() || benchThisMonth()) return null;
+  return h('div', { class: 'card', style: 'border-color:var(--sky-d)' }, h('div', { class: 'row between' }, h('h3', { text: 'วัดผลประจำเดือน' }), h('span', { class: 'pill sky', text: '1 นาที' })),
+    h('p', { class: 'small muted', text: `ตอบคำถามเดิมทุกเดือน "${BENCH_Q}" แอปจะเก็บความยาว ความเร็ว และคำตอบไว้เทียบกับเดือนก่อน นี่คือหลักฐานว่าคุณพูดเก่งขึ้นจริง` }),
+    h('button', { class: 'btn primary', style: 'align-self:flex-start', onclick: () => { ui.speakMode = 'answer'; ui.story = null; Object.assign(ui.sp, { world: UNITS[currentUnit()].w, boss: false, q: BENCH_Q, res: null, err: '', saved: false, added: false, ans: '', secs: 0 }); go('speak'); }, text: 'วัดผลเดือนนี้' }));
+}
+function benchCompare() {
+  const cps = sortedCps().filter(c => c.answer); if (cps.length < 1) return null;
+  const a = cps[0], b = cps[cps.length - 1];
+  const col = (c, label) => h('div', {}, h('div', { class: 'small muted', text: `${label} · ${c.date}` }), h('div', { class: 'num', text: `${c.seconds} วิ · ${c.words} คำ · ${c.wpm} คำ/นาที` }), h('div', { class: 'small', style: 'margin-top:4px', text: c.answer }));
+  return h('div', { class: 'card' }, h('h3', { text: cps.length > 1 ? 'คำตอบครั้งแรก vs ล่าสุด' : 'คำตอบวัดผลครั้งแรก' }), cps.length > 1 ? h('div', { class: 'grid2' }, col(a, 'ครั้งแรก'), col(b, 'ล่าสุด')) : col(a, 'ครั้งแรก'),
+    cps.length > 1 ? h('p', { class: 'small', style: 'color:var(--mint-d);font-weight:600', text: `พูดเร็วขึ้น ${b.wpm - a.wpm >= 0 ? '+' : ''}${b.wpm - a.wpm} คำ/นาที · ยาวขึ้น ${b.words - a.words >= 0 ? '+' : ''}${b.words - a.words} คำ` }) : null);
+}
 function vSpeak() {
-  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'โหมดฝึกพูด' }, [['chat', 'คุยกับเจลลี่บู'], ['answer', 'ตอบคำถาม + บอส']].map(([k, l]) => h('button', { 'aria-pressed': String(ui.speakMode === k), onclick: () => { ui.speakMode = k; render(); }, text: l })));
-  return h('section', {}, seg, ...(ui.speakMode === 'chat' ? vChat() : vAnswer()));
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'โหมดฝึกพูด' }, [['story', 'เรื่องเล่าของฉัน'], ['chat', 'คุยกับเจลลี่บู'], ['answer', 'ตอบคำถาม + บอส']].map(([k, l]) => h('button', { 'aria-pressed': String(ui.speakMode === k), onclick: () => { ui.speakMode = k; render(); }, text: l })));
+  if (ui.speakMode === 'story' && ui.story) return vStory();
+  return h('section', {}, seg, ...(ui.speakMode === 'story' ? vStoryList() : ui.speakMode === 'chat' ? vChat() : vAnswer()));
 }
 function vChat() {
   if (!ui.chat.unit) startChat(UNITS[currentUnit()]);
@@ -1795,12 +1962,13 @@ function vChat() {
     h('button', { class: 'btn sm', onclick: () => { const open = UNITS.filter((x, i) => unitOpen(i)); const n = open[(open.indexOf(u) + 1) % open.length]; ui.chat.unit = null; startChat(n); render(); }, text: 'เปลี่ยนสถานการณ์' })),
     h('p', { class: 'small muted', text: 'พิมพ์สิ่งที่คุณพูดออกเสียง เจลลี่บูจะตอบ แก้ประโยคให้ถูก และใบ้ว่าควรพูดอะไรต่อ ลองใช้โครงสร้าง: ' + u.f }));
   const msgs = h('div', { class: 'chat', id: 'chatbox' }, C.view.map((m, k) => m.role === 'fix'
-    ? h('div', { class: 'fix' }, h('div', {}, h('b', { text: 'พูดแบบนี้จะดีกว่า: ' }), m.better), m.why ? h('div', { class: 'small', text: m.why }) : null)
+    ? h('div', { class: 'fix' }, h('div', {}, h('b', { text: 'พูดแบบนี้จะดีกว่า: ' }), m.better), m.why ? h('div', { class: 'small', text: m.why }) : null, m.card ? h('div', { class: 'small muted', text: '+ เพิ่มเข้าการ์ดทบทวนแล้ว' }) : null)
     : h('div', { class: 'msg ' + m.role }, h('div', { class: 'row', style: 'gap:6px;flex-wrap:nowrap;align-items:flex-start' }, h('div', { style: 'min-width:0;flex:1', text: m.en }), m.role === 'ai' ? sayBtn(m.en, 'sm') : null), m.th ? h('div', { class: 'th', text: m.th }) : null, m.hint && k === C.view.length - 1 ? h('div', { class: 'hint', text: 'ใบ้: ' + m.hint }) : null)),
     C.busy ? h('div', { class: 'msg ai' }, h('span', { class: 'spin', style: 'color:var(--lav-d);border-color:var(--lav)' }), ' เจลลี่บูกำลังพิมพ์…') : null);
   const comp = aiOff ? aiNeeded() : h('div', { class: 'composer' }, h('textarea', { id: 'chatIn', rows: 2, placeholder: 'พูดออกเสียงก่อน แล้วพิมพ์ตามที่พูด…', 'aria-label': 'ข้อความของคุณ', oninput: e => { C.draft = e.target.value; }, onkeydown: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } } }, C.draft || ''), h('button', { class: 'btn primary', disabled: C.busy ? true : null, onclick: sendChat, text: 'ส่ง' }));
+  if (!aiOff && SR) comp.append(micBtn(() => $('#chatIn')));
   const talkToday = questCounts().record;
-  return [pick, h('div', { class: 'card' }, msgs, C.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: C.err }) : null, comp, h('div', { class: 'small muted', text: `วันนี้คุยแล้ว ${Math.min(talkToday, 99)} ประโยค · ภารกิจ 3 ประโยค` }))];
+  return [pick, h('div', { class: 'card' }, msgs, C.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: C.err }) : null, comp, h('div', { class: 'small muted', text: `วันนี้พูดรวม ${Math.min(talkToday, 999)} วินาที · ภารกิจ 60 วินาที (คุย 1 ประโยค ≈ 15 วิ)` }))];
 }
 function vAnswer() {
   const sp = ui.sp; if (!sp.q) setSpeak(UNITS[currentUnit()].w, false);
@@ -1813,6 +1981,7 @@ function vAnswer() {
       : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: sp.q }), sayBtn(sp.q)),
     h('div', { class: 'ringwrap' }, ring, h('div', { style: 'display:flex;flex-direction:column;gap:8px;min-width:0;flex:1' }, h('button', { class: sp.running ? 'btn pink' : 'btn primary', onclick: toggleTimer, text: sp.running ? 'หยุด' : (sp.secs ? 'เริ่มพูดใหม่' : 'เริ่มพูด!') }), h('div', { class: 'small muted', text: sp.boss ? 'วงแหวนเต็ม = ถึงเวลาขั้นต่ำของบอส' : 'ตอบ → because → For example → So' }))),
     h('label', { class: 'f' }, 'พิมพ์สิ่งที่คุณพูด (ผิดได้เต็มที่)', h('textarea', { id: 'sp-ans', rows: 4, oninput: e => { sp.ans = e.target.value; const m = $('#sp-meta'); if (m) m.textContent = metaText(); } }, sp.ans)),
+    SR ? h('div', { class: 'row' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: 'พูดแล้วแอปพิมพ์ให้ + จับเวลาเอง' })) : null,
     h('div', { class: 'small muted num', id: 'sp-meta', text: metaText() }),
     !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: sp.busy || sp.running ? true : null, onclick: () => { sp.ans = $('#sp-ans').value; doCheck(); } }, sp.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังตรวจ…'] : 'ให้ตรวจคำตอบ'), sp.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: sp.err }) : null) : aiNeeded());
   const out = [card];
@@ -1832,7 +2001,7 @@ function vAnswer() {
     const wpm = Math.round(w / (sp.secs / 60));
     out.push(h('div', { class: 'card' }, h('h3', { text: 'บันทึกเป็นเช็กพอยต์ +30 XP' }), h('p', { class: 'small muted', text: 'ทำเดือนละครั้งด้วยคำถามเดิม "Tell me about yourself and your job." โลก B1 และ B2 ใช้คำ/นาทีจากตรงนี้ปลดล็อก' }),
       h('div', { class: 'grid2' }, h('div', {}, h('div', { class: 'small muted', text: 'ครั้งนี้' }), h('div', { class: 'num', text: `${sp.secs} วิ · ${w} คำ · ${wpm} คำ/นาที` })), h('label', { class: 'f' }, 'เงียบเกิน 3 วิกี่ครั้ง', h('input', { type: 'number', min: 0, id: 'sp-pause', value: sp.pauses, oninput: e => { sp.pauses = e.target.value; } }))),
-      h('button', { class: 'btn', style: 'align-self:flex-start', disabled: sp.saved ? true : null, onclick: () => { put('checkpoints', uid(), { date: today(), seconds: sp.secs, words: w, wpm, pauses: sp.pauses === '' ? null : Number(sp.pauses), q: sp.q, created: Date.now() }); sp.saved = true; render(); }, text: sp.saved ? 'บันทึกแล้ว' : 'บันทึกเช็กพอยต์' })));
+      h('button', { class: 'btn', style: 'align-self:flex-start', disabled: sp.saved ? true : null, onclick: () => { put('checkpoints', uid(), { date: today(), seconds: sp.secs, words: w, wpm, answer: sp.ans.trim().slice(0, 1200), pauses: sp.pauses === '' ? null : Number(sp.pauses), q: sp.q, created: Date.now() }); sp.saved = true; render(); }, text: sp.saved ? 'บันทึกแล้ว' : 'บันทึกเช็กพอยต์' })));
   }
   return out;
 }
@@ -1911,7 +2080,7 @@ function vStats() {
     ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
     ['ไม่เห็นพัฒนาการ ท้อ', 'แถบ 3,000 คำ เลเวล สติกเกอร์ และกราฟคำต่อนาที'], ['เวลาน้อย', 'ภารกิจ 12 นาที โหมดมินิ 2 นาที และปรับความยากได้ทุกแพ็ก'],
   ].map(([a, b]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b })))))));
-  return h('section', {}, big, insightCard(true), tiles, chart, albumCard(), badges, heat, table, add, why);
+  return h('section', {}, big, insightCard(true), benchCompare(), tiles, chart, albumCard(), badges, heat, table, add, why);
 }
 
 if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
