@@ -498,6 +498,10 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 :root[data-theme="dark"] .theme-btn .sun{transform:translateY(-130%);opacity:0}
 :root[data-theme="dark"] .theme-btn .moon{transform:none;opacity:1}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme-btn .sun{transform:translateY(-130%);opacity:0}:root:not([data-theme="light"]) .theme-btn .moon{transform:none;opacity:1}}
+.verb-hero{text-align:center;padding:6px 0}.verb-hero .en{font-family:var(--display);font-size:34px;font-weight:700;color:var(--lav-d)}.verb-hero .th{font-size:17px;font-weight:600}
+.forms{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.form{border:2px solid var(--edge);border-radius:14px;padding:6px 4px;text-align:center;background:var(--bg2);min-width:0;overflow-wrap:anywhere}
+tr.known td{background:var(--mint)}
+@media (max-width:380px){.forms{grid-template-columns:repeat(2,1fr)}}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -877,7 +881,7 @@ function aiShadow(u) {
   return sample.json(`${ME}\n\nWrite a short natural spoken dialogue for SHADOWING practice. Unit "${u.t}" (CEFR ${u.lv}). Situation: ${u.scene}. Use the grammar focus "${u.f}"${ws.length ? ' and naturally include some of these words: ' + ws.join(', ') : ''}.${diffNote()}\nSpeaker B is Tanp. 8 lines alternating A and B, starting with A. Each line at most ${u.w < 2 ? 12 : 20} words, the way people really talk (contractions are good).\nReply with ONLY JSON: {"title": "short English title", "lines": [{"who": "A" or "B", "en": "...", "th": "Thai translation"}]}`, { cache: false });
 }
 function aiChat(u, turns) {
-  const ws = unitWords(u.id).map(w => w.w).slice(-40);
+  const ws = unitWords(u.id).map(w => w.w).slice(-40).concat(allWords().filter(w => w.unit === 'verbs').slice(-12).map(w => w.w));
   const rules = `${ME}\n\nYou are Jelly Boo, a tiny cheerful jelly ghost and a friendly English conversation partner. Role-play this situation with her: ${u.scene}. Her level: CEFR ${u.lv}. Unit grammar focus: ${u.f}. Words from this unit she is practising: ${ws.join(', ') || '(none yet)'}.\nAfter EACH of her messages reply with ONLY JSON:\n{"fix": null if her last message is correct and natural, otherwise {"better": "her message corrected and made natural, keeping her meaning", "why_th": "short Thai explanation of the main fix"}, "reply": "your next line in simple natural English at her level (1-3 short sentences), always ending with a question that keeps the conversation going", "reply_th": "Thai translation of your reply", "hint_th": "a short Thai hint of what she could answer next, with 1-2 useful English words", "used": ["unit words she used correctly"]}`;
   return sample.json([{ role: 'user', content: rules }, { role: 'assistant', content: u.open }, ...turns], { cache: false });
 }
@@ -1490,7 +1494,195 @@ function vHome() {
 
 // ---------- COURSE ----------
 const ringSvg = (p, color) => { const e = document.createElement('div'); e.innerHTML = `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="var(--bg2)" stroke-width="7"/><circle cx="30" cy="30" r="24" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="151" stroke-dashoffset="${151 * (1 - p)}"/></svg>`; return e.firstChild; };
+// ---------- Power verbs: 100 high-frequency verbs, 3 forms, chunk, example; tense drill works offline ----------
+// [base, past, past participle, Thai, chunk (verb + what usually follows), example]
+const VERB_GROUPS = [
+  ['ชีวิตประจำวัน', 'peach', [
+    ['have', 'had', 'had', 'มี / กิน', 'have breakfast', 'I have breakfast at seven.'],
+    ['get', 'got', 'got', 'ได้รับ / ไปถึง', 'get to work', 'I get to work at eight.'],
+    ['go', 'went', 'gone', 'ไป', 'go to work', 'I go to work by car.'],
+    ['come', 'came', 'come', 'มา / กลับมา', 'come home late', 'I came home late last night.'],
+    ['wake', 'woke', 'woken', 'ตื่น', 'wake up early', 'I wake up early on weekdays.'],
+    ['sleep', 'slept', 'slept', 'นอนหลับ', 'sleep early', 'I want to sleep early tonight.'],
+    ['eat', 'ate', 'eaten', 'กิน', 'eat lunch', 'We eat lunch at noon.'],
+    ['drink', 'drank', 'drunk', 'ดื่ม', 'drink coffee', 'I drink coffee every morning.'],
+    ['cook', 'cooked', 'cooked', 'ทำอาหาร', 'cook dinner', 'I cooked dinner for my family.'],
+    ['buy', 'bought', 'bought', 'ซื้อ', 'buy groceries', 'I buy groceries on Sunday.'],
+    ['pay', 'paid', 'paid', 'จ่าย', 'pay the bill', 'I paid the bill online.'],
+    ['wear', 'wore', 'worn', 'สวมใส่', 'wear a uniform', 'We wear a uniform at the plant.'],
+    ['watch', 'watched', 'watched', 'ดู', 'watch a movie', 'I watched a movie last weekend.'],
+    ['listen', 'listened', 'listened', 'ฟัง', 'listen to music', 'I listen to music in the car.'],
+    ['read', 'read', 'read', 'อ่าน', 'read the news', 'I read the news on my phone.'],
+    ['drive', 'drove', 'driven', 'ขับรถ', 'drive to work', 'I drive to work every day.'],
+    ['leave', 'left', 'left', 'ออกจาก / ทิ้งไว้', 'leave the office', 'I leave the office at five.'],
+    ['stay', 'stayed', 'stayed', 'อยู่ / พัก', 'stay at home', 'I stayed at home on Sunday.'],
+    ['live', 'lived', 'lived', 'อาศัยอยู่', 'live in Bangkok', 'I live in Bangkok.'],
+    ['spend', 'spent', 'spent', 'ใช้ (เวลา/เงิน)', 'spend time with my family', 'I spend time with my family on weekends.'],
+    ['relax', 'relaxed', 'relaxed', 'ผ่อนคลาย', 'relax at home', 'I relax at home after work.'],
+    ['clean', 'cleaned', 'cleaned', 'ทำความสะอาด', 'clean the house', 'I clean the house on Saturday.'],
+    ['bring', 'brought', 'brought', 'นำมา / พามา', 'bring my laptop', 'I always bring my laptop to meetings.'],
+  ]],
+  ['งาน', 'lav', [
+    ['work', 'worked', 'worked', 'ทำงาน', 'work on a project', 'I am working on a new project.'],
+    ['check', 'checked', 'checked', 'ตรวจสอบ', 'check the schedule', 'I check the schedule every morning.'],
+    ['plan', 'planned', 'planned', 'วางแผน', 'plan the maintenance work', 'I plan the maintenance work for next week.'],
+    ['fix', 'fixed', 'fixed', 'ซ่อม / แก้', 'fix the problem', 'The team fixed the problem quickly.'],
+    ['repair', 'repaired', 'repaired', 'ซ่อมแซม', 'repair the machine', 'They repaired the machine yesterday.'],
+    ['solve', 'solved', 'solved', 'แก้ปัญหา', 'solve the problem', 'We solved the problem together.'],
+    ['finish', 'finished', 'finished', 'ทำเสร็จ', 'finish the report', 'I finished the report on time.'],
+    ['start', 'started', 'started', 'เริ่ม', 'start the meeting', 'Let\'s start the meeting.'],
+    ['send', 'sent', 'sent', 'ส่ง', 'send an email', 'I sent an email to the supplier.'],
+    ['receive', 'received', 'received', 'ได้รับ', 'receive a request', 'We received a request from operations.'],
+    ['prepare', 'prepared', 'prepared', 'เตรียม', 'prepare the documents', 'I prepared the documents for the audit.'],
+    ['manage', 'managed', 'managed', 'จัดการ / ดูแล', 'manage the backlog', 'I manage the work order backlog.'],
+    ['handle', 'handled', 'handled', 'รับมือ / จัดการ', 'handle the job', 'She can handle the job well.'],
+    ['follow', 'followed', 'followed', 'ทำตาม / ติดตาม', 'follow the plan', 'Please follow the safety plan.'],
+    ['update', 'updated', 'updated', 'อัปเดต', 'update the schedule', 'I updated the schedule this morning.'],
+    ['report', 'reported', 'reported', 'รายงาน', 'report the problem', 'He reported the problem to me.'],
+    ['review', 'reviewed', 'reviewed', 'ทบทวน / ตรวจทาน', 'review the data', 'I review the data every Friday.'],
+    ['improve', 'improved', 'improved', 'ปรับปรุง / พัฒนา', 'improve the process', 'We want to improve the process.'],
+    ['reduce', 'reduced', 'reduced', 'ลด', 'reduce the cost', 'The new plan reduced the cost.'],
+    ['increase', 'increased', 'increased', 'เพิ่ม', 'increase safety', 'This change will increase safety.'],
+    ['order', 'ordered', 'ordered', 'สั่ง (ซื้อ)', 'order spare parts', 'I ordered spare parts last week.'],
+    ['replace', 'replaced', 'replaced', 'เปลี่ยน (ของใหม่)', 'replace the part', 'We need to replace the broken part.'],
+    ['test', 'tested', 'tested', 'ทดสอบ', 'test the system', 'They tested the system after the repair.'],
+    ['schedule', 'scheduled', 'scheduled', 'นัด / กำหนดเวลา', 'schedule a meeting', 'Can we schedule a meeting for Monday?'],
+    ['assign', 'assigned', 'assigned', 'มอบหมาย', 'assign the task', 'I assign tasks to each team.'],
+    ['complete', 'completed', 'completed', 'ทำให้เสร็จสมบูรณ์', 'complete the work order', 'The team completed the work order.'],
+  ]],
+  ['สื่อสาร', 'mint', [
+    ['say', 'said', 'said', 'พูด (ว่า)', 'say hello', 'She said hello to everyone.'],
+    ['tell', 'told', 'told', 'บอก', 'tell my manager', 'I told my manager about the delay.'],
+    ['ask', 'asked', 'asked', 'ถาม / ขอ', 'ask a question', 'Can I ask a question?'],
+    ['answer', 'answered', 'answered', 'ตอบ', 'answer the phone', 'I answered the phone quickly.'],
+    ['explain', 'explained', 'explained', 'อธิบาย', 'explain the problem', 'Let me explain the problem.'],
+    ['talk', 'talked', 'talked', 'คุย', 'talk to my team', 'I talk to my team every morning.'],
+    ['speak', 'spoke', 'spoken', 'พูด (ภาษา)', 'speak English', 'I want to speak English well.'],
+    ['call', 'called', 'called', 'โทร / เรียก', 'call the supplier', 'I called the supplier this afternoon.'],
+    ['meet', 'met', 'met', 'พบ / เจอ', 'meet my manager', 'I meet my manager on Mondays.'],
+    ['agree', 'agreed', 'agreed', 'เห็นด้วย', 'agree with the plan', 'Everyone agreed with the plan.'],
+    ['discuss', 'discussed', 'discussed', 'หารือ / พูดคุยเรื่อง', 'discuss the plan', 'We discussed the plan in the meeting.'],
+    ['share', 'shared', 'shared', 'แบ่งปัน / แชร์', 'share my idea', 'I shared my idea with the team.'],
+    ['help', 'helped', 'helped', 'ช่วย', 'help my team', 'I help my team when they are busy.'],
+    ['show', 'showed', 'shown', 'แสดง / ให้ดู', 'show the data', 'Let me show the data.'],
+    ['suggest', 'suggested', 'suggested', 'เสนอแนะ', 'suggest a solution', 'I suggested a new solution.'],
+    ['give', 'gave', 'given', 'ให้', 'give feedback', 'My teacher gives good feedback.'],
+  ]],
+  ['ความคิด ความรู้สึก', 'pink', [
+    ['think', 'thought', 'thought', 'คิด', 'think about the future', 'I often think about the future.'],
+    ['know', 'knew', 'known', 'รู้', 'know the answer', 'I know the answer.'],
+    ['understand', 'understood', 'understood', 'เข้าใจ', 'understand the question', 'I understand the question now.'],
+    ['remember', 'remembered', 'remembered', 'จำได้', 'remember new words', 'It is hard to remember new words.'],
+    ['forget', 'forgot', 'forgotten', 'ลืม', 'forget the password', 'I forgot the password again.'],
+    ['learn', 'learned', 'learned', 'เรียนรู้', 'learn English', 'I learn English every evening.'],
+    ['feel', 'felt', 'felt', 'รู้สึก', 'feel tired', 'I felt tired after work.'],
+    ['want', 'wanted', 'wanted', 'ต้องการ / อยาก', 'want to work abroad', 'I want to work abroad.'],
+    ['need', 'needed', 'needed', 'จำเป็นต้อง', 'need more time', 'We need more time for this job.'],
+    ['like', 'liked', 'liked', 'ชอบ', 'like my job', 'I like my job because I solve problems.'],
+    ['hope', 'hoped', 'hoped', 'หวัง', 'hope to move to Canada', 'I hope to move to Canada one day.'],
+    ['decide', 'decided', 'decided', 'ตัดสินใจ', 'decide to study', 'I decided to study English seriously.'],
+    ['try', 'tried', 'tried', 'พยายาม / ลอง', 'try a new way', 'Let\'s try a new way.'],
+    ['worry', 'worried', 'worried', 'กังวล', 'worry about the deadline', 'Don\'t worry about the deadline.'],
+    ['choose', 'chose', 'chosen', 'เลือก', 'choose a topic', 'I chose an easy topic.'],
+    ['enjoy', 'enjoyed', 'enjoyed', 'สนุกกับ / ชอบทำ', 'enjoy my weekend', 'I enjoyed my weekend.'],
+    ['miss', 'missed', 'missed', 'คิดถึง / พลาด', 'miss the bus', 'I missed the bus this morning.'],
+  ]],
+  ['เปลี่ยนแปลง เติบโต', 'sky', [
+    ['move', 'moved', 'moved', 'ย้าย', 'move to another country', 'I want to move to another country.'],
+    ['travel', 'traveled', 'traveled', 'เดินทาง', 'travel abroad', 'I traveled abroad last year.'],
+    ['change', 'changed', 'changed', 'เปลี่ยน', 'change my job', 'I might change my job next year.'],
+    ['become', 'became', 'become', 'กลายเป็น', 'become an engineer', 'I became an engineer in 2022.'],
+    ['grow', 'grew', 'grown', 'เติบโต', 'grow my career', 'I want to grow my career.'],
+    ['keep', 'kept', 'kept', 'ทำต่อไป / เก็บไว้', 'keep practicing', 'Keep practicing every day.'],
+    ['find', 'found', 'found', 'หาเจอ / พบว่า', 'find a new job', 'I found a good job.'],
+    ['lose', 'lost', 'lost', 'ทำหาย / แพ้', 'lose my keys', 'I lost my keys yesterday.'],
+    ['look', 'looked', 'looked', 'มอง / ดูเหมือน', 'look for a job', 'I am looking for a new job.'],
+    ['put', 'put', 'put', 'วาง / ใส่', 'put it on the desk', 'Please put it on the desk.'],
+    ['use', 'used', 'used', 'ใช้', 'use the system', 'We use the system to track work orders.'],
+    ['build', 'built', 'built', 'สร้าง', 'build my skills', 'I build my skills step by step.'],
+    ['win', 'won', 'won', 'ชนะ / ได้รับ', 'win the competition', 'Our team won the competition.'],
+    ['run', 'ran', 'run', 'วิ่ง / ดำเนินการ', 'run the plant', 'We run the plant 24 hours a day.'],
+    ['pick', 'picked', 'picked', 'หยิบ / รับ (คน)', 'pick up my friend', 'I picked up my friend at the airport.'],
+    ['set', 'set', 'set', 'ตั้ง', 'set a goal', 'I set a goal for this month.'],
+    ['turn', 'turned', 'turned', 'เปิด/ปิด (สวิตช์) / หัน', 'turn off the machine', 'Please turn off the machine.'],
+    ['join', 'joined', 'joined', 'เข้าร่วม', 'join the company', 'I joined the company in 2022.'],
+  ]],
+];
+const VERBS = VERB_GROUPS.flatMap(([g, color, list]) => list.map(([b, p, pp, th, chunk, ex]) => ({ b, p, pp, th, chunk, ex, g, color })));
+const verbId = v => 'w_v-' + v.b;
+const verbKnown = v => S.words.has(verbId(v));
+const verbS3 = b => b === 'have' ? 'has' : /(s|sh|ch|x|z|o)$/.test(b) ? b + 'es' : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + 'ies' : b + 's';
+const verbIng = b => b === 'lie' ? 'lying' : ['plan', 'run', 'put', 'set', 'win', 'get', 'stop', 'begin', 'sit', 'swim'].includes(b) ? b + b.slice(-1) + 'ing' : /[^e]e$/.test(b) ? b.slice(0, -1) + 'ing' : b + 'ing';
+const verbRest = v => v.chunk.split(' ').slice(1).join(' ');
+function verbQuestion(v) {
+  const rest = verbRest(v); const kinds = [
+    { cue: 'เมื่อวาน (อดีต)', s: `Yesterday I ___ ${rest}.`, a: v.p },
+    { cue: 'ทุกวัน (เขา/เธอ)', s: `She usually ___ ${rest}.`, a: verbS3(v.b) },
+    { cue: 'เคยทำแล้ว (have + V3)', s: `I have already ___ ${rest}.`, a: v.pp },
+    { cue: 'อนาคต (will + V1)', s: `Tomorrow I will ___ ${rest}.`, a: v.b },
+    { cue: 'กำลังทำ (be + ing)', s: `Right now I'm ___ ${rest}.`, a: verbIng(v.b) },
+  ];
+  const k = kinds[Math.floor(Math.random() * kinds.length)];
+  const opts = shuffle([...new Set([v.b, v.p, v.pp, verbS3(v.b), verbIng(v.b)])]).slice(0, 4);
+  if (!opts.includes(k.a)) opts[0] = k.a;
+  return { v, ...k, opts: shuffle(opts) };
+}
+function verbCard() {
+  const n = VERBS.filter(verbKnown).length;
+  return h('div', { class: 'card verbs-cta' },
+    h('div', { class: 'row between' }, h('h3', { text: 'กริยาพลังสูง 100 คำ' }), h('span', { class: 'pill mint num', text: `${n}/${VERBS.length}` })),
+    h('p', { class: 'small muted', text: 'กริยาที่ใช้บ่อยที่สุดในชีวิตประจำวันและที่ทำงาน พร้อมรูป 3 ช่องและวลีที่ใช้คู่กัน รู้คำพวกนี้ก็พูดได้เกือบทุกเรื่อง' }),
+    h('div', { class: 'qbar' }, h('i', { style: `width:${n / VERBS.length * 100}%` })),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.verbs = { mode: 'learn', items: VERBS.filter(v => !verbKnown(v)).slice(0, 5), i: 0 }; render(true); }, disabled: n >= VERBS.length ? true : null, text: n ? 'เรียนอีก 5 คำ' : 'เริ่มเรียน 5 คำแรก' }),
+      h('button', { class: 'btn', onclick: () => startVerbDrill(), text: 'เกมผันกริยา' }),
+      h('button', { class: 'btn ghost sm', onclick: () => { ui.verbs = { mode: 'list' }; render(true); }, text: 'ดูทั้งหมด' })));
+}
+function startVerbDrill() {
+  const known = VERBS.filter(verbKnown); const pool = known.length >= 10 ? known : known.concat(VERBS.filter(v => !verbKnown(v)).slice(0, 10 - known.length));
+  ui.verbs = { mode: 'drill', qs: shuffle(pool).slice(0, 10).map(verbQuestion), i: 0, picked: null, right: 0 }; render(true);
+}
+function saveVerbs(items) {
+  const now = Date.now(); const t = today();
+  items.forEach((v, k) => { if (verbKnown(v)) return; put('words', verbId(v), { w: v.b, th: v.th, chunk: `${v.p} / ${v.pp} · ${v.chunk}`, ex: v.ex, exTh: '', unit: 'verbs', level: 'core', box: 0, due: addDays(t, 1), created: now + k, reviews: 0 }, true); });
+}
+function vVerbs() {
+  const V = ui.verbs; const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.verbs = null; render(true); }, text: '‹ กลับคอร์ส' });
+  if (V.mode === 'list') {
+    return h('section', {}, back, ...VERB_GROUPS.map(([g, color, list]) => h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: g }), h('span', { class: 'pill ' + color, text: `${list.filter(x => S.words.has('w_v-' + x[0])).length}/${list.length}` })),
+      h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'V1' }), h('th', { text: 'V2' }), h('th', { text: 'V3' }), h('th', { text: 'ความหมาย' }))),
+        h('tbody', {}, list.map(([b, p, pp, th]) => h('tr', { class: S.words.has('w_v-' + b) ? 'known' : '' }, h('td', {}, h('b', { text: b })), h('td', { text: p }), h('td', { text: pp }), h('td', { class: 'small', text: th })))))))));
+  }
+  if (V.mode === 'learn') {
+    const v = V.items[V.i];
+    if (!v) return h('section', {}, back, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('cheer'), h('h2', { text: 'เก็บกริยาเข้าการ์ดแล้ว!' }), h('p', { class: 'small muted', text: 'จะวนกลับมาให้ทบทวนพรุ่งนี้ ลองเล่นเกมผันกริยาต่อ แล้วใช้คำเหล่านี้ตอนคุยกับเจลลี่บู' }),
+      h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: () => startVerbDrill(), text: 'เล่นเกมผันกริยา' }), h('button', { class: 'btn', onclick: () => { ui.verbs = null; render(true); }, text: 'กลับคอร์ส' }))));
+    return h('section', {}, back, h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('span', { class: 'pill ' + v.color, text: v.g }), h('span', { class: 'small muted num', text: `${V.i + 1}/${V.items.length}` })),
+      h('div', { class: 'verb-hero' }, h('div', { class: 'row', style: 'justify-content:center;flex-wrap:nowrap' }, h('div', { class: 'en', text: v.b }), sayBtn(`${v.b}, ${v.p}, ${v.pp}`)), h('div', { class: 'th', text: v.th })),
+      h('div', { class: 'forms' }, [['V1 ปัจจุบัน', v.b], ['V2 อดีต', v.p], ['V3 เคย/ถูกทำ', v.pp], ['+ing', verbIng(v.b)]].map(([l, f]) => h('div', { class: 'form' }, h('div', { class: 'small muted', text: l }), h('b', { text: f })))),
+      h('div', { class: 'block nat' }, h('div', { class: 'row between', style: 'flex-wrap:nowrap' }, h('div', { class: 'lbl', text: 'ใช้คู่กับ' }), sayBtn(v.chunk, 'sm')), h('b', { text: v.chunk })),
+      h('div', { class: 'block' }, h('div', { class: 'row between', style: 'flex-wrap:nowrap' }, h('div', { class: 'lbl', text: 'ตัวอย่าง (ฟังแล้วพูดตาม)' }), sayBtn(v.ex, 'sm')), h('div', { text: v.ex })),
+      h('p', { class: 'small muted', text: 'ลองพูดประโยคของคุณเองด้วยคำนี้ 1 ประโยคออกเสียง ก่อนกดต่อไป' }),
+      h('button', { class: 'btn primary', onclick: () => { V.i++; if (V.i >= V.items.length) { saveVerbs(V.items); confetti(70); } render(true); if (V.items[V.i] && canTTS) say(V.items[V.i].b, ui.rate); }, text: V.i < V.items.length - 1 ? 'คำต่อไป' : 'เก็บทั้ง 5 คำเข้าการ์ด' })));
+  }
+  // drill
+  const q = V.qs[V.i];
+  if (!q) {
+    const stars = V.right >= 9 ? 3 : V.right >= 6 ? 2 : 1;
+    return h('section', {}, back, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot(stars === 3 ? 'cheer' : 'happy'), h('h2', { text: `ถูก ${V.right}/${V.qs.length}` }),
+      h('p', { class: 'small muted', text: stars === 3 ? 'เปลี่ยน tense ได้แม่นมาก!' : 'จุดที่พลาดบ่อย: อดีตใช้ V2 · have/has ตามด้วย V3 · will ตามด้วย V1 · he/she ทำเป็นประจำ เติม s' }),
+      h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: () => startVerbDrill(), text: 'เล่นอีกรอบ' }), h('button', { class: 'btn', onclick: () => { ui.verbs = null; render(true); }, text: 'กลับคอร์ส' }))));
+  }
+  const ok = V.picked === q.a;
+  return h('section', {}, back, h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('span', { class: 'pill butter', text: q.cue }), h('span', { class: 'small muted num', text: `${V.i + 1}/${V.qs.length}` })),
+    h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(V.i + 1) / V.qs.length * 100}%` }))),
+    h('div', { class: 'wcard' }, h('div', { class: 'small muted', text: `${q.v.b} = ${q.v.th}` }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: V.picked == null ? q.s : q.s.replace('___', q.a) })),
+    h('div', { class: 'opts' }, q.opts.map(o => h('button', { class: 'opt' + (V.picked == null ? '' : o === q.a ? ' ok' : V.picked === o ? ' no' : ''), disabled: V.picked != null ? true : null, onclick: () => { V.picked = o; if (o === q.a) { V.right++; } render(); if (canTTS) say(q.s.replace('___', q.a), ui.rate); }, text: o }))),
+    V.picked != null ? h('div', { class: 'row between' }, h('b', { style: `color:var(--${ok ? 'mint' : 'pink'}-d)`, text: ok ? 'ถูกต้อง! พูดประโยคนี้ออกเสียง 1 รอบ' : `คำตอบ: ${q.a}` }), h('button', { class: 'btn primary', onclick: () => { V.i++; V.picked = null; render(true); }, text: 'ต่อไป' })) : null));
+}
 function vCourse() {
+  if (ui.verbs) return vVerbs();
   if (ui.sub === 'learn') return vLearn();
   if (ui.sub === 'shadow') return vShadow();
   if (ui.sub === 'unit' && ui.unit) return vUnit();
@@ -1515,7 +1707,7 @@ function vCourse() {
   }));
   const boss = h('div', { class: 'boss' }, ico('boss'), h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'small', text: `บอสประจำโลก ${W.lv} · พูดอย่างน้อย ${W.secs} วินาที และได้ 2 ดาว` }), h('b', { text: W.boss })),
     open ? h('button', { class: 'btn pink sm', onclick: () => { setSpeak(ui.world, true); ui.speakMode = 'answer'; go('speak'); }, text: bossCleared(ui.world) ? 'ท้าอีกรอบ' : 'ท้าบอส!' }) : null);
-  return h('section', {}, loaded && !placement() ? testCard() : null, wb, head, list, h('div', { class: 'card' }, boss, bossCleared(ui.world) ? h('span', { class: 'pill mint', style: 'align-self:flex-start', text: 'ชนะบอสแล้ว' }) : null));
+  return h('section', {}, loaded && !placement() ? testCard() : null, verbCard(), wb, head, list, h('div', { class: 'card' }, boss, bossCleared(ui.world) ? h('span', { class: 'pill mint', style: 'align-self:flex-start', text: 'ชนะบอสแล้ว' }) : null));
 }
 function vUnit() {
   const u = UNITS.find(x => x.id === ui.unit); const W = WORLDS[u.w]; const ws = unitWords(u.id); const ud = unitDoc(u.id);
