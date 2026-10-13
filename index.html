@@ -1926,7 +1926,7 @@ function classPrepCard() {
     .sort((a, b) => storyPracticeDays(a.s) - storyPracticeDays(b.s))[0];
   const C = ui.cls || (ui.cls = { en: '', th: '' });
   return h('div', { class: 'card' },
-    h('div', { class: 'row between' }, h('h3', { text: 'คลาสกับครู' }), h('span', { class: 'pill sky', text: 'จ.–ศ. 08:15' })),
+    h('div', { class: 'row between' }, h('h3', { text: 'คลาสกับครู' }), h('span', { class: 'pill sky', text: 'จ.–ศ. 20:15–20:45' })),
     h('div', { class: 'tip' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'qt', text: 'ก่อนคลาส: ซ้อม 3 นาที' }), h('div', { class: 'small muted', text: pick ? `ซ้อม "${pick.tp.th}" แล้วเล่าให้ครูฟังในคลาส` : 'เริ่มเรื่องเล่าเรื่องแรกด้านล่าง แล้วเอาไปเล่าให้ครูฟัง' })),
       pick ? h('button', { class: 'btn sm primary', onclick: () => { ui.story = { id: pick.tp.id, step: 'practice', round: 0, hide: false }; render(true); }, text: 'ซ้อมเลย' }) : null),
     h('div', { class: 'qt', style: 'margin-top:4px', text: 'หลังคลาส: จดประโยคใหม่จากครู' }),
