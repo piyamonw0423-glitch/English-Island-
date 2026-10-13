@@ -475,6 +475,7 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 .exq{display:flex;flex-direction:column;gap:10px}
 .exq .q{font-family:var(--display);font-weight:600;font-size:17px}
 .diff{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.insight .tips{display:flex;flex-direction:column;gap:8px}.insight .tip{display:flex;gap:10px;align-items:center;padding:10px 12px;border:2px solid var(--edge);border-radius:18px;background:var(--card)}.insight .tiles{grid-template-columns:repeat(2,1fr)}.flip{cursor:pointer}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -798,6 +799,7 @@ function questDoneSheet(step) {
     h('p', { class: 'small muted', text: next ? `ดาวถัดไป: ${next.title}` : 'ครบทุกดาวแล้ว! ไปเปิดหีบสมบัติวันนี้กัน' }),
     h('div', { class: 'row', style: 'justify-content:center;flex-wrap:wrap' },
       h('button', { class: 'btn primary', onclick: goNext, text: next ? 'ไปภารกิจถัดไป' : 'ไปเปิดหีบสมบัติ' }),
+      next ? null : h('button', { class: 'btn', onclick: () => { close(); go('stats'); }, text: 'ดูบทวิเคราะห์' }),
       h('button', { class: 'btn ghost sm', onclick: close, text: 'เรียนต่ออีกหน่อย' }))));
   document.body.append(ov); confetti(80);
 }
@@ -1344,6 +1346,91 @@ function mascotLine(s, lv, d, yMiss) {
   if (s >= 3) return ['cheer', `ไฟกำลังลุก! ติดต่อกัน ${s} วันแล้ว`];
   return ['happy', 'สวัสดี Tanp! วันนี้แค่ 12 นาที หรือ 2 นาทีในวันยุ่งก็นับ'];
 }
+// ---------- learner insight: what to review, what to do next, auto difficulty ----------
+function learnerStats() {
+  const t = today(); const days7 = Array.from({ length: 7 }, (_, i) => addDays(t, -i));
+  let got = 0, near = 0, miss = 0;
+  days7.forEach(d => { const x = S.days.get(d); if (x && x.rv) { got += x.rv.got || 0; near += x.rv.near || 0; miss += x.rv.miss || 0; } });
+  const rvTotal = got + near + miss; const acc = rvTotal ? got / rvTotal : null;
+  const items = [...S.words.entries()].map(([id, x]) => ({ col: 'words', id, ...x })).concat([...S.phrases.entries()].map(([id, x]) => ({ col: 'phrases', id, ...x })));
+  const weak = items.filter(x => (x.lapses || 0) >= 2 || ((x.box || 0) === 0 && (x.reviews || 0) >= 2))
+    .sort((a, b) => (b.lapses || 0) - (a.lapses || 0) || (a.box || 0) - (b.box || 0)).slice(0, 8);
+  const since = Date.parse(days7[6]);
+  const chats = [...S.checks.values()].filter(c => c.kind === 'chat' && (c.created || 0) >= since);
+  const fixed = chats.filter(c => c.better && c.better.trim().toLowerCase() !== String(c.said || '').trim().toLowerCase());
+  const fixRate = chats.length ? fixed.length / chats.length : null;
+  const mistakes = fixed.slice().sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 3).map(c => ({ said: c.said, better: c.better }));
+  const active = days7.filter(d => dayLevel(S.days.get(d))).length;
+  const shadows = [...S.units.values()].map(u => u.lastShadow || 0); const lastShadow = shadows.length ? Math.max(...shadows) : 0;
+  const shadowGap = lastShadow ? Math.floor((Date.now() - lastShadow) / 864e5) : null;
+  const due = dueItems().length; const tomorrow = items.filter(x => (x.due || '') === addDays(t, 1)).length;
+  const cu = UNITS[currentUnit()]; const cuLearned = unitWords(cu.id).length; const cuPct = Math.round(cuLearned / cu.target * 100);
+  return { acc, rvTotal, got, near, miss, weak, chats: chats.length, fixRate, mistakes, active, shadowGap, due, tomorrow, cu, cuPct };
+}
+// Rules turn the numbers into concrete advice (Thai). Each tip: [title, detail, action?]
+function learnerTips(st) {
+  const tips = [];
+  if (st.weak.length) tips.push(['ทวนคำที่ยังจำไม่แม่น ' + st.weak.length + ' คำ', st.weak.slice(0, 5).map(x => x.w || x.en).join(' · '), 'weak']);
+  if (st.acc != null && st.acc < .6) tips.push(['ช่วงนี้ลืมบ่อย ลดคำใหม่ลงก่อน', `ทบทวนจำได้ ${Math.round(st.acc * 100)}% ใน 7 วัน เน้นทบทวนให้ถึง 70% ก่อนค่อยเรียนแพ็กใหม่`, 'review']);
+  if (st.due) tips.push([`การ์ดถึงรอบทบทวน ${st.due} ใบ`, 'ทวนวันนี้จะจำได้นานขึ้น 2–3 เท่า (ทวนตามรอบ 1, 3, 7, 14 วัน)', 'review']);
+  if (st.fixRate != null && st.chats >= 3 && st.fixRate > .5) tips.push(['ประโยคที่พูดถูกแก้บ่อย', 'ลองพูดประโยคที่เจลลี่บูแก้ให้ซ้ำ 3 รอบออกเสียง แล้วใช้แพทเทิร์นเดิมกับเรื่องใหม่', 'speak']);
+  if (st.shadowGap == null || st.shadowGap >= 3) tips.push(['ไม่ได้ Shadowing ' + (st.shadowGap == null ? 'เลย' : st.shadowGap + ' วัน'), 'Shadowing วันละ 1 บท ช่วยให้พูดลื่นและไม่ต้องแปลในหัว', 'shadow']);
+  if (st.chats < 3) tips.push(['พูดให้มากขึ้น', 'คุยกับเจลลี่บูอย่างน้อยวันละ 3 ประโยค ใช้คำที่เพิ่งเรียนอย่างน้อย 1 คำ', 'speak']);
+  if (st.active < 4) tips.push([`เรียน ${st.active}/7 วันในสัปดาห์นี้`, 'วันยุ่งใช้โหมดมินิ 2 นาทีก็ได้ ความต่อเนื่องสำคัญกว่าความยาว', null]);
+  if (st.acc != null && st.acc >= .85 && st.rvTotal >= 20 && (st.fixRate == null || st.fixRate <= .3)) tips.push(['พร้อมขยับแล้ว!', `จำได้ ${Math.round(st.acc * 100)}% และพูดผิดน้อย เจลลี่บูปรับบทเรียนให้ท้าทายขึ้น`, 'course']);
+  return tips.slice(0, 5);
+}
+// Auto difficulty from the last 7 days; a manual choice in the last 3 days wins.
+function autoAdapt(st) {
+  const man = lsGet('epl-diff-manual', ''); if (man && man >= addDays(today(), -3)) return null;
+  if (st.rvTotal < 15 && st.chats < 6) return null;
+  const strong = st.acc != null && st.acc >= .85 && (st.fixRate == null || st.fixRate <= .3);
+  const weakNow = (st.acc != null && st.acc < .55) || (st.fixRate != null && st.chats >= 5 && st.fixRate > .7);
+  const want = strong ? 1 : weakNow ? -1 : 0; const cur = diff();
+  if (want === cur) return null;
+  lsSet('epl-diff', want); lsSet('epl-diff-auto', { v: want, d: today() }); return want;
+}
+function startWeakReview(list) {
+  ui.review = null; startReview(false);
+  if (!ui.review) return;
+  const ids = new Set(list.map(x => x.id)); const keep = ui.review.items.filter(x => ids.has(x.id));
+  const add = list.filter(x => !keep.some(k => k.id === x.id)).map(x => ({ ...x, mode: 'recall' }));
+  ui.review.items = shuffle(keep.concat(add)); render(true);
+}
+function insightCard(full) {
+  if (!loaded || (!S.words.size && !S.checks.size)) return null;
+  const st = learnerStats(); autoAdapt(st); const au = lsGet('epl-diff-auto', null); const changed = au && au.d === today() ? au.v : null; const tips = learnerTips(st);
+  const lvl = diff() > 0 ? 'ท้าทายขึ้น' : diff() < 0 ? 'ง่ายลง' : 'ปกติ';
+  const act = { weak: ['ทวนเลย', () => { go('review'); startWeakReview(st.weak); }], review: ['ไปทบทวน', () => { go('review'); startReview(false); }], speak: ['ไปฝึกพูด', () => go('speak')], shadow: ['ไป Shadowing', () => go('shadow')], course: ['ไปบทเรียน', () => go('course')] };
+  const pct = v => v == null ? '–' : Math.round(v * 100) + '%';
+  const ai = ui.insightAI || {};
+  const aiBox = ai.res ? h('div', { class: 'block nat' }, h('div', { class: 'lbl', text: 'เจลลี่บูวิเคราะห์' }), h('div', { class: 'small', text: ai.res.summary_th || '' }),
+      ...(Array.isArray(ai.res.plan_th) ? ai.res.plan_th.slice(0, 4).map((p, i) => h('div', { class: 'small', text: `${i + 1}. ${p}` })) : []))
+    : ai.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: ai.err }) : null;
+  return h('div', { class: 'card insight' },
+    h('div', { class: 'row between' }, h('h3', { text: 'บทวิเคราะห์ผู้เรียน · 7 วัน' }), h('span', { class: 'pill lav', text: 'ระดับบทเรียน: ' + lvl })),
+    changed != null ? h('div', { class: 'small', style: 'color:var(--mint-d);font-weight:600', text: changed > 0 ? 'เก่งขึ้นแล้ว! ปรับคำศัพท์และบทสนทนาให้ท้าทายขึ้นอัตโนมัติ' : changed < 0 ? 'ปรับบทเรียนให้ง่ายลงชั่วคราว เพื่อให้จำได้แน่นก่อน' : 'ปรับบทเรียนกลับเป็นระดับปกติ' }) : null,
+    h('div', { class: 'tiles' },
+      h('div', { class: 'tile', style: 'background:var(--mint)' }, h('b', { text: pct(st.acc) }), h('span', { text: 'ทบทวนจำได้' })),
+      h('div', { class: 'tile', style: 'background:var(--peach)' }, h('b', { text: st.fixRate == null ? '–' : pct(1 - st.fixRate) }), h('span', { text: 'พูดถูกเลย' })),
+      h('div', { class: 'tile', style: 'background:var(--lav)' }, h('b', { text: st.active + '/7' }), h('span', { text: 'วันที่เรียน' })),
+      h('div', { class: 'tile', style: 'background:var(--sky)' }, h('b', { text: st.cuPct + '%' }), h('span', { text: 'บท ' + st.cu.t }))),
+    h('div', { class: 'small muted', text: `พรุ่งนี้มีการ์ดถึงรอบ ${st.tomorrow} ใบ` }),
+    tips.length ? h('div', { class: 'tips' }, tips.map(([title, detail, a]) => h('div', { class: 'tip' }, h('div', { style: 'min-width:0;flex:1' }, h('div', { class: 'qt', text: title }), h('div', { class: 'small muted', text: detail })), a && act[a] ? h('button', { class: 'btn sm', onclick: act[a][1], text: act[a][0] }) : null)))
+      : h('p', { class: 'small', text: 'ทุกอย่างดีมาก! รักษาจังหวะนี้ไว้' }),
+    full && st.mistakes.length ? h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'ประโยคที่ควรพูดซ้ำ' }), st.mistakes.map(m => h('div', { class: 'small' }, h('s', { text: m.said }), ' → ', h('b', { text: m.better })))) : null,
+    aiBox,
+    sample && !aiOff ? h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', disabled: ai.busy ? true : null, onclick: () => runInsightAI(st) }, ai.busy ? [h('span', { class: 'spin' }), ' กำลังวิเคราะห์…'] : ai.res ? 'วิเคราะห์ใหม่' : 'ให้เจลลี่บูวิเคราะห์ละเอียด') : null);
+}
+async function runInsightAI(st) {
+  ui.insightAI = { busy: true }; render();
+  const data = { review_accuracy_7d: st.acc, reviews_7d: st.rvTotal, weak_items: st.weak.map(x => x.w || x.en), chat_sentences_7d: st.chats, chat_corrected_rate: st.fixRate, recent_corrections: st.mistakes, active_days_7: st.active, days_since_shadowing: st.shadowGap, current_unit: st.cu.t + ' (' + WORLDS[st.cu.w].lv + ')', unit_progress_pct: st.cuPct };
+  try {
+    const r = await sample.json(`${ME}\n\nYou are her English coach. Here is her learning data for the last 7 days (JSON):\n${JSON.stringify(data)}\n\nAnalyse what is holding back her speaking and what to review. Be specific to the data (name the words/patterns). Reply with only JSON: {"summary_th": "2-3 short Thai sentences: what is going well and the main weakness", "plan_th": ["3-4 concrete Thai actions for the next 3 days, each one short line, mention exact words/patterns/units"]}`);
+    ui.insightAI = { res: r };
+  } catch (e) { ui.insightAI = { err: aiErr(e) || 'วิเคราะห์ไม่สำเร็จ' }; }
+  render();
+}
 function vHome() {
   const t = today(); const d = S.days.get(t) || { steps: {} }; const lv = dayLevel(d);
   const [mood, line] = mascotLine(streak(), lv, d, !dayLevel(S.days.get(addDays(t, -1))));
@@ -1374,7 +1461,7 @@ function vHome() {
   const DOW = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']; const mon = addDays(t, -((new Date(t + 'T00:00:00').getDay() + 6) % 7));
   const week = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'สัปดาห์นี้' }), h('span', { class: 'small muted', text: 'พลาด 1 วันได้ อย่าพลาด 2 วันติด' })),
     h('div', { class: 'week' }, DOW.map((nm, i) => { const day = addDays(mon, i); const l = dayLevel(S.days.get(day)); return h('div', {}, h('i', { class: (l ? 'l' + l : '') + (day === t ? ' today' : '') }, l ? ico(l === 2 ? 'check' : 'flame') : null), nm); })));
-  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), weekCard(), cont);
+  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), loaded && huntStops().every(x => x.done) ? insightCard(false) : null, weekCard(), cont);
 }
 
 // ---------- COURSE ----------
@@ -1503,9 +1590,9 @@ function vLearn() {
     h('div', { class: 'stars' }, [0, 1, 2].map(k => { const e = ico(k < stars ? 'star' : 'starOff'); if (k < stars) { e.classList.add('on'); e.style.animationDelay = (k * .25) + 's'; } return e; })),
     h('p', { class: 'small muted', text: `ตอบถูก ${L.right}/${total} · รู้อยู่แล้ว ${L.known.size} คำ · คำเหล่านี้จะกลับมาให้ทบทวนตามรอบ` }),
     h('div', {}, h('div', { class: 'small', style: 'margin-bottom:6px', text: 'แพ็กนี้เป็นยังไงบ้าง?' }), h('div', { class: 'diff' },
-      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', Math.max(-1, diff() - 1)); render(); }, text: 'ยากไป' }),
-      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', 0); render(); }, text: 'พอดี' }),
-      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', Math.min(1, diff() + 1)); render(); }, text: 'ง่ายไป' })),
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff-manual', today()); lsSet('epl-diff', Math.max(-1, diff() - 1)); render(); }, text: 'ยากไป' }),
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff-manual', today()); lsSet('epl-diff', 0); render(); }, text: 'พอดี' }),
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff-manual', today()); lsSet('epl-diff', Math.min(1, diff() + 1)); render(); }, text: 'ง่ายไป' })),
       h('div', { class: 'small muted', style: 'margin-top:4px', text: 'ระดับแพ็กถัดไป: ' + (diff() < 0 ? 'ง่ายลง' : diff() > 0 ? 'ท้าทายขึ้น' : 'ปกติ') })),
     h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: () => startLearn(u), text: 'เรียนอีกแพ็ก' }), h('button', { class: 'btn', onclick: () => startShadow(u), text: 'ไป Shadowing' }), h('button', { class: 'btn ghost', onclick: () => { ui.sub = 'unit'; render(true); }, text: 'กลับบท' }))));
 }
@@ -1589,7 +1676,8 @@ function rateItem(kind) {
   if (doc) {
     let box = doc.box || 0, due;
     if (kind === 'got') { box = Math.min(box + 1, INTERVALS.length - 1); due = addDays(today(), INTERVALS[box]); } else if (kind === 'near') due = addDays(today(), 1); else { box = 0; due = addDays(today(), 1); }
-    put(it.col, it.id, { ...doc, box, due, lastSeen: Date.now(), reviews: (doc.reviews || 0) + 1 }, true);
+    put(it.col, it.id, { ...doc, box, due, lastSeen: Date.now(), reviews: (doc.reviews || 0) + 1, lapses: (doc.lapses || 0) + (kind === 'miss' ? 1 : 0) }, true);
+    { const td = today(); const dd = S.days.get(td) || { steps: {} }; const rv = { got: 0, near: 0, miss: 0, ...(dd.rv || {}) }; rv[kind]++; put('days', td, { ...dd, rv, updated: Date.now() }, true); }
   }
   if (r.i >= r.items.length) setTimeout(() => confetti(140), 200);
   freezeFor(kind === 'miss' ? 420 : 140, () => { const n = r.items[r.i]; if (n && n.mode === 'listen') setTimeout(() => say(n.w, ui.rate), 250); });
@@ -1633,8 +1721,11 @@ function vReview() {
     : [h('div', { class: 'row', style: 'justify-content:center' }, h('div', { class: 'en', text: it.en || '' }), sayBtn(it.en || '', 'sm')), it.alt ? h('div', { class: 'sub', text: 'หรือ: ' + it.alt }) : null, it.note ? h('div', { class: 'sub', text: it.note }) : null];
   const flip = h('div', { class: 'flip' }, h('div', { class: 'face front' }, front), h('div', { class: 'face back' }, back));
   const rateRow = h('div', { class: 'rate', hidden: true }, h('button', { class: 'btn pink', onclick: () => rateItem('miss'), text: 'ลืม' }), h('button', { class: 'btn', style: 'background:var(--peach)', onclick: () => rateItem('near'), text: 'เกือบได้' }), h('button', { class: 'btn mint', onclick: () => rateItem('got'), text: 'นึกออก!' }));
-  const reveal = h('button', { class: 'btn primary', style: 'width:100%', onclick: () => { flip.classList.add('on'); reveal.hidden = true; rateRow.hidden = false; if (isW && it.mode !== 'listen') say(it.w, ui.rate); } , text: 'พลิกดูเฉลย' });
-  flip.addEventListener('click', () => { if (!flip.classList.contains('on')) reveal.click(); });
+  let saidOnce = false;
+  const toggle = () => { const on = flip.classList.toggle('on'); reveal.textContent = on ? '↺ พลิกกลับด้านหน้า' : 'พลิกดูเฉลย'; reveal.className = on ? 'btn ghost' : 'btn primary'; rateRow.hidden = false; if (on && !saidOnce && isW && it.mode !== 'listen') { saidOnce = true; say(it.w, ui.rate); } };
+  const reveal = h('button', { class: 'btn primary', style: 'width:100%', onclick: toggle, text: 'พลิกดูเฉลย' });
+  flip.addEventListener('click', e => { if (e.target.closest('button')) return; toggle(); });
+  flip.setAttribute('role', 'button'); flip.setAttribute('tabindex', '0'); flip.setAttribute('aria-label', 'แตะเพื่อพลิกการ์ด'); flip.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
   return h('section', {}, h('div', { class: 'card', id: 'rvCard' }, top, h('div', { class: 'scene' }, flip), reveal, rateRow));
 }
 async function startExam() {
@@ -1820,7 +1911,7 @@ function vStats() {
     ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
     ['ไม่เห็นพัฒนาการ ท้อ', 'แถบ 3,000 คำ เลเวล สติกเกอร์ และกราฟคำต่อนาที'], ['เวลาน้อย', 'ภารกิจ 12 นาที โหมดมินิ 2 นาที และปรับความยากได้ทุกแพ็ก'],
   ].map(([a, b]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b })))))));
-  return h('section', {}, big, tiles, chart, albumCard(), badges, heat, table, add, why);
+  return h('section', {}, big, insightCard(true), tiles, chart, albumCard(), badges, heat, table, add, why);
 }
 
 if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
