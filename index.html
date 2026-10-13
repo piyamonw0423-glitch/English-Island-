@@ -1005,7 +1005,7 @@ function vTest() {
   const best = mcqBest(); const wMcq = Math.min(3, best + 1);
   const sp = T.speak && T.speak.idx >= 0 ? T.speak.idx : null;
   const wSpeak = sp == null ? null : Math.min(3, sp);
-  const rec = wSpeak == null ? wMcq : Math.min(wMcq, Math.max(0, wSpeak));
+  const rec = wSpeak == null ? wMcq : Math.max(wMcq - 1, Math.min(wMcq, Math.max(0, wSpeak))); // speaking can pull the start down at most one world
   const levelName = i => i < 0 ? 'Starter' : LV[i];
   const rows = LV.map(lv => T.results[lv] === undefined ? null : h('div', { class: 'levelrow' }, h('span', { class: 'pill ' + (T.results[lv] ? 'mint' : 'pink'), text: lv }), h('div', { class: 'bar' }, h('i', { style: `width:${(T.score[lv] || 0) / 5 * 100}%` })), h('span', { class: 'num small', text: `${T.score[lv] || 0}/5 ${T.results[lv] ? 'ผ่าน' : 'ยังไม่ผ่าน'}` })));
   const opt = (w, label, primary) => { const u = UNITS[firstUnitOf(w)]; return h('button', { class: primary ? 'btn primary' : 'btn', onclick: () => savePlacement(w), text: `${label}: ${WORLDS[w].lv} บทที่ ${u.n} "${u.t}"` }); };
