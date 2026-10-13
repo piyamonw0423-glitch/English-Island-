@@ -1,0 +1,1754 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFC9E2">
+<meta name="description" content="ฝึกภาษาอังกฤษทุกวันกับเจลลี่บู">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Jelly English">
+<title>English Progress Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&family=Fredoka:wght@500;600;700&display=swap">
+</head>
+<body>
+<style>
+/* Layout: a storybook app — dreamy sky behind, one illustrated screen at a time, floating HUD and pill-shaped bottom bar */
+:root{
+  --sky1:#FFE3EF; --sky2:#EADFFF; --sky3:#FFEFD9; --bg:#FFF4F9; --bg2:#F5EEFF; --card:#FFFFFF; --ink:#3F2D5C; --ink2:#7B6A93; --line:#EBDDF6; --edge:#4A3566;
+  --lav:#E3D6FF; --lav-d:#8B5CF6; --pink:#FFD6E7; --pink-d:#EC5B9C; --mint:#CDF5E6; --mint-d:#1FA97A;
+  --peach:#FFE2CC; --peach-d:#F07A2E; --butter:#FFF3B8; --butter-d:#D99A00; --sky:#D6EEFF; --sky-d:#2D8FD8;
+  --glow:0 12px 28px rgba(110,70,160,.16);
+  --display:"Mali","Fredoka",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai Looped","Mali",system-ui,sans-serif;
+  --num:"Fredoka","Mali",system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --sky1:#1B1636; --sky2:#2B1F52; --sky3:#3A2350; --bg:#211A3D; --bg2:#2C2350; --card:#2D2450; --ink:#FBF3FF; --ink2:#C9B9E6; --line:#45387A; --edge:#0F0A24;
+  --lav:#46368A; --lav-d:#B9A0FF; --pink:#62285A; --pink-d:#FF8CC2; --mint:#174D45; --mint-d:#5FE3B4;
+  --peach:#5E3420; --peach-d:#FFAE70; --butter:#584718; --butter-d:#FFD966; --sky:#1C3C64; --sky-d:#84C8FF;
+  --glow:0 12px 28px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --sky1:#1B1636; --sky2:#2B1F52; --sky3:#3A2350; --bg:#211A3D; --bg2:#2C2350; --card:#2D2450; --ink:#FBF3FF; --ink2:#C9B9E6; --line:#45387A; --edge:#0F0A24;
+  --lav:#46368A; --lav-d:#B9A0FF; --pink:#62285A; --pink-d:#FF8CC2; --mint:#174D45; --mint-d:#5FE3B4;
+  --peach:#5E3420; --peach-d:#FFAE70; --butter:#584718; --butter-d:#FFD966; --sky:#1C3C64; --sky-d:#84C8FF;
+  --glow:0 12px 28px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.hmap.space{aspect-ratio:6/5;border-color:#2A1A55;box-shadow:0 10px 28px rgba(59,26,120,.35),inset 0 0 0 2px rgba(255,255,255,.08)}
+.hmap.space .stars .tw{animation:twinkle 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.hmap.space .shoot{animation:shoot 7s ease-in infinite;transform:translate(400px,-20px)}
+@keyframes shoot{0%,78%{transform:translate(400px,-20px);opacity:0}80%{opacity:1;transform:translate(330px,30px)}92%{opacity:0;transform:translate(180px,85px)}100%{opacity:0;transform:translate(180px,85px)}}
+.planet{width:50px;height:50px;border:2.5px solid #2A1A55;box-shadow:inset -7px -7px 0 rgba(0,0,0,.18),inset 5px 5px 0 rgba(255,255,255,.35),0 0 18px rgba(255,255,255,.25);color:#2A1A55;padding:10px;overflow:visible}
+.planet .pl-ico{width:100%;height:100%;display:grid;place-items:center;position:relative;z-index:2}
+.planet .pl-ico .ico{width:24px;height:24px}
+.planet.p0{background:radial-gradient(circle at 35% 30%,#E7D8FF,#A985FF 60%,#6E45E0)}
+.planet.p1{background:radial-gradient(circle at 35% 30%,#FFE0EE,#FF8CC2 60%,#E0468E)}
+.planet.p2{background:radial-gradient(circle at 35% 30%,#D9FFF0,#5FE3B4 60%,#1FA97A)}
+.planet.p3{background:radial-gradient(circle at 35% 30%,#FFF0D6,#FFAE70 60%,#F07A2E)}
+.planet.p4{background:radial-gradient(circle at 35% 30%,#E0F4FF,#7CC8FF 60%,#2D8FD8)}
+.planet.p0::after,.planet.p2::after,.planet.p4::after{content:"";position:absolute;left:-14px;right:-14px;top:50%;height:12px;margin-top:-6px;border-radius:50%;border:2.5px solid rgba(255,240,180,.9);transform:rotate(-18deg);z-index:1;pointer-events:none;animation:ring 6s linear infinite}
+@keyframes ring{0%,100%{transform:rotate(-18deg) scaleX(1)}50%{transform:rotate(-12deg) scaleX(.94)}}
+.planet.p1::before,.planet.p3::before{content:"";position:absolute;width:9px;height:9px;border-radius:50%;background:rgba(0,0,0,.14);top:8px;right:9px;box-shadow:-20px 22px 0 -2px rgba(0,0,0,.12),-4px 26px 0 -3px rgba(0,0,0,.1)}
+.planet.done{filter:saturate(1.1)}
+.planet.done .pl-ico{background:#169C6F;border-radius:50%;border:2px solid #fff}
+.planet.done .pl-ico .ico{width:18px;height:18px}
+.planet .flag{position:absolute;top:-20px;left:30px;width:3px;height:22px;background:#fff;border-radius:2px;z-index:3}
+.planet .flag::after{content:"";position:absolute;left:3px;top:0;width:14px;height:10px;background:#FFD24A;clip-path:polygon(0 0,100% 50%,0 100%);animation:wave .8s ease-in-out infinite alternate;transform-origin:0 50%}
+.planet.now{animation:none;box-shadow:inset -7px -7px 0 rgba(0,0,0,.18),inset 5px 5px 0 rgba(255,255,255,.35),0 0 0 5px rgba(255,255,255,.25),0 0 26px 6px rgba(255,140,194,.85)}
+.planet .pl-name{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:5px;white-space:nowrap;font-family:var(--display);font-weight:700;font-size:11px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:3}
+.hchest.station .st-ring{position:absolute;inset:-12px;border-radius:50%;border:2.5px dashed rgba(255,226,122,.85);animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hchest.station{filter:drop-shadow(0 0 12px rgba(255,210,74,.8))}
+.htoken.rocket{width:40px;height:56px;transform:translate(-50%,-50%) rotate(var(--ang,0deg));transform-origin:50% 50%;transition:left 1.1s var(--spring),top 1.1s var(--spring),transform .8s var(--spring);z-index:4;animation:hover 1.6s ease-in-out infinite}
+@keyframes hover{0%,100%{margin-top:0}50%{margin-top:-5px}}
+.htoken.rocket svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))}
+.htoken.rocket .flame{animation:flame .25s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 0}
+@keyframes flame{from{transform:scaleY(.8)}to{transform:scaleY(1.2)}}
+
+.hmap{position:relative;width:100%;aspect-ratio:3/2;border-radius:24px;border:2.5px solid var(--edge);overflow:hidden;box-shadow:inset 0 -6px 0 rgba(0,0,0,.06)}
+.hmap>svg{position:absolute;inset:0;width:100%;height:100%}
+.hnode{position:absolute;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;border:2.5px solid #4A3566;background:#fff;display:grid;place-items:center;cursor:pointer;padding:7px;box-shadow:0 4px 0 #4A3566;transition:transform .3s var(--spring);color:#3F2D5C}
+.hnode:hover{transform:translate(-50%,-50%) scale(1.1)}
+.hnode.done{background:linear-gradient(180deg,#4FD9A6,#169C6F)}
+.hnode.now{background:linear-gradient(180deg,#FF8CC0,#E5468E);color:#fff;animation:glowp 1.8s ease-in-out infinite}
+.hchest{position:absolute;transform:translate(-50%,-50%);width:58px;height:58px;border:0;background:none;padding:0;cursor:default;filter:drop-shadow(0 4px 0 rgba(74,53,102,.35))}
+.hchest .ico{width:100%;height:100%}
+.hchest.ready{cursor:pointer;animation:wiggle 1.1s var(--spring) infinite}
+.hchest.ready::after{content:"";position:absolute;inset:-14px;border-radius:50%;background:radial-gradient(circle,rgba(255,226,122,.75),transparent 65%);z-index:-1;animation:halo 1.6s ease-in-out infinite}
+.htoken{position:absolute;transform:translate(-50%,-92%);transition:left .9s var(--spring),top .9s var(--spring);pointer-events:none;z-index:2}
+.htoken .mascot{width:58px;height:62px}
+.treasure-got{display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:20px;background:linear-gradient(135deg,#FFF3B8,#FFE2CC);border:2px solid #4A3566;color:#3F2D5C}
+.qi{position:relative}
+.qnum{position:absolute;top:-8px;left:-8px;width:20px;height:20px;border-radius:50%;background:#4A3566;color:#fff;font-size:11px;display:grid;place-items:center;font-weight:700}
+.week i.tr{background:var(--butter);border-color:var(--edge)}
+.week i.tr .ico{width:24px;height:24px}
+.reveal{animation:revealSpin 1s var(--spring)}
+@keyframes revealSpin{0%{transform:scale(0) rotate(-180deg)}100%{transform:scale(1) rotate(0)}}
+.modal.shake{animation:shake .4s}
+
+.banner{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border-radius:30px;border:2.5px solid var(--edge);padding:16px 14px 16px 20px;position:relative;overflow:hidden;box-shadow:var(--glow);background:linear-gradient(135deg,var(--pink),var(--lav) 55%,var(--sky));animation:pop .6s var(--spring)}
+.banner::before{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-50px;top:-70px;background:rgba(255,255,255,.35)}
+.banner::after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;left:-30px;bottom:-40px;background:rgba(255,255,255,.25)}
+.banner .bn-text{position:relative;z-index:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.banner h1{font-family:var(--display);font-size:24px;font-weight:700;line-height:1.25}
+.banner p{font-size:13.5px;color:var(--ink)}
+.banner .mascot{width:92px;height:98px;position:relative;z-index:1}
+.banner.big .mascot{width:122px;height:130px}
+.banner.big h1{font-size:26px}
+.banner .bubble{margin-top:4px;font-size:14.5px}
+.banner .eyebrow{font-size:12.5px;font-weight:600;color:var(--ink2);font-family:var(--display)}
+.banner.course{background:linear-gradient(135deg,var(--sky),var(--lav) 60%,var(--pink))}
+.banner.review{background:linear-gradient(135deg,var(--lav),var(--pink) 60%,var(--peach))}
+.banner.speak{background:linear-gradient(135deg,var(--peach),var(--pink) 60%,var(--lav))}
+.banner.bank{background:linear-gradient(135deg,var(--mint),var(--sky) 60%,var(--lav))}
+.banner.stats{background:linear-gradient(135deg,var(--butter),var(--peach) 50%,var(--pink))}
+.skybg .rise{position:absolute;bottom:-40px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.95),rgba(255,182,214,.35) 60%,rgba(255,182,214,.1));border:1.5px solid rgba(255,255,255,.7);animation:rise linear infinite}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .skybg .rise{opacity:.35}}
+:root[data-theme="dark"] .skybg .rise{opacity:.35}
+.skybg .rise.hrt{border:0;border-radius:0;background:none}
+.skybg .rise.hrt::before{content:"";position:absolute;inset:0;background:#FF9EC6;opacity:.45;clip-path:path('M5 9C2 6 0 4.5 0 2.7 0 1.2 1.2 0 2.6 0 3.6 0 4.5.6 5 1.4 5.5.6 6.4 0 7.4 0 8.8 0 10 1.2 10 2.7 10 4.5 8 6 5 9z');transform:scale(1.4);transform-origin:0 0}
+@keyframes rise{from{transform:translateY(0) translateX(0)}50%{transform:translateY(-55vh) translateX(18px)}to{transform:translateY(-115vh) translateX(-10px)}}
+.splash{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:linear-gradient(160deg,#FFD6E7,#E3D6FF 55%,#D6EEFF);animation:fade .4s}
+.splash.out{animation:spOut .45s forwards}
+@keyframes spOut{to{opacity:0;transform:scale(1.04)}}
+.sp-float{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.sp-float i{position:absolute;bottom:-30px;border-radius:50%;background:rgba(255,255,255,.7);animation:rise linear infinite}
+.sp-float i.hrt{background:#FF8CC2;opacity:.55;border-radius:50% 50% 0 50%;transform:rotate(45deg)}
+.sp-card{position:relative;z-index:1;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border:3px solid #4A3566;border-radius:36px;padding:22px 22px 18px;max-width:380px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;box-shadow:0 18px 40px rgba(110,70,160,.25);animation:pop .7s var(--spring);color:#3F2D5C}
+.sp-card .muted{color:#6E5A86}
+.sp-m .mascot{width:150px;height:160px}
+.sp-title{font-family:var(--display);font-size:30px;font-weight:700;line-height:1.2;background:linear-gradient(90deg,#EC5B9C,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sp-card .eyebrow{font-family:var(--num);font-weight:600;letter-spacing:.5px;color:#8B5CF6;font-size:13px}
+.sp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin:6px 0}
+.sp-stat{border:2px solid #4A3566;border-radius:18px;padding:6px 4px;display:flex;flex-direction:column;color:#3F2D5C}
+.sp-stat b{font-family:var(--num);font-size:20px;line-height:1.2}
+.sp-stat span{font-size:11.5px}
+.sp-go{width:100%;font-size:17px;padding:12px}
+.card{transition:transform .3s var(--spring),box-shadow .3s}
+.card:hover{transform:translateY(-2px)}
+.nav button[aria-current="page"]::after{content:"";position:absolute;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--pink-d)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{background:linear-gradient(160deg,#3A1F4A,#2B1F52 55%,#1C3C64)}}
+:root[data-theme="dark"] .splash{background:linear-gradient(160deg,#3A1F4A,#2B1F52 55%,#1C3C64)}
+
+.mascot.jelly .ghost{animation:jwob 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes jwob{0%,100%{transform:scale(1,1) rotate(0)}25%{transform:scale(1.03,.97) rotate(-2deg)}50%{transform:scale(.97,1.04) rotate(0)}75%{transform:scale(1.02,.98) rotate(2deg)}}
+.mascot .jheart{animation:beat 1.3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.mascot .bub{animation:bub 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes bub{0%{transform:translateY(4px);opacity:0}30%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
+
+.mascot .eyeR.eyes{animation:wink 6s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes wink{0%,70%,80%,100%{transform:scaleY(1)}74%,77%{transform:scaleY(.08)}}
+.mascot .blep{animation:blep 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 0%}
+@keyframes blep{0%,40%,100%{transform:scaleY(1)}55%{transform:scaleY(1.45)}70%{transform:scaleY(.9)}}
+.mascot .bow{animation:bowb 2.6s var(--spring) infinite;transform-box:fill-box;transform-origin:50% 60%}
+@keyframes bowb{0%,65%,100%{transform:rotate(0) scale(1)}75%{transform:rotate(-12deg) scale(1.12)}87%{transform:rotate(6deg)}}
+
+.mascot .ant{animation:antb 2.4s var(--spring) infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes antb{0%,60%,100%{transform:rotate(0) scale(1)}70%{transform:rotate(-14deg) scale(1.15)}80%{transform:rotate(10deg)}90%{transform:rotate(-4deg)}}
+.mascot.talkie .body{animation:sway2 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:30% 100%}
+.mascot.think .ant{animation:thinkb 1.4s ease-in-out infinite}
+@keyframes thinkb{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-4px) rotate(6deg)}}
+
+.mascot .ghost{animation:sway2 3.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes sway2{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.mascot .lantern{animation:lant 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 0%}
+@keyframes lant{0%,100%{transform:rotate(-10deg);filter:drop-shadow(0 0 0 #FFD24A)}50%{transform:rotate(10deg);filter:drop-shadow(0 0 6px #FFD24A)}}
+.mascot .shadow{animation:shad 2.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes shad{0%,100%{transform:scaleX(1)}45%,55%{transform:scaleX(.8)}}
+
+.mascot{width:120px;height:128px}
+.mascot .halo{animation:halo 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes halo{0%,100%{opacity:.7;transform:scale(.93)}50%{opacity:1;transform:scale(1.06)}}
+.mascot .filament{animation:beat 1.3s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.2)}30%{transform:scale(.95)}45%{transform:scale(1.1)}}
+.mascot .wingL{animation:flapL .45s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:100% 85%}
+.mascot .wingR{animation:flapR .45s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:0% 85%}
+@keyframes flapL{from{transform:rotate(8deg)}to{transform:rotate(-16deg)}}
+@keyframes flapR{from{transform:rotate(-8deg)}to{transform:rotate(16deg)}}
+.mascot.sleepy .wingL,.mascot.sleepy .wingR{animation-duration:1.6s}
+.mascot.cheer{animation:jump .9s var(--spring) infinite}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-14px) scale(.95,1.06)}60%{transform:translateY(0) scale(1.06,.94)}}
+.big3k .track b{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.6) 0 6px,transparent 6px 12px)}
+
+html{background:var(--sky1)}
+body{background:linear-gradient(170deg,var(--sky1) 0%,var(--sky2) 55%,var(--sky3) 100%);background-attachment:fixed;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;padding-inline:16px;padding-block:14px 112px;min-height:100%}
+.skybg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.skybg .cloud{position:absolute;opacity:.85;animation:drift 60s linear infinite}
+.skybg .cloud svg{width:100%;height:auto;display:block}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .skybg .cloud{opacity:.14}}
+:root[data-theme="dark"] .skybg .cloud{opacity:.14}
+@keyframes drift{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+.skybg .sp{position:absolute;width:14px;height:14px;animation:twinkle 3s ease-in-out infinite}
+.skybg .sp svg{width:100%;height:100%}
+@keyframes twinkle{0%,100%{transform:scale(.4) rotate(0);opacity:.3}50%{transform:scale(1) rotate(45deg);opacity:1}}
+.app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.35;margin:0;text-wrap:balance}
+h2{font-size:22px} h3{font-size:18px}
+p{margin:0}
+.muted{color:var(--ink2)} .small{font-size:13px}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:2.5px solid var(--edge);border-radius:28px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--glow),inset 0 -5px 0 var(--line);min-width:0;position:relative}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.btn{font-family:var(--display);font-size:15px;font-weight:600;border-radius:999px;padding:9px 20px;border:2.5px solid var(--edge);background:var(--card);color:var(--ink);cursor:pointer;box-shadow:inset 0 -4px 0 var(--line),0 3px 0 var(--edge);transition:transform .25s var(--spring)}
+.btn:hover{transform:translateY(-2px) scale(1.03)}
+.btn:active{transform:translateY(2px) scale(.97)}
+.btn.primary{background:linear-gradient(180deg,#A985FF,#7C4DEB);color:#fff;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.15),0 3px 0 var(--edge)}
+.btn.pink{background:linear-gradient(180deg,#FF8CC0,#E5468E);color:#fff;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.15),0 3px 0 var(--edge)}
+.btn.mint{background:linear-gradient(180deg,#4FD9A6,#169C6F);color:#fff;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.15),0 3px 0 var(--edge)}
+.btn.ghost{background:none;border-color:transparent;box-shadow:none;color:var(--ink2);padding-inline:8px}
+.btn.sm{font-size:13px;padding:5px 13px}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible,.nav button:focus-visible,.node:focus-visible{outline:3px solid var(--pink-d);outline-offset:3px}
+input[type=text],input[type=number],input[type=date],textarea{font-family:var(--body);font-size:15px;color:var(--ink);background:var(--bg);border:2px solid var(--line);border-radius:18px;padding:10px 13px;width:100%}
+input:focus,textarea:focus{border-color:var(--lav-d)}
+textarea{min-height:100px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink2);min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--display);font-size:12.5px;font-weight:600;padding:2px 11px;border-radius:999px;border:2px solid var(--edge);background:var(--bg2);color:var(--ink)}
+.pill.lav{background:var(--lav)} .pill.pink{background:var(--pink)} .pill.mint{background:var(--mint)} .pill.peach{background:var(--peach)} .pill.butter{background:var(--butter)} .pill.sky{background:var(--sky)}
+.ico{display:inline-grid;place-items:center;flex:none}
+.ico svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* HUD */
+.hud{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--card);border:2.5px solid var(--edge);border-radius:999px;padding:7px 16px 7px 7px;box-shadow:var(--glow);position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5}
+.lvl{width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF6C8,#FFD24A 55%,#E9A800);border:2.5px solid var(--edge);display:grid;place-items:center;position:relative;box-shadow:inset 0 -4px 0 rgba(0,0,0,.12)}
+.lvl b{font-family:var(--num);font-size:21px;font-weight:700;color:#4A3566;line-height:1}
+.lvl::after{content:"";position:absolute;top:5px;left:10px;width:12px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);transform:rotate(-25deg)}
+.xpbox{display:flex;flex-direction:column;gap:4px;min-width:0}
+.xpbox .t{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden;font-family:var(--display);font-weight:600}
+.xpbox .t span:first-child{overflow:hidden;text-overflow:ellipsis}
+.bar{height:16px;border-radius:999px;background:var(--bg2);overflow:hidden;border:2px solid var(--edge);position:relative}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#FF8CC0,#A985FF,#7CC8FF);box-shadow:inset 0 3px 0 rgba(255,255,255,.45);transition:width 1s var(--spring);position:relative}
+.streak{display:flex;align-items:center;gap:3px;font-family:var(--num);font-size:22px;font-weight:700;color:var(--peach-d)}
+.streak .ico{width:32px;height:32px}
+.streak.lit .ico{animation:flick 1.4s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes flick{0%,100%{transform:scale(1,1) rotate(-4deg)}50%{transform:scale(.92,1.12) rotate(4deg)}}
+.xpfloat{position:fixed;z-index:30;font-family:var(--num);font-weight:700;font-size:24px;color:#FFD24A;pointer-events:none;animation:floatUp 1.5s var(--spring) forwards;-webkit-text-stroke:1.5px #4A3566;paint-order:stroke fill}
+@keyframes floatUp{0%{opacity:0;transform:translateY(12px) scale(.5)}20%{opacity:1;transform:translateY(0) scale(1.2)}100%{opacity:0;transform:translateY(-60px) scale(1)}}
+
+/* mascot */
+.hero{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:center}
+.mascot{width:112px;height:112px;animation:bob 2.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes bob{0%,100%{transform:translateY(0) scale(1,1)}45%{transform:translateY(-8px) scale(.97,1.04)}55%{transform:translateY(-8px) scale(.97,1.04)}90%{transform:translateY(0) scale(1.04,.96)}}
+.mascot .eyes{animation:blink 4.5s infinite;transform-origin:center;transform-box:fill-box}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+.mascot .sprout{animation:sway 2.6s ease-in-out infinite;transform-origin:50% 100%;transform-box:fill-box}
+@keyframes sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.mascot .arm{animation:wave 1.2s ease-in-out infinite;transform-box:fill-box;transform-origin:20% 80%}
+@keyframes wave{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(18deg)}}
+.bubble{background:var(--card);border:2.5px solid var(--edge);border-radius:24px 24px 24px 8px;padding:12px 15px;font-family:var(--display);font-weight:500;font-size:15.5px;position:relative;animation:pop .6s var(--spring);box-shadow:var(--glow)}
+@keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* week strip */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}
+.week div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--ink2);font-family:var(--display);font-weight:600}
+.week i{width:36px;height:36px;border-radius:50%;background:var(--bg2);border:2px dashed var(--line);display:grid;place-items:center}
+.week i.l1{background:var(--peach);border:2.5px solid var(--edge)}
+.week i.l2{background:linear-gradient(180deg,#4FD9A6,#169C6F);border:2.5px solid var(--edge)}
+.week i .ico{width:20px;height:20px}
+.week i.today{box-shadow:0 0 0 3px var(--card),0 0 0 5.5px var(--pink-d)}
+
+/* quests */
+.quests{display:flex;flex-direction:column;gap:10px}
+.quest{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:22px;background:var(--bg);border:2px solid var(--line);transition:background .4s}
+.quest .qi{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;border:2.5px solid var(--edge)}
+.quest .qi .ico{width:28px;height:28px}
+.quest.done{background:var(--mint);border-color:var(--mint-d)}
+.quest.done .qt{text-decoration:line-through;text-decoration-thickness:2.5px;text-decoration-color:var(--mint-d)}
+.qt{font-family:var(--display);font-weight:600}
+.qbar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-top:4px;border:1.5px solid var(--line)}
+.qbar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#4FD9A6,#2D8FD8);transition:width .8s var(--spring)}
+.chest{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:24px;background:linear-gradient(135deg,#FFF3B8,#FFE2CC);border:2.5px solid var(--edge);color:#4A3566}
+.chest .ico{width:62px;height:62px}
+.chest.ready .ico{animation:wiggle 1.1s var(--spring) infinite}
+@keyframes wiggle{0%,100%{transform:rotate(0) scale(1)}15%{transform:rotate(-10deg) scale(1.08)}30%{transform:rotate(10deg) scale(1.08)}45%{transform:rotate(0) scale(1)}}
+
+/* map */
+.map{position:relative;display:flex;flex-direction:column;gap:6px;padding:6px 0}
+.stage{display:grid;grid-template-columns:78px 1fr;gap:14px;align-items:center;position:relative}
+.stage.alt{grid-template-columns:1fr 78px}
+.stage.alt .node{order:2}
+.node{width:78px;height:78px;border-radius:50%;border:2.5px solid var(--edge);cursor:pointer;display:grid;place-items:center;font-family:var(--num);font-size:28px;font-weight:700;position:relative;box-shadow:inset 0 -6px 0 rgba(0,0,0,.14),inset 0 5px 0 rgba(255,255,255,.4),0 6px 0 var(--edge);transition:transform .3s var(--spring)}
+.node:hover{transform:scale(1.08) rotate(-3deg)}
+.node .ico{width:34px;height:34px}
+.node.locked{background:var(--bg2);color:var(--ink2)}
+.node.open{background:radial-gradient(circle at 35% 30%,#FFB5D8,#EC5B9C);color:#fff;animation:glowp 2s ease-in-out infinite}
+.node.clear{background:radial-gradient(circle at 35% 30%,#8FF0C8,#1FA97A);color:#fff}
+@keyframes glowp{0%,100%{box-shadow:inset 0 -6px 0 rgba(0,0,0,.14),inset 0 5px 0 rgba(255,255,255,.4),0 6px 0 var(--edge),0 0 0 0 rgba(236,91,156,.45)}50%{box-shadow:inset 0 -6px 0 rgba(0,0,0,.14),inset 0 5px 0 rgba(255,255,255,.4),0 6px 0 var(--edge),0 0 0 16px rgba(236,91,156,0)}}
+.stage .info{background:var(--card);border:2.5px solid var(--edge);border-radius:22px;padding:8px 14px;min-width:0;box-shadow:var(--glow)}
+.stage.sel .info{background:var(--butter)}
+.trail{height:26px;margin-left:37px;border-left:4px dotted var(--lav-d)}
+.stage.alt+.trail{margin-left:auto;margin-right:37px;border-left:none;border-right:4px dotted var(--lav-d)}
+.zone{font-family:var(--display);font-weight:600;font-size:13px;text-align:center;padding:3px 14px;align-self:center;border-radius:999px;background:var(--edge);color:#fff}
+
+/* flashcard game */
+.gtop{display:flex;align-items:center;gap:10px}
+.gtop .bar{flex:1}
+.combo{font-family:var(--num);font-weight:700;color:var(--pink-d);min-width:72px;text-align:right}
+.combo.bump{animation:bump .5s var(--spring)}
+@keyframes bump{50%{transform:scale(1.5) rotate(-6deg)}}
+.scene{perspective:1100px}
+.flip{position:relative;min-height:250px;transform-style:preserve-3d;transition:transform .7s var(--spring)}
+.flip.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:28px;padding:24px 18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;border:2.5px solid var(--edge);box-shadow:inset 0 -6px 0 rgba(0,0,0,.06)}
+.face.front{background:radial-gradient(circle at 20% 15%,rgba(255,255,255,.7) 0 8%,transparent 9%),linear-gradient(160deg,var(--lav),var(--pink))}
+.face.back{background:radial-gradient(circle at 80% 15%,rgba(255,255,255,.7) 0 8%,transparent 9%),linear-gradient(160deg,var(--mint),var(--sky));transform:rotateY(180deg)}
+.face .th{font-family:var(--display);font-weight:600;font-size:23px;line-height:1.5}
+.face .en{font-family:var(--display);font-size:23px;font-weight:700}
+.face .sub{font-size:14px;color:var(--ink2)}
+.rate{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rate .btn{padding:11px 4px}
+.card.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-7px) rotate(-1deg)}40%,80%{transform:translateX(7px) rotate(1deg)}}
+.stars{display:flex;gap:8px;justify-content:center}
+.stars .ico{width:50px;height:50px}
+.stars .ico.on{animation:starIn .7s var(--spring) backwards}
+@keyframes starIn{0%{transform:scale(0) rotate(-90deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+/* lists */
+.plist{display:flex;flex-direction:column}
+.pitem{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 0;border-top:2px dashed var(--line)}
+.pitem:first-child{border-top:0}
+.pitem .en{font-weight:600}
+.meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink2)}
+.hearts{display:inline-flex;gap:2px}
+.hearts i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.hearts i.on{background:var(--pink-d)}
+
+/* speak */
+.ringwrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.ring{width:112px;height:112px;position:relative;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .tv{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--num);font-size:26px;font-weight:700}
+.ring circle{transition:stroke-dashoffset .25s linear}
+.boss{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:24px;background:var(--pink);border:2.5px solid var(--edge)}
+.boss .ico{width:52px;height:52px;animation:bob 2.2s ease-in-out infinite}
+.block{padding:12px 14px;border-radius:20px;background:var(--bg);border:2px solid var(--line)}
+.block .lbl{font-size:12px;color:var(--ink2);margin-bottom:2px;font-family:var(--display);font-weight:600}
+.block.nat{background:var(--mint);border-color:var(--mint-d)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 8px;border-bottom:2px dashed var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--ink2);font-weight:600;font-family:var(--display)}
+td.r,th.r{text-align:right}
+.wrong{color:var(--pink-d);text-decoration:line-through}
+.right{color:var(--mint-d);font-weight:600}
+
+/* stats */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{border-radius:22px;padding:10px 14px;display:flex;flex-direction:column;border:2.5px solid var(--edge);color:var(--ink)!important}
+.tile b{font-family:var(--num);font-size:28px;font-weight:700;line-height:1.2}
+.tile span{font-size:12.5px}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:12px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;line-height:1.35;font-family:var(--display);font-weight:600}
+.badge .disc{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;border:2.5px solid var(--edge);box-shadow:inset 0 -5px 0 rgba(0,0,0,.1),inset 0 4px 0 rgba(255,255,255,.5),0 4px 0 var(--edge);transition:transform .3s var(--spring)}
+.badge:hover .disc{transform:rotate(-8deg) scale(1.08)}
+.badge .disc .ico{width:36px;height:36px}
+.badge.off .disc{background:var(--bg2)!important;border-style:dashed;box-shadow:none}
+.badge.off .disc .ico{opacity:.45}
+.badge.off span{color:var(--ink2)}
+.heat{display:grid;grid-template-rows:repeat(7,13px);grid-auto-flow:column;grid-auto-columns:13px;gap:3px;overflow-x:auto}
+.heat i{border-radius:4px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--line)}
+.heat i.l1{background:var(--peach-d)} .heat i.l2{background:var(--mint-d)}
+.chart svg{width:100%;height:auto;display:block}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:8px 10px calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.nav .in{display:grid;grid-template-columns:repeat(6,1fr);gap:2px;background:var(--card);border:2.5px solid var(--edge);border-radius:30px;padding:6px;width:100%;max-width:560px;box-shadow:var(--glow)}
+.nav button{border:0;background:none;border-radius:22px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--ink2);font-family:var(--display);font-weight:600;font-size:11.5px;cursor:pointer;position:relative;transition:transform .3s var(--spring)}
+.nav button:hover{transform:translateY(-2px)}
+.nav button .ico{width:26px;height:26px}
+.nav button[aria-current="page"]{background:var(--lav);color:var(--ink)}
+.nav button[aria-current="page"] .ico{animation:hop .6s var(--spring)}
+@keyframes hop{40%{transform:translateY(-6px) scale(1.15)}}
+.nav .dot{position:absolute;top:3px;right:calc(50% - 20px);width:11px;height:11px;border-radius:50%;background:var(--pink-d);border:2px solid var(--card);animation:pulseDot 1.6s ease-in-out infinite}
+@keyframes pulseDot{50%{transform:scale(1.3)}}
+
+/* overlay & toast */
+.overlay{position:fixed;inset:0;z-index:40;background:rgba(40,25,70,.45);backdrop-filter:blur(3px);display:grid;place-items:center;padding:16px;animation:fade .3s}
+@keyframes fade{from{opacity:0}}
+.modal{background:var(--card);border-radius:34px;padding:26px 22px;max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center;animation:pop .7s var(--spring);border:3px solid var(--edge);box-shadow:var(--glow)}
+.modal .big{font-family:var(--num);font-size:58px;font-weight:700;line-height:1;background:linear-gradient(90deg,#EC5B9C,#8B5CF6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);transform:translateX(-50%);z-index:35;background:#FFF3B8;border:2.5px solid #4A3566;border-radius:24px;padding:10px 16px;display:flex;gap:10px;align-items:center;box-shadow:var(--glow);animation:drop .7s var(--spring);max-width:calc(100% - 32px);color:#3F2D5C}
+.toast .disc{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none;border:2.5px solid #4A3566}
+.toast .disc .ico{width:26px;height:26px}
+@keyframes drop{from{transform:translate(-50%,-40px) scale(.7);opacity:0}}
+canvas#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+.notice{font-size:13px;padding:10px 14px;border-radius:18px;background:#FFF3B8;color:#3F2D5C;border:2px solid #4A3566}
+.spin{display:inline-block;width:14px;height:14px;border:3px solid rgba(255,255,255,.4);border-top-color:currentColor;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+details summary{cursor:pointer;font-family:var(--display);font-weight:600}
+.screen{display:flex;flex-direction:column;gap:16px}
+.screen>*{animation:enter .55s var(--spring) backwards}
+.screen>*:nth-child(2){animation-delay:.06s}.screen>*:nth-child(3){animation-delay:.12s}.screen>*:nth-child(4){animation-delay:.18s}.screen>*:nth-child(5){animation-delay:.24s}
+@keyframes enter{from{opacity:0;transform:translateY(18px) scale(.97)}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* v5 additions */
+.mascot{width:120px;height:120px}
+.mascot .earR{animation:earR 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 95%}
+.mascot .earL{animation:earL 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 95%}
+@keyframes earR{0%,70%,100%{transform:rotate(0)}78%{transform:rotate(14deg)}86%{transform:rotate(-4deg)}}
+@keyframes earL{0%,60%,100%{transform:rotate(0)}68%{transform:rotate(-10deg)}}
+.mascot .twk{animation:twinkle 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.hero{grid-template-columns:120px 1fr}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--bg2);border:2.5px solid var(--edge);border-radius:999px;padding:4px}
+.seg button{border:0;background:none;border-radius:999px;padding:7px 8px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 2px 0 var(--edge)}
+.worldbar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.world{border:2.5px solid var(--edge);border-radius:20px;padding:8px 6px;text-align:center;cursor:pointer;background:var(--card);font-family:var(--display);font-weight:600;transition:transform .3s var(--spring);color:var(--ink)}
+.world:hover{transform:translateY(-2px)}
+.world .lv{font-family:var(--num);font-size:20px;font-weight:700;line-height:1.1}
+.world .sm{font-size:11px;color:var(--ink2)}
+.world[aria-pressed="true"]{box-shadow:0 4px 0 var(--edge)}
+.world.locked{opacity:.55}
+.units{display:flex;flex-direction:column;gap:10px}
+.unit{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:22px;border:2.5px solid var(--edge);background:var(--card);cursor:pointer;text-align:left;font:inherit;color:inherit;transition:transform .3s var(--spring)}
+.unit:hover{transform:translateX(3px)}
+.unit.locked{background:var(--bg2);border-style:dashed;cursor:default}
+.unit.locked:hover{transform:none}
+.uring{width:58px;height:58px;position:relative}
+.uring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.uring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--num);font-size:17px}
+.tag{font-size:11px;font-weight:600;font-family:var(--display);padding:1px 8px;border-radius:999px;border:1.5px solid var(--edge)}
+.tag.life{background:var(--pink)} .tag.work{background:var(--sky)} .tag.exam{background:var(--butter)}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.act{border:2.5px solid var(--edge);border-radius:22px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink);box-shadow:0 4px 0 var(--edge);transition:transform .25s var(--spring)}
+.act:hover{transform:translateY(-3px)}
+.act:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.act .ico{width:34px;height:34px}
+.act small{font-family:var(--body);font-weight:400;font-size:11.5px;color:var(--ink2)}
+@media (max-width:420px){.acts{grid-template-columns:1fr 1fr 1fr}.act{padding:10px 4px;font-size:13px}}
+.wcard{border:2.5px solid var(--edge);border-radius:28px;padding:22px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;background:radial-gradient(circle at 85% 10%,rgba(255,255,255,.75) 0 7%,transparent 8%),linear-gradient(160deg,var(--lav),var(--pink));animation:pop .55s var(--spring)}
+.wcard .w{font-family:var(--display);font-size:32px;font-weight:700;line-height:1.2}
+.wcard .pos{font-family:var(--num);font-size:13px;color:var(--ink2)}
+.wcard .th{font-family:var(--display);font-size:19px;font-weight:600}
+.wcard .chunk{font-size:14px;padding:3px 12px;border-radius:999px;background:var(--card);border:2px solid var(--edge)}
+.wcard .ex{font-size:16px;font-weight:500}
+.say{width:42px;height:42px;border-radius:50%;border:2.5px solid var(--edge);background:var(--card);display:inline-grid;place-items:center;cursor:pointer;color:var(--ink);box-shadow:0 3px 0 var(--edge);transition:transform .2s var(--spring);flex:none;padding:0}
+.say:active{transform:translateY(2px)}
+.say .ico{width:22px;height:22px}
+.say.sm{width:34px;height:34px}.say.sm .ico{width:18px;height:18px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{font-family:var(--display);font-size:16px;font-weight:600;border:2.5px solid var(--edge);border-radius:18px;padding:12px 8px;background:var(--card);color:var(--ink);cursor:pointer;box-shadow:0 3px 0 var(--edge);transition:transform .2s var(--spring)}
+.opt:hover{transform:translateY(-2px)}
+.opt.ok{background:linear-gradient(180deg,#4FD9A6,#169C6F);color:#fff;animation:bump .5s var(--spring)}
+.opt.no{background:linear-gradient(180deg,#FF8CC0,#E5468E);color:#fff;animation:shake .4s}
+.opt:disabled{cursor:default}
+.lines{display:flex;flex-direction:column;gap:8px}
+.line{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:20px;border:2px solid var(--line);background:var(--bg)}
+.line.B{background:var(--lav);border-color:var(--lav-d)}
+.line.playing{border-color:var(--pink-d);box-shadow:0 0 0 3px var(--pink)}
+.line .who{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--num);font-weight:700;border:2px solid var(--edge);background:var(--card)}
+.line .en{font-weight:600}
+.line.hide .en,.line.hide .thl{filter:blur(6px)}
+.tickb{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--edge);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:3px}
+.tickb.on{background:var(--mint-d)}
+.chat{display:flex;flex-direction:column;gap:10px;max-height:56vh;overflow-y:auto;padding:4px 2px}
+.msg{max-width:86%;padding:10px 14px;border-radius:22px;border:2px solid var(--edge);animation:pop .45s var(--spring)}
+.msg.ai{align-self:flex-start;background:var(--card);border-radius:22px 22px 22px 6px}
+.msg.me{align-self:flex-end;background:var(--lav);border-radius:22px 22px 6px 22px}
+.msg .th{font-size:13px;color:var(--ink2)}
+.fix{align-self:flex-end;max-width:90%;background:var(--mint);border:2px dashed var(--mint-d);border-radius:18px;padding:8px 12px;font-size:14px}
+.fix b{color:var(--mint-d)}
+.hint{font-size:13px;color:var(--ink2);padding:2px 6px}
+.composer{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.composer textarea{min-height:52px}
+.big3k{display:flex;flex-direction:column;gap:6px}
+.big3k .track{height:22px;border-radius:999px;border:2.5px solid var(--edge);background:var(--bg2);position:relative;overflow:hidden}
+.big3k .track i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#FF8CC0,#A985FF,#7CC8FF,#5FE3B4);box-shadow:inset 0 4px 0 rgba(255,255,255,.4);transition:width 1.2s var(--spring)}
+.big3k .marks{position:relative;height:18px;font-family:var(--num);font-size:11.5px;color:var(--ink2)}
+.big3k .marks span{position:absolute;transform:translateX(-50%)}
+.big3k .track em{position:absolute;top:0;bottom:0;width:2px;background:var(--edge);opacity:.35}
+.levelrow{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;font-size:13px}
+.levelrow .bar{height:12px}
+.exq{display:flex;flex-direction:column;gap:10px}
+.exq .q{font-family:var(--display);font-weight:600;font-size:17px}
+.diff{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+</style>
+
+<div class="skybg" id="sky" aria-hidden="true"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="app">
+  <div class="hud" id="hud">
+    <div class="lvl" id="lvlRing"><b id="lvlNum">1</b></div>
+    <div class="xpbox"><div class="t"><span id="lvlTitle">มือใหม่หัดพูด</span><span class="num" id="xpText">0 / 200 XP</span></div><div class="bar"><i id="xpBar" style="width:0%"></i></div></div>
+    <div class="streak" id="streak" title="วันติดต่อกัน"><span class="ico" id="flame"></span><span id="streakN">0</span></div>
+  </div>
+  <div id="modeNote" class="notice" hidden></div>
+  <main id="main"></main>
+</div>
+<nav class="nav" aria-label="เมนูหลัก"><div class="in" id="nav"></div></nav>
+
+<script>
+(() => {
+// ---------- storybook line-art sprites ----------
+const E = '#4A3566';
+const sv = (vb, body, attrs = '') => `<svg viewBox="${vb}" ${attrs} aria-hidden="true">${body}</svg>`;
+const NAV = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+const SOFT = 'fill="currentColor" fill-opacity=".18"';
+const STARP = 'M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z';
+const I = {
+  home: sv('0 0 24 24', `<path d="M5.5 10.2v9.3h13v-9.3" ${SOFT}/><path d="M3.5 11.5L12 4l8.5 7.5"/><path d="M5.5 10.2v9.3h13v-9.3"/><path d="M10 19.5v-5h4v5"/>`, NAV),
+  map: sv('0 0 24 24', `<path d="M3 6.5l5.5-2.5 7 2.5 5.5-2.5v13.5l-5.5 2.5-7-2.5L3 20z" ${SOFT}/><path d="M3 6.5l5.5-2.5 7 2.5 5.5-2.5v13.5l-5.5 2.5-7-2.5L3 20z"/><path d="M8.5 4v13.5M15.5 6.5V20"/>`, NAV),
+  cards: sv('0 0 24 24', `<rect x="3" y="6.5" width="12.5" height="15" rx="3" ${SOFT}/><rect x="3" y="6.5" width="12.5" height="15" rx="3"/><path d="M8 3.5h10a3 3 0 013 3V17"/><path d="M6.5 12h5.5M6.5 15.5h3.5"/>`, NAV),
+  book: sv('0 0 24 24', `<path d="M4 5.5A2.5 2.5 0 016.5 3H19v15H6.5A2.5 2.5 0 004 20.5z" ${SOFT}/><path d="M4 5.5A2.5 2.5 0 016.5 3H19v15H6.5A2.5 2.5 0 004 20.5z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H19v3.5H6.5A2.5 2.5 0 014 20.5z"/><path d="M9 7.5h6"/>`, NAV),
+  mic: sv('0 0 24 24', `<rect x="8.5" y="2.5" width="7" height="12" rx="3.5" ${SOFT}/><rect x="8.5" y="2.5" width="7" height="12" rx="3.5"/><path d="M5 11a7 7 0 0014 0M12 18v3.5M8.5 21.5h7"/>`, NAV),
+  chart: sv('0 0 24 24', `<rect x="4" y="11" width="4" height="9" rx="1.5" ${SOFT}/><rect x="10" y="5" width="4" height="15" rx="1.5" ${SOFT}/><rect x="16" y="13" width="4" height="7" rx="1.5" ${SOFT}/><rect x="4" y="11" width="4" height="9" rx="1.5"/><rect x="10" y="5" width="4" height="15" rx="1.5"/><rect x="16" y="13" width="4" height="7" rx="1.5"/>`, NAV),
+  lock: sv('0 0 24 24', `<rect x="5" y="10" width="14" height="10.5" rx="3" ${SOFT}/><rect x="5" y="10" width="14" height="10.5" rx="3"/><path d="M8 10V7.5a4 4 0 018 0V10M12 14v2.5"/>`, NAV),
+  wave: sv('0 0 24 24', `<path d="M3.5 12h1.5M8 8.5v7M12 5v14M16 8.5v7M20 11v2"/>`, NAV),
+  flame: sv('0 0 24 24', `<path d="M12 2.5c1.2 3.6 6.5 5.8 6.5 11.5a6.5 6.5 0 01-13 0c0-3.2 2-5.4 3.3-6.6.1 2 .9 3.2 2.1 3.4-.5-3.2.1-6 1.1-8.3z" fill="#FF8A3D" stroke="${E}" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 11.5c1.6 1.6 3.2 2.7 3.2 4.7a3.2 3.2 0 01-6.4 0c0-1.5.9-2.6 1.6-3.2.2 1 .8 1.6 1.5 1.6-.3-1-.1-2.1.1-3.1z" fill="#FFD24A"/><ellipse cx="9" cy="12.5" rx=".9" ry="1.9" fill="#fff" opacity=".65"/>`),
+  check: sv('0 0 24 24', `<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>`),
+  star: sv('0 0 24 24', `<path d="${STARP}" fill="#FFD24A" stroke="${E}" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.6 9.2l1.8-.3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>`),
+  starOff: sv('0 0 24 24', `<path d="${STARP}" fill="var(--bg2)" stroke="var(--line)" stroke-width="1.6" stroke-linejoin="round"/>`),
+  heart: sv('0 0 24 24', `<path d="M12 20.5S3.5 15.4 3.5 9.3A4.3 4.3 0 0112 7.2a4.3 4.3 0 018.5 2.1c0 6.1-8.5 11.2-8.5 11.2z" fill="#FF6FAE" stroke="${E}" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="7.8" cy="9.8" rx="1.3" ry="2" fill="#fff" opacity=".7" transform="rotate(-25 7.8 9.8)"/>`),
+  chest: sv('0 0 64 64', `<rect x="8" y="28" width="48" height="28" rx="6" fill="#F59A55" stroke="${E}" stroke-width="2.5"/><path d="M8 32c0-11 9-19 24-19s24 8 24 19z" fill="#FF7EB6" stroke="${E}" stroke-width="2.5" stroke-linejoin="round"/><rect x="8" y="30" width="48" height="6" fill="#FFD24A" stroke="${E}" stroke-width="2.5"/><rect x="27" y="27" width="10" height="13" rx="3" fill="#FFD24A" stroke="${E}" stroke-width="2.5"/><path d="M16 21q5-5 11-6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".75" fill="none"/>`),
+  chestOpen: sv('0 0 64 64', `<path d="M12 27L17 8h30l5 19z" fill="#FF7EB6" stroke="${E}" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="32" cy="28" rx="21" ry="7" fill="#FFF0A0"/><circle cx="24" cy="24" r="5" fill="#FFD24A" stroke="${E}" stroke-width="2"/><circle cx="36" cy="22" r="5" fill="#FFD24A" stroke="${E}" stroke-width="2"/><circle cx="45" cy="26" r="4" fill="#FFD24A" stroke="${E}" stroke-width="2"/><rect x="8" y="28" width="48" height="28" rx="6" fill="#F59A55" stroke="${E}" stroke-width="2.5"/><rect x="8" y="30" width="48" height="6" fill="#FFD24A" stroke="${E}" stroke-width="2.5"/><path d="M8 6l3 4M56 6l-3 4M32 0v4" stroke="#FFD24A" stroke-width="2.6" stroke-linecap="round"/>`),
+  crown: sv('0 0 24 24', `<path d="M3 8.5l4.6 4.2L12 5l4.4 7.7L21 8.5l-1.8 10.5H4.8z" fill="#FFD24A" stroke="${E}" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14.6" r="1.7" fill="#FF6FAE" stroke="${E}" stroke-width="1"/><circle cx="3" cy="8.5" r="1.4" fill="#FFD24A" stroke="${E}" stroke-width="1"/><circle cx="21" cy="8.5" r="1.4" fill="#FFD24A" stroke="${E}" stroke-width="1"/><circle cx="12" cy="4.6" r="1.4" fill="#FFD24A" stroke="${E}" stroke-width="1"/>`),
+  boss: sv('0 0 48 48', `<path d="M12 34A9 9 0 0111 16a12 12 0 0123-3 8.5 8.5 0 012 21z" fill="#BBA7E0" stroke="${E}" stroke-width="2.5" stroke-linejoin="round"/><path d="M15 20.5l5 2.2M33 20.5l-5 2.2" stroke="${E}" stroke-width="2.5" stroke-linecap="round"/><circle cx="19" cy="25.5" r="2.5" fill="${E}"/><circle cx="29" cy="25.5" r="2.5" fill="${E}"/><circle cx="19.9" cy="24.6" r=".9" fill="#fff"/><circle cx="29.9" cy="24.6" r=".9" fill="#fff"/><path d="M21 30.5q3-2 6 0" stroke="${E}" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M26 35l-4 6h5l-3 6" stroke="#FFC21A" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`),
+};
+const ico = (k, size) => { const s = document.createElement('span'); s.className = 'ico'; if (size) { s.style.width = size + 'px'; s.style.height = size + 'px'; } s.innerHTML = I[k]; return s; };
+const SPARK = '<svg viewBox="0 0 24 24"><path d="M12 0C13 8 16 11 24 12 16 13 13 16 12 24 11 16 8 13 0 12 8 11 11 8 12 0z" fill="#FFFFFF"/></svg>';
+const CLOUD = '<svg viewBox="0 0 120 50"><path d="M20 46a15 15 0 010-30 20 20 0 0137-7 16 16 0 0129 7 14 14 0 0114 30z" fill="#FFFFFF" opacity=".75"/></svg>';
+(function sky() {
+  const s = document.getElementById('sky'); if (!s) return;
+  for (let i = 0; i < 12; i++) { const b = document.createElement('div'); b.className = 'rise' + (i % 4 === 0 ? ' hrt' : ''); b.style.left = (i * 8.3 + 3) + '%'; b.style.animationDelay = (-i * 2.1).toFixed(1) + 's'; b.style.animationDuration = (16 + (i % 5) * 4) + 's'; const z = 10 + (i % 4) * 7; b.style.width = b.style.height = z + 'px'; s.append(b); }
+  [[8, 12, 140, 0], [40, 55, 110, -22], [70, 30, 170, -40]].forEach(([top, , w, delay]) => { const c = document.createElement('div'); c.className = 'cloud'; c.style.top = top + '%'; c.style.width = w + 'px'; c.style.animationDelay = delay + 's'; c.innerHTML = CLOUD; s.append(c); });
+  for (let i = 0; i < 16; i++) { const p = document.createElement('div'); p.className = 'sp'; p.style.left = (Math.random() * 96) + '%'; p.style.top = (Math.random() * 92) + '%'; p.style.animationDelay = (Math.random() * 3).toFixed(2) + 's'; const z = 8 + Math.random() * 12; p.style.width = p.style.height = z + 'px'; p.innerHTML = SPARK; s.append(p); }
+})();
+
+
+// ---------- extra icons + new mascot ----------
+Object.assign(I, {
+  speaker: sv('0 0 24 24', `<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor" fill-opacity=".18"/><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/>`, NAV),
+  chat: sv('0 0 24 24', `<path d="M4 5.5h16v10H10l-4.5 4v-4H4z" fill="currentColor" fill-opacity=".18"/><path d="M4 5.5h16v10H10l-4.5 4v-4H4z"/><path d="M8 10.5h.01M12 10.5h.01M16 10.5h.01" stroke-width="2.8"/>`, NAV),
+  learn: sv('0 0 24 24', `<path d="M12 3.5l9 4.5-9 4.5L3 8z" fill="currentColor" fill-opacity=".18"/><path d="M12 3.5l9 4.5-9 4.5L3 8z"/><path d="M6.5 10v5c2 2.5 9 2.5 11 0v-5M21 8v5.5"/>`, NAV),
+  exam: sv('0 0 24 24', `<rect x="5" y="3" width="14" height="18" rx="3" fill="currentColor" fill-opacity=".18"/><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 8.5l1.5 1.5 3-3M8.5 14.5h7M8.5 17.5h5"/>`, NAV),
+  play: sv('0 0 24 24', `<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>`),
+  spark: sv('0 0 24 24', `<path d="M12 1.5c1 7 3.5 9.5 10.5 10.5-7 1-9.5 3.5-10.5 10.5-1-7-3.5-9.5-10.5-10.5 7-1 9.5-3.5 10.5-10.5z" fill="#FFD24A" stroke="${E}" stroke-width="1.4" stroke-linejoin="round"/>`),
+});
+let mascotN2 = 0;
+function mascot(mood) {
+  mood = mood || 'happy';
+  const id = 'jb' + (++mascotN2); const L = '#E2559A'; const EYE = '#B0306E';
+  const star = (x, y, r, fill) => { let d = ''; for (let k = 0; k < 10; k++) { const rr = k % 2 ? r * .45 : r; const a = k * Math.PI / 5 - Math.PI / 2; d += (k ? 'L' : 'M') + (x + Math.cos(a) * rr).toFixed(1) + ' ' + (y + Math.sin(a) * rr).toFixed(1); } return `<path d="${d}Z" fill="${fill}"/>`; };
+  const heartP = (x, y, s) => `M${x} ${y}c${-3 * s} ${-5 * s} ${-10 * s} ${-3 * s} ${-9 * s} ${2 * s} ${1 * s} ${3 * s} ${5 * s} ${5 * s} ${9 * s} ${8 * s} ${4 * s} ${-3 * s} ${8 * s} ${-5 * s} ${9 * s} ${-8 * s} ${1 * s} ${-5 * s} ${-6 * s} ${-7 * s} ${-9 * s} ${-2 * s}z`;
+  const dotEyes = (dy = 0) => `<g class="eyes"><circle cx="54" cy="${74 + dy}" r="6.8" fill="${EYE}"/><circle cx="86" cy="${74 + dy}" r="6.8" fill="${EYE}"/><circle cx="56.6" cy="${71.4 + dy}" r="2.6" fill="#fff"/><circle cx="88.6" cy="${71.4 + dy}" r="2.6" fill="#fff"/><circle cx="52" cy="${77 + dy}" r="1.2" fill="#fff"/><circle cx="84" cy="${77 + dy}" r="1.2" fill="#fff"/></g>`;
+  const eyes = mood === 'cheer' ? `<path d="M47 77q7-10 14 0M79 77q7-10 14 0" stroke="${L}" stroke-width="4.4" fill="none" stroke-linecap="round"/>`
+    : mood === 'sleepy' ? `<path d="M47 75q7 6 14 0M79 75q7 6 14 0" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : mood === 'shy' ? `<path d="M48 76q6 5 12 0M80 76q6 5 12 0" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : mood === 'think' ? dotEyes(-4) : dotEyes(0);
+  const mouth = mood === 'cheer' ? `<path d="M62 86q8 12 16 0z" fill="#FF6FAE" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`
+    : mood === 'sleepy' ? `<ellipse cx="70" cy="89" rx="3" ry="2.4" fill="#FF6FAE" stroke="${L}" stroke-width="2.2"/><circle cx="80" cy="86" r="5" fill="#fff" fill-opacity=".7" stroke="${L}" stroke-width="1.6"/>`
+    : mood === 'think' ? `<path d="M64 89q3-3 6 0t6 0" stroke="${L}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : mood === 'shy' ? `<path d="M65 88q2.5-2.5 5 0t5 0" stroke="${L}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : `<path d="M65 85q5 6 10 0" stroke="${L}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`;
+  const blushO = mood === 'shy' || mood === 'cheer' ? .95 : .6;
+  const extra = mood === 'think' ? `<path d="M106 40q5 8 0 11.5q-5-3.5 0-11.5z" fill="#BFE6FF" stroke="${L}" stroke-width="1.8"/><text x="112" y="28" font-family="Fredoka, sans-serif" font-weight="700" font-size="20" fill="${L}">?</text>`
+    : mood === 'sleepy' ? `<text x="106" y="26" font-family="Fredoka, sans-serif" font-weight="700" font-size="17" fill="${L}">z</text><text x="118" y="12" font-family="Fredoka, sans-serif" font-weight="700" font-size="12" fill="${L}">z</text>`
+    : mood === 'cheer' ? `<g class="twk">${star(16, 40, 7, '#FFD24A')}</g><g class="twk" style="animation-delay:.6s"><path d="${heartP(122, 30, .9)}" fill="${L}"/></g><g class="twk" style="animation-delay:1.1s">${star(126, 98, 5, '#7CC8FF')}</g>`
+    : mood === 'shy' ? `<g class="twk"><path d="${heartP(118, 32, .9)}" fill="${L}"/></g>` : '';
+  const up = mood === 'cheer';
+  const hem = Array.from({ length: 6 }, () => 'q-7 10 -14 0').join(' ');
+  const fillEnd = mood === 'shy' || mood === 'cheer' ? '#FFAFD1' : mood === 'sleepy' ? '#F2D3E2' : '#FFCFE4';
+  const el = document.createElement('div'); el.className = 'mascot jelly ' + mood; el.setAttribute('role', 'img'); el.setAttribute('aria-label', 'เจลลี่บู ผีเยลลี่ผู้ช่วยฝึกภาษา');
+  el.innerHTML = `<svg viewBox="0 0 140 150" style="overflow:visible"><defs>
+    <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FB"/><stop offset=".6" stop-color="#FFE3EF"/><stop offset="1" stop-color="${fillEnd}"/></linearGradient>
+    <radialGradient id="${id}h"><stop offset="0" stop-color="#FFD3E6" stop-opacity=".9"/><stop offset="1" stop-color="#FFD3E6" stop-opacity="0"/></radialGradient></defs>
+    ${mood === 'sleepy' ? '' : `<circle class="halo" cx="70" cy="76" r="64" fill="url(#${id}h)"/>`}
+    <ellipse class="shadow" cx="70" cy="144" rx="30" ry="4" fill="${L}" opacity=".16"/>
+    <g class="ghost">
+      <ellipse cx="25" cy="${up ? 66 : 92}" rx="7" ry="10" fill="#FFE3EF" stroke="${L}" stroke-width="3" transform="rotate(${up ? -30 : 28} 25 ${up ? 66 : 92})"/>
+      <g class="${mood === 'sleepy' ? '' : 'arm'}"><ellipse cx="115" cy="${up ? 66 : 88}" rx="7" ry="10" fill="#FFE3EF" stroke="${L}" stroke-width="3" transform="rotate(${up ? 30 : -28} 115 ${up ? 66 : 88})"/></g>
+      <path d="M28 76c0-30 18-52 42-52s42 22 42 52v42 ${hem}z" fill="url(#${id})" fill-opacity=".95" stroke="${L}" stroke-width="3.6" stroke-linejoin="round"/>
+      <path d="M40 52q6-16 22-20" stroke="#fff" stroke-width="7" stroke-linecap="round" fill="none"/><circle cx="37" cy="64" r="3.4" fill="#fff"/>
+      <g class="bub"><circle cx="92" cy="106" r="4" fill="none" stroke="#fff" stroke-width="2"/></g><g class="bub" style="animation-delay:-1.2s"><circle cx="46" cy="112" r="2.6" fill="none" stroke="#fff" stroke-width="1.8"/></g><g class="bub" style="animation-delay:-2.1s"><circle cx="101" cy="94" r="2" fill="#fff"/></g>
+      <g class="jheart"><path d="${heartP(70, 110, 1)}" fill="#FF7EB6" stroke="${L}" stroke-width="1.4" stroke-linejoin="round"/><circle cx="66" cy="110" r="1.3" fill="#fff"/></g>
+      ${eyes}${mouth}
+      <ellipse cx="43" cy="85" rx="7.5" ry="4.4" fill="#FF7EB6" opacity="${blushO}"/><ellipse cx="97" cy="85" rx="7.5" ry="4.4" fill="#FF7EB6" opacity="${blushO}"/>
+      <path d="M39 84l2.6-3M44 85l2.6-3M93 84l2.6-3M98 85l2.6-3" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/>
+    </g>${extra}</svg>`;
+  return el;
+}
+
+// ---------- helpers ----------
+const $ = (s, el = document) => el.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v; else if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) { if (c == null || c === false) continue; el.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return el;
+}
+const iso = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const today = () => iso(new Date());
+const addDays = (s, n) => { const d = new Date(s + 'T00:00:00'); d.setDate(d.getDate() + n); return iso(d); };
+const thDate = s => new Date(s + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+const dayOf = ts => ts ? iso(new Date(ts)) : '';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const words = t => (t.trim().match(/[A-Za-z0-9'’-]+/g) || []).length;
+const slug = w => 'w_' + String(w).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+const shuffle = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canTTS = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
+function say(text, rate = 1, onend) {
+  if (!canTTS) { if (onend) onend(); return; }
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US'; u.rate = rate;
+    const vs = speechSynthesis.getVoices(); const v = vs.find(v => /en-US/i.test(v.lang) && /female|samantha|aria|jenny|google us/i.test(v.name)) || vs.find(v => /^en/i.test(v.lang)); if (v) u.voice = v;
+    if (onend) { u.onend = onend; u.onerror = onend; }
+    speechSynthesis.speak(u);
+  } catch { if (onend) onend(); }
+}
+const sayBtn = (text, cls) => canTTS ? h('button', { class: 'say' + (cls ? ' ' + cls : ''), 'aria-label': 'ฟังเสียง ' + text, onclick: e => { e.stopPropagation(); say(text, ui.rate); } }, ico('speaker')) : null;
+
+// ---------- data ----------
+const INTERVALS = [0, 1, 3, 7, 14, 30, 60];
+const COLS = ['phrases', 'days', 'checkpoints', 'checks', 'units', 'words', 'meta'];
+const S = Object.fromEntries(COLS.map(c => [c, new Map()]));
+let db = null, sample = null, aiOff = false, loaded = false;
+async function put(col, id, data, quiet) {
+  S[col].set(id, data); if (!quiet) render();
+  if (db) { try { await db.collection(col).doc(id).set(data); } catch (e) { note(e && e.code === 'quota_exceeded' ? 'พื้นที่เก็บข้อมูลเต็ม ลบประโยคเก่าบางส่วนก่อน' : 'บันทึกไม่สำเร็จ ลองอีกครั้ง'); } }
+  else lsSet('epl-' + col, [...S[col]]);
+}
+async function del(col, id) { S[col].delete(id); render(); if (db) { try { await db.collection(col).doc(id).delete(); } catch {} } else lsSet('epl-' + col, [...S[col]]); }
+function note(msg) { const n = $('#modeNote'); n.textContent = msg; n.hidden = false; }
+async function initStore() {
+  const C = window.claude;
+  if (C && C.use) { try { db = await C.use('db'); } catch {} try { sample = await C.use('sample'); } catch {} }
+  if (db) {
+    const got = new Set();
+    for (const col of COLS) db.collection(col).onSnapshot(snap => {
+      S[col] = new Map(snap.docs.filter(d => d.exists).map(d => [d.id, { ...d.data() }]));
+      got.add(col); if (got.size === COLS.length) loaded = true; render();
+    }, () => note('การเชื่อมต่อข้อมูลขาดหาย รีเฟรชหน้าเพื่อเชื่อมใหม่'));
+  } else {
+    for (const col of COLS) S[col] = new Map(lsGet('epl-' + col, []));
+    loaded = true; try { if (!localStorage.getItem('epl-pwa-note')) { localStorage.setItem('epl-pwa-note', '1'); note('ความคืบหน้าบันทึกไว้ในเครื่องนี้ · ฟีเจอร์ AI (คุยกับเจลลี่บู, ข้อสอบ AI) ใช้ได้เมื่อเปิดแอปใน Claude'); } } catch (e) {}
+  }
+  if (!sample) aiOff = true;
+  render();
+}
+
+// ---------- syllabus ----------
+const WORLDS = [
+  { lv: 'A1', name: 'เมืองแรกเริ่ม', sub: 'Beginner · ชีวิตประจำวัน', color: 'pink', target: 80, wpm: 0,
+    boss: 'Tell me about yourself and your daily routine.', secs: 45,
+    qs: ['Tell me about yourself.', 'What do you do every morning?', 'What food do you like?', 'Tell me about your family.'] },
+  { lv: 'A2', name: 'ย่านคนเมือง', sub: 'Elementary · ชีวิตนอกบ้าน', color: 'peach', target: 90, wpm: 0,
+    boss: 'Tell me about a trip or a weekend you really enjoyed.', secs: 75,
+    qs: ['What did you do last weekend?', 'Tell me about your last trip.', 'What do you do when you feel stressed?', 'What are your plans for next month?'] },
+  { lv: 'B1', name: 'ออฟฟิศกลางเมือง', sub: 'Intermediate · เริ่มใช้ในงาน', color: 'mint', target: 100, wpm: 75,
+    boss: 'Explain your job and tell me about a problem you solved at work.', secs: 100,
+    qs: ['Tell me about your job.', 'What does a typical workday look like?', 'Tell me about a problem at work and how you solved it.', 'Do you prefer working alone or in a team? Why?'] },
+  { lv: 'B2', name: 'เวทีมืออาชีพ', sub: 'Upper-Intermediate · งาน สอบ สัมภาษณ์', color: 'sky', target: 110, wpm: 90,
+    boss: 'Tell me about yourself and why we should hire you.', secs: 150,
+    qs: ['Give a short update on a project you are working on.', 'What is your biggest achievement at work?', 'Why do you want to work for an international company?', 'Where do you see yourself in five years?'] },
+];
+const U = (w, t, th, f, use, scene, open) => ({ w, t, th, f, use, scene, open });
+const UNITS = [
+  U(0, 'Hello & Me', 'ทักทายและแนะนำตัว', 'verb to be: I am / You are / She is', 'life', 'meeting a new friend at a café in Bangkok', "Hi! I'm Jelly Boo. Nice to meet you! What's your name?"),
+  U(0, 'Family & Friends', 'ครอบครัวและเพื่อน', 'have / has, possessives (my, your, her)', 'life', 'showing family photos to a friend', 'Oh, is this a photo of your family? Who is this?'),
+  U(0, 'My Home', 'บ้านของฉัน', 'there is / there are, in / on / under', 'life', 'talking about where you live', 'Where do you live? Is it a house or a condo?'),
+  U(0, 'Food & Drinks', 'อาหารและเครื่องดื่ม', 'like / don\'t like, would like', 'life', 'having lunch together at a food court', "I'm so hungry! What do you usually eat for lunch?"),
+  U(0, 'Daily Routine', 'กิจวัตรประจำวัน', 'present simple + always / usually / never', 'life', 'chatting about your normal day', 'What time do you usually get up on weekdays?'),
+  U(0, 'Time & Dates', 'เวลาและวันที่', 'at / on / in + time, What time…?', 'life', 'making a plan to meet', "Let's meet this week! Which day is good for you?"),
+  U(0, 'Shopping & Money', 'ช้อปปิ้งและเงิน', 'How much…? this / that / these / those', 'life', 'shopping at a market', 'Welcome to my shop! What are you looking for today?'),
+  U(0, 'Getting Around', 'เดินทางในเมือง', 'can / can\'t, directions (turn left, go straight)', 'life', 'asking for directions to the BTS station', 'Hi! You look a little lost. Where do you want to go?'),
+  U(1, 'Last Weekend', 'สุดสัปดาห์ที่ผ่านมา', 'past simple (regular & irregular)', 'life', 'Monday morning small talk', 'Good morning! How was your weekend? What did you do?'),
+  U(1, 'Health & Body', 'สุขภาพและร่างกาย', 'should / shouldn\'t, I have a…', 'life', 'telling a friend you feel sick', 'You look tired today. Are you okay? How do you feel?'),
+  U(1, 'Weather & Seasons', 'อากาศและฤดูกาล', 'comparatives (hotter, more comfortable)', 'life', 'comparing Bangkok weather with another city', "It's so hot today! Is it always this hot in Bangkok?"),
+  U(1, 'Hobbies & Free Time', 'งานอดิเรก', 'enjoy / love / hate + V-ing', 'life', 'getting to know a new colleague', 'What do you like doing in your free time?'),
+  U(1, 'Travel & Hotels', 'ท่องเที่ยวและโรงแรม', 'going to (plans), I\'d like to book…', 'life', 'checking in at a hotel', 'Good evening, welcome to our hotel. Do you have a reservation?'),
+  U(1, 'Restaurants', 'สั่งอาหารที่ร้าน', 'Could I have…? Can I get…? polite requests', 'life', 'ordering at a restaurant', 'Hi there! Are you ready to order, or do you need a few more minutes?'),
+  U(1, 'Feelings', 'ความรู้สึกและนิสัย', 'adjectives + because, so', 'life', 'talking about a stressful week', "You seem a bit stressed this week. What's going on?"),
+  U(1, 'Plans & Invitations', 'ชวนและนัดหมาย', 'present continuous for future, Would you like to…?', 'life', 'inviting a friend to an event', 'Are you doing anything this Saturday? I have a fun idea!'),
+  U(2, 'Describing My Job', 'อธิบายงานของฉัน', "I'm responsible for… / I work on… / My job is to…", 'work', 'a new colleague asks about your role', "Hi, I'm new here. What do you do in this team?"),
+  U(2, 'At the Workplace', 'ในที่ทำงาน', 'present perfect: I have finished / Have you…?', 'work', 'checking task status with a teammate', 'Hey, have you finished the work orders for this week?'),
+  U(2, 'Emails & Messages', 'อีเมลและข้อความงาน', 'I\'m writing to… / Could you please… / Please find attached', 'work', 'writing a short work message together', 'I need to send a message to the supplier. Can you help me write it?'),
+  U(2, 'Meetings Basics', 'พูดในที่ประชุม', 'I agree / I see your point, but… / Could you clarify…?', 'work', 'a short team meeting about schedules', "Okay team, let's start. What do you think about the new schedule?"),
+  U(2, 'Problems & Solutions', 'ปัญหาและวิธีแก้', 'because of / so / as a result', 'work', 'reporting an equipment problem', 'I heard there was a problem with one of the machines. What happened?'),
+  U(2, 'Technology & Tools', 'เทคโนโลยีและเครื่องมือ', 'passive voice basics: is used / was replaced', 'work', 'explaining a tool or system you use', 'What software do you use at work? How does it help you?'),
+  U(2, 'Experiences', 'ประสบการณ์', 'Have you ever…? present perfect vs past simple', 'exam', 'sharing life experiences', 'Have you ever done something really exciting or scary?'),
+  U(2, 'Opinions & News', 'ความคิดเห็นและข่าว', 'In my opinion… / If…, will… (first conditional)', 'exam', 'discussing a news story', 'Did you see the news about AI at work? What do you think?'),
+  U(3, 'Project Updates', 'อัปเดตความคืบหน้างาน', 'so far / on track / behind schedule / be supposed to', 'work', 'giving a project update to your manager', "Hi, can you give me a quick update on your project? Are we on track?"),
+  U(3, 'Data & Numbers', 'ข้อมูลและตัวเลข', 'increase / decrease / slightly / significantly', 'exam', 'explaining a chart in a report', 'I see this chart in your report. Can you explain what it shows?'),
+  U(3, 'Negotiation', 'ต่อรองและโน้มน้าว', 'If we…, we would… (second conditional)', 'work', 'negotiating a deadline with a supplier', "We can't deliver the parts until next month. Is that a problem for you?"),
+  U(3, 'Safety & Maintenance', 'ความปลอดภัยและซ่อมบำรุง', 'must / have to / need to, procedures', 'work', 'explaining safety rules to a visitor at the plant', 'Hello! This is my first time at a power plant. What safety rules should I know?'),
+  U(3, 'Teamwork & Leadership', 'ทีมเวิร์กและภาวะผู้นำ', 'relative clauses: who / which / that', 'work', 'talking about how you work with other teams', 'How do you work with other teams when there is a big job?'),
+  U(3, 'Job Interviews', 'สัมภาษณ์งาน', 'achievements: I managed to… / I was able to…', 'work', 'a job interview at an international company', 'Thank you for coming today. Could you tell me a little about yourself?'),
+  U(3, 'Presentations', 'การนำเสนอ', "signposting: First… / Let's move on to… / To sum up…", 'exam', 'presenting your work to managers', "We're ready for your presentation. What will you talk about today?"),
+  U(3, 'Career & Future', 'อาชีพและอนาคต', 'I would like to… / By next year I will have…', 'work', 'a career talk with a mentor', 'Where do you want to be in your career in five years?'),
+];
+UNITS.forEach((u, i) => { u.id = 'u' + String(i + 1).padStart(2, '0'); u.n = i + 1; u.lv = WORLDS[u.w].lv; u.target = WORLDS[u.w].target; });
+const TOTAL_TARGET = UNITS.reduce((a, u) => a + u.target, 0);
+const TITLES = ['มือใหม่หัดพูด', 'กล้าเปิดปาก', 'นักเล่าเรื่องฝึกหัด', 'พูดคล่องขึ้นทุกวัน', 'นักสนทนาตัวจริง', 'พร้อมลุยงาน', 'มือโปรสื่อสาร', 'ตำนานภาษาอังกฤษ'];
+
+// ---------- derived ----------
+const allWords = () => [...S.words.values()];
+const unitWords = id => allWords().filter(w => w.unit === id);
+const unitDoc = id => S.units.get(id) || {};
+function unitProgress(u) { const n = unitWords(u.id).length; const sh = (unitDoc(u.id).shadowDone || 0) > 0; return Math.min(1, n / u.target) * .8 + (sh ? .2 : 0); }
+const bossCleared = w => [...S.checks.values()].some(c => c.boss && c.pass && c.world === w);
+const bestWpm = () => Math.max(0, ...[...S.checkpoints.values()].map(c => c.wpm || 0));
+function worldOpen(w) { if (w === 0 || w <= UNITS[placedStart()].w) return true; if (!bossCleared(w - 1)) return false; return bestWpm() >= WORLDS[w].wpm; }
+function unitOpen(i) { if (i <= placedStart()) return true; const u = UNITS[i]; if (!worldOpen(u.w)) return false; if (i === 0 || UNITS[i - 1].w !== u.w) return true; return unitProgress(UNITS[i - 1]) >= .5; }
+function currentUnit() { let cur = 0; UNITS.forEach((u, i) => { if (unitOpen(i)) cur = i; }); for (let i = placedStart(); i <= cur; i++) if (unitOpen(i) && unitProgress(UNITS[i]) < 1) return i; return cur; }
+function computeXP() {
+  let xp = 0;
+  for (const d of S.days.values()) { xp += Object.values(d.steps || {}).filter(Boolean).length * 10; if (d.minimum) xp += 5; if (d.quest) xp += 20; if (d.treasure) xp += 15; }
+  for (const k of S.meta.keys()) if (k.startsWith('week-')) xp += 100;
+  for (const p of S.phrases.values()) { if (p.source !== 'starter') xp += 5; xp += (p.reviews || 0) * 2; if ((p.box || 0) >= 4) xp += 10; }
+  for (const w of S.words.values()) { xp += 3 + (w.reviews || 0) * 2; if ((w.box || 0) >= 4) xp += 5; }
+  for (const c of S.checks.values()) { xp += c.kind === 'chat' ? 5 : c.kind === 'exam' ? 3 : 15; if (c.boss && c.pass) xp += 100; }
+  for (const u of S.units.values()) xp += (u.shadowDone || 0) * 15;
+  xp += S.checkpoints.size * 30;
+  return xp;
+}
+function levelInfo(xp) { let n = 1, need = 200, rest = xp; while (rest >= need) { rest -= need; n++; need = 200 + 50 * (n - 1); } return { level: n, into: rest, need, total: xp }; }
+const titleFor = lv => TITLES[Math.min(TITLES.length - 1, Math.floor((lv - 1) / 2))];
+function dayLevel(d) { if (!d) return 0; const n = Object.values(d.steps || {}).filter(Boolean).length; if (n >= 4) return 2; if (n > 0 || d.minimum) return 1; return 0; }
+function streak() { let s = 0, cur = today(); if (!dayLevel(S.days.get(cur))) cur = addDays(cur, -1); while (dayLevel(S.days.get(cur))) { s++; cur = addDays(cur, -1); } return s; }
+function bestStreak() { const ks = [...S.days.keys()].filter(k => dayLevel(S.days.get(k))).sort(); let best = 0, run = 0, prev = null; for (const k of ks) { run = prev && addDays(prev, 1) === k ? run + 1 : 1; best = Math.max(best, run); prev = k; } return best; }
+const sortedCps = () => [...S.checkpoints.entries()].map(([id, c]) => ({ id, ...c })).sort((a, b) => a.date < b.date ? -1 : 1);
+function dueItems() {
+  const t = today();
+  const w = [...S.words.entries()].filter(([, x]) => (x.due || '') <= t).map(([id, x]) => ({ col: 'words', id, ...x }));
+  const p = [...S.phrases.entries()].filter(([, x]) => (x.due || '') <= t).map(([id, x]) => ({ col: 'phrases', id, ...x }));
+  return w.concat(p);
+}
+const packSize = () => lsGet('epl-pack', 8);
+const diff = () => lsGet('epl-diff', 0);
+function questCounts() {
+  const t = today();
+  const seen = [...S.words.values(), ...S.phrases.values()].filter(x => dayOf(x.lastSeen) === t).length;
+  const learned = allWords().filter(w => dayOf(w.created) === t).length;
+  const cs = [...S.checks.values()].filter(c => dayOf(c.created) === t);
+  const talk = cs.filter(c => c.kind === 'chat').length + 3 * cs.filter(c => !c.kind || c.kind === 'answer').length;
+  return { learn: learned, review: seen, record: talk };
+}
+const QUESTS = () => [
+  { id: 'learn', title: 'เรียนคำศัพท์ใหม่', target: Math.min(5, packSize()), unit: 'คำ', icon: 'learn', color: 'lav', go: 'course' },
+  { id: 'review', title: 'ทบทวนแบบ Active Recall', target: Math.max(1, Math.min(10, S.words.size + S.phrases.size)), unit: 'ใบ', icon: 'cards', color: 'pink', go: 'review' },
+  { id: 'shadow', title: 'Shadowing 1 บท', target: 1, unit: 'บท', icon: 'speaker', color: 'mint', go: 'shadow' },
+  { id: 'record', title: 'คุยกับเจลลี่บู 3 ประโยค', target: 3, unit: 'ประโยค', icon: 'chat', color: 'peach', go: 'speak' },
+];
+function markStep(step) { const t = today(); const d = S.days.get(t) || { steps: {} }; if (d.steps && d.steps[step]) return; put('days', t, { ...d, steps: { ...(d.steps || {}), [step]: true }, updated: Date.now() }); }
+function syncQuests() {
+  if (!loaded) return; const c = questCounts(); const d = S.days.get(today()) || { steps: {} };
+  for (const q of QUESTS()) if (q.id !== 'shadow' && c[q.id] >= q.target && !(d.steps && d.steps[q.id])) { markStep(q.id); return; }
+}
+const learnedCount = () => S.words.size;
+const BADGES = [
+  { id: 'w50', name: 'ศัพท์ 50 คำแรก', icon: 'learn', color: 'lav', test: () => learnedCount() >= 50 },
+  { id: 'w300', name: 'ศัพท์ 300 คำ', icon: 'learn', color: 'lav', test: () => learnedCount() >= 300 },
+  { id: 'w1000', name: 'ศัพท์ 1,000 คำ', icon: 'crown', color: 'butter', test: () => learnedCount() >= 1000 },
+  { id: 'w3000', name: 'ครบ 3,000 คำ!', icon: 'crown', color: 'pink', test: () => learnedCount() >= 3000 },
+  { id: 'st3', name: 'ไฟติด 3 วัน', icon: 'flame', color: 'peach', test: () => bestStreak() >= 3 },
+  { id: 'st7', name: 'ครบ 1 สัปดาห์', icon: 'flame', color: 'peach', test: () => bestStreak() >= 7 },
+  { id: 'st30', name: 'ไฟไม่มอด 30 วัน', icon: 'flame', color: 'butter', test: () => bestStreak() >= 30 },
+  { id: 'sh1', name: 'Shadowing บทแรก', icon: 'speaker', color: 'mint', test: () => [...S.units.values()].some(u => u.shadowDone) },
+  { id: 'sh20', name: 'Shadowing 20 รอบ', icon: 'speaker', color: 'mint', test: () => [...S.units.values()].reduce((a, u) => a + (u.shadowDone || 0), 0) >= 20 },
+  { id: 'ch1', name: 'คุยกับเจลลี่บูครั้งแรก', icon: 'chat', color: 'peach', test: () => [...S.checks.values()].some(c => c.kind === 'chat') },
+  { id: 'ch100', name: 'คุยมาแล้ว 100 ประโยค', icon: 'chat', color: 'peach', test: () => [...S.checks.values()].filter(c => c.kind === 'chat').length >= 100 },
+  { id: 'm50', name: 'จำแม่น 50 คำ', icon: 'heart', color: 'pink', test: () => allWords().filter(w => (w.box || 0) >= 4).length >= 50 },
+  { id: 'ex1', name: 'ทำข้อสอบชุดแรก', icon: 'exam', color: 'sky', test: () => [...S.checks.values()].some(c => c.kind === 'exam') },
+  { id: 'chest', name: 'เปิดหีบแรก', icon: 'chest', color: 'butter', test: () => [...S.days.values()].some(d => d.quest) },
+  { id: 'cp1', name: 'วัดผลครั้งแรก', icon: 'chart', color: 'sky', test: () => S.checkpoints.size >= 1 },
+  { id: 'boss1', name: 'ผ่านเมืองแรก', icon: 'crown', color: 'pink', test: () => bossCleared(0) },
+  { id: 'boss3', name: 'พร้อมใช้ในงาน', icon: 'crown', color: 'mint', test: () => bossCleared(2) },
+  { id: 'boss4', name: 'พร้อมสัมภาษณ์', icon: 'crown', color: 'lav', test: () => bossCleared(3) },
+];
+
+// ---------- AI ----------
+function aiErr(e) {
+  const c = e && e.code;
+  if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(c)) { aiOff = true; return 'ใช้ Claude ในหน้านี้ไม่ได้'; }
+  if (c === 'rate_limited') return 'ใช้บ่อยไปนิด รอสักครู่แล้วลองใหม่';
+  if (c === 'refused') return 'Claude ตอบข้อความนี้ไม่ได้ ลองเปลี่ยนถ้อยคำ';
+  if (c === 'session_expired') return 'ต้องเข้าสู่ระบบใหม่ก่อน';
+  if (c === 'cancelled') return '';
+  return 'คำตอบไม่สมบูรณ์ ลองกดอีกครั้ง';
+}
+const ME = 'The learner is Tanp, a Thai woman who works as a maintenance planning engineer at a power plant in Bangkok. She is moving from beginner to upper-intermediate English, step by step. Her goals: everyday conversation first, then work English, the TOEIC exam and job interviews at international companies. Be warm and encouraging. Thai explanations must be short, kind and clear.';
+const diffNote = () => diff() < 0 ? ' Make it EASIER than usual: very common words, very short simple sentences.' : diff() > 0 ? ' Make it a little more challenging than usual.' : '';
+function aiPack(u, n) {
+  const known = allWords().filter(w => w.unit === u.id).map(w => w.w).concat(allWords().slice(-150).map(w => w.w));
+  return sample.json(`${ME}\n\nCreate a vocabulary pack for unit "${u.t}" (CEFR ${u.lv}). Topic: ${u.th} / ${u.scene}. Grammar focus of the unit: ${u.f}.${diffNote()}\nChoose ${n} useful, high-frequency English words or very short phrases from the core ~3000 most common English words at about CEFR ${u.lv} that fit this topic and that she will really use${u.use === 'work' ? ' at work' : u.use === 'exam' ? ' in conversation and in the TOEIC exam' : ' in daily life'}.\nDo NOT repeat any of these words she already learned: ${JSON.stringify([...new Set(known)].slice(0, 220))}.\nReply with ONLY a JSON array of ${n} objects: {"w": "word", "pos": "n|v|adj|adv|prep|phr", "th": "short Thai meaning", "chunk": "a common collocation or chunk using it", "ex": "one short natural example sentence about her real life (CEFR ${u.lv})", "exTh": "Thai translation of the example"}`, { cache: false });
+}
+function aiShadow(u) {
+  const ws = shuffle(unitWords(u.id).map(w => w.w)).slice(0, 12);
+  return sample.json(`${ME}\n\nWrite a short natural spoken dialogue for SHADOWING practice. Unit "${u.t}" (CEFR ${u.lv}). Situation: ${u.scene}. Use the grammar focus "${u.f}"${ws.length ? ' and naturally include some of these words: ' + ws.join(', ') : ''}.${diffNote()}\nSpeaker B is Tanp. 8 lines alternating A and B, starting with A. Each line at most ${u.w < 2 ? 12 : 20} words, the way people really talk (contractions are good).\nReply with ONLY JSON: {"title": "short English title", "lines": [{"who": "A" or "B", "en": "...", "th": "Thai translation"}]}`, { cache: false });
+}
+function aiChat(u, turns) {
+  const ws = unitWords(u.id).map(w => w.w).slice(-40);
+  const rules = `${ME}\n\nYou are Jelly Boo, a tiny cheerful jelly ghost and a friendly English conversation partner. Role-play this situation with her: ${u.scene}. Her level: CEFR ${u.lv}. Unit grammar focus: ${u.f}. Words from this unit she is practising: ${ws.join(', ') || '(none yet)'}.\nAfter EACH of her messages reply with ONLY JSON:\n{"fix": null if her last message is correct and natural, otherwise {"better": "her message corrected and made natural, keeping her meaning", "why_th": "short Thai explanation of the main fix"}, "reply": "your next line in simple natural English at her level (1-3 short sentences), always ending with a question that keeps the conversation going", "reply_th": "Thai translation of your reply", "hint_th": "a short Thai hint of what she could answer next, with 1-2 useful English words", "used": ["unit words she used correctly"]}`;
+  return sample.json([{ role: 'user', content: rules }, { role: 'assistant', content: u.open }, ...turns], { cache: false });
+}
+function aiCheck(q, ans, w) {
+  return sample.json(`${ME}\n\nLevel: CEFR ${WORLDS[w].lv}.\nQuestion she answered out loud:\n"""${q}"""\nWhat she said (typed from memory):\n"""${ans}"""\n\nCorrect it. Reply with only JSON:\n{"corrected": "her answer with only the necessary corrections", "natural": "how a fluent speaker would say the same ideas: simple words, a little longer using because / for example / last week / so", "natural_th": "Thai translation of the natural version", "mistakes": [{"wrong": "exact wrong part", "right": "fixed part", "why_th": "short Thai reason"}], "stars": 1-3 (1 = hard to understand, 2 = understandable with mistakes, 3 = clear and natural), "praise_th": "one short warm Thai sentence on what she did well", "next_th": "one Thai sentence: what to add next time to speak longer"}\nAt most 5 mistakes; an empty list if there are none.`, { cache: false });
+}
+function aiExam(lv) {
+  const ws = shuffle(allWords().map(w => w.w)).slice(0, 30);
+  return sample.json(`${ME}\n\nCreate 5 TOEIC Part 5 style questions (incomplete sentences, 4 options, one correct) at about CEFR ${lv}, in workplace contexts.${ws.length ? ' Use some of these words she has learned: ' + ws.join(', ') + '.' : ''} Mix vocabulary and grammar (word form, tense, preposition).\nReply with ONLY a JSON array: [{"q": "sentence with ____ for the blank", "options": ["A", "B", "C", "D"], "answer": 0-3, "why_th": "short Thai explanation"}]`, { cache: false });
+}
+function aiTranslate(th) { return sample.json(`${ME}\n\nShe wants to SAY this in English (Thai):\n"""${th}"""\n\nReply with only JSON: {"en": "the most natural short spoken English sentence", "alt": "one alternative way to say it", "note_th": "one short Thai tip about a key word, chunk or grammar point"}`, { modelTier: 'quick' }); }
+
+// ---------- placement test ----------
+const LV = ['A1', 'A2', 'B1', 'B2'];
+const Q = (q, o, kind) => ({ q, o, a: 0, kind: kind || 'gram' });
+const PQ = {
+  A1: [
+    Q('She ___ a teacher.', ['is', 'are', 'am', 'be']),
+    Q('I ___ coffee every morning.', ['drink', 'drinks', 'drinking', 'am drink']),
+    Q('There ___ two cats in the house.', ['are', 'is', 'be', 'am']),
+    Q('What time ___ you get up?', ['do', 'does', 'are', 'is']),
+    Q('We go to work ___ Monday.', ['on', 'in', 'at', 'by']),
+    Q('A place where you buy medicine is a ___.', ['pharmacy', 'library', 'bakery', 'garage'], 'vocab'),
+    Q("My brother's wife is my ___.", ['sister-in-law', 'aunt', 'cousin', 'niece'], 'vocab'),
+    { listen: 'I usually take the bus to work at seven.', q: 'เขาไปทำงานยังไง', o: ['นั่งรถเมล์', 'นั่งรถไฟฟ้า', 'เดินไป', 'นั่งแท็กซี่'], a: 0, kind: 'listen' },
+  ],
+  A2: [
+    Q('I ___ to Chiang Mai last year.', ['went', 'go', 'have gone', 'was go']),
+    Q('This bag is ___ than that one.', ['cheaper', 'more cheap', 'cheapest', 'the cheap']),
+    Q('You look tired. You ___ go to bed early.', ['should', 'must to', 'can to', 'would to']),
+    Q("I'm ___ to visit my parents this weekend.", ['going', 'go', 'will', 'plan']),
+    Q('She enjoys ___ to music.', ['listening', 'listen', 'to listen', 'listened']),
+    Q('Could I ___ the bill, please?', ['have', 'make', 'do', 'take'], 'vocab'),
+    Q("I can't come to work today because I'm ___.", ['sick', 'sorry', 'sure', 'bored'], 'vocab'),
+    { listen: "Sorry, I can't join dinner on Friday because I have to work late.", q: 'ทำไมเขาไปกินข้าวเย็นไม่ได้', o: ['ต้องทำงานดึก', 'ไม่สบาย', 'ไปต่างจังหวัด', 'ไม่ชอบอาหาร'], a: 0, kind: 'listen' },
+  ],
+  B1: [
+    Q('I ___ here since 2022.', ['have worked', 'work', 'am working', 'worked']),
+    Q('If it rains tomorrow, we ___ the meeting online.', ['will have', 'would have', 'have had', 'had']),
+    Q('The machine ___ every six months.', ['is inspected', 'inspects', 'is inspecting', 'inspected']),
+    Q("I'm responsible ___ planning maintenance work.", ['for', 'of', 'to', 'with']),
+    Q('Have you ever ___ a presentation in English?', ['given', 'gave', 'give', 'giving']),
+    Q('The project was delayed ___ a shortage of spare parts.', ['because of', 'although', 'so that', 'unless'], 'vocab'),
+    Q('Please ___ the attached file and let me know if you have any questions.', ['review', 'remind', 'remove', 'reply'], 'vocab'),
+    { listen: "The pump stopped twice this week, so we've decided to replace the seal on Thursday.", q: 'วันพฤหัสจะทำอะไร', o: ['เปลี่ยนซีล', 'ซื้อปั๊มใหม่', 'ประชุมทีม', 'ปิดโรงงาน'], a: 0, kind: 'listen' },
+  ],
+  B2: [
+    Q('If I ___ more time, I would study abroad.', ['had', 'have', 'will have', 'would have']),
+    Q('The engineer ___ designed the system has left the company.', ['who', 'which', 'whom', 'whose']),
+    Q('By the end of next year, we ___ the new plant.', ['will have completed', 'will complete', 'have completed', 'completed']),
+    Q('Despite ___ late, the team met the deadline.', ['starting', 'start', 'they started', 'to start']),
+    Q('The figures show a ___ increase of 2% this quarter.', ['slight', 'slightly', 'slighting', 'slights'], 'vocab'),
+    Q('We need to ___ the risks before we approve the plan.', ['assess', 'access', 'assist', 'assume'], 'vocab'),
+    Q('Output was ___ by 15% after the upgrade.', ['boosted', 'boosting', 'boost', 'boosts'], 'vocab'),
+    { listen: 'Although the budget was cut by ten percent, the team still managed to finish the overhaul ahead of schedule.', q: 'ข้อใดถูกต้อง', o: ['ทีมทำเสร็จก่อนกำหนด แม้งบจะลดลง', 'งบประมาณเพิ่มขึ้น 10%', 'ทีมทำงานเสร็จช้ากว่ากำหนด', 'โครงการถูกยกเลิก'], a: 0, kind: 'listen' },
+  ],
+};
+const placement = () => S.meta.get('placement') || null;
+const placedStart = () => { const p = placement(); return p ? Math.max(0, Math.min(UNITS.length - 1, p.start || 0)) : 0; };
+const firstUnitOf = w => UNITS.findIndex(u => u.w === w);
+function aiPlace(text) {
+  return sample.json(`${ME}\n\nThis is a PLACEMENT check. Estimate the CEFR speaking level (A1, A2, B1 or B2) of this answer, which she said out loud and then typed from memory.\nQuestion: "Tell me about yourself and your job."\nAnswer: """${text}"""\nJudge range of vocabulary, grammar accuracy, sentence length and how connected the ideas are. Be realistic, not generous.\nReply with ONLY JSON: {"cefr": "A1|A2|B1|B2", "why_th": "one short Thai sentence explaining the level", "strength_th": "one thing she does well (Thai)", "focus_th": "the one most useful thing to improve next (Thai)"}`, { cache: false });
+}
+function startTest() {
+  ui.test = { phase: 'intro', results: {}, score: {}, qs: [], i: 0, picked: null, lvIdx: 1, speak: null, ans: '', busy: false, err: '' };
+  tab = 'test'; render(true); window.scrollTo({ top: 0 });
+}
+function loadLevel(li) {
+  const T = ui.test; const bank = PQ[LV[li]];
+  const L = bank.find(q => q.kind === 'listen');
+  let qs = shuffle(bank.filter(q => q.kind !== 'listen')).slice(0, canTTS ? 4 : 5);
+  if (canTTS && L) qs.splice(2, 0, L);
+  T.qs = qs.map(q => { const order = shuffle([0, 1, 2, 3]); return { ...q, opts: order.map(k => q.o[k]), ans: order.indexOf(q.a) }; });
+  T.i = 0; T.picked = null; T.lvIdx = li; T.score[LV[li]] = 0; T.phase = 'q';
+  if (T.qs[0].listen) setTimeout(() => say(T.qs[0].listen, .9), 500);
+}
+function levelDone() {
+  const T = ui.test; const lv = LV[T.lvIdx]; const passed = T.score[lv] >= 4; T.results[lv] = passed;
+  if (passed && T.lvIdx < 3 && T.results[LV[T.lvIdx + 1]] === undefined) loadLevel(T.lvIdx + 1);
+  else if (!passed && T.lvIdx > 0 && T.results[LV[T.lvIdx - 1]] === undefined) loadLevel(T.lvIdx - 1);
+  else T.phase = 'speak';
+  render(true); window.scrollTo({ top: 0 });
+}
+function mcqBest() { const T = ui.test; let best = -1; LV.forEach((lv, i) => { if (T.results[lv] === true) best = Math.max(best, i); }); return best; }
+function savePlacement(w, extra) {
+  const T = ui.test || { score: {}, results: {} };
+  put('meta', 'placement', { level: LV[w], start: firstUnitOf(w), score: T.score, results: T.results, speak: T.speak ? T.speak.cefr : null, date: today(), ...extra });
+  ui.world = w; ui.sub = null; ui.test = null; tab = 'course'; lsSet('epl-tab', tab);
+  confetti(160); render(true); window.scrollTo({ top: 0 });
+}
+function testCard() {
+  return h('div', { class: 'card', style: 'background:linear-gradient(150deg,var(--butter),var(--card) 70%)' },
+    h('div', { class: 'hero' }, mascot('happy'), h('div', { class: 'bubble', text: 'ก่อนเริ่มเรียน มาวัดระดับกันก่อน! จะได้ไม่ต้องเริ่มจากศูนย์' })),
+    h('p', { class: 'small', text: 'ใช้เวลา 5–8 นาที: คำศัพท์ ไวยากรณ์ การฟัง และพูดแนะนำตัว 1 ข้อ เจลลี่บูจะเลือกบทที่เหมาะกับระดับจริงของคุณ' }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: startTest, text: 'เริ่มทดสอบระดับ' }), h('button', { class: 'btn ghost sm', onclick: () => { ui.test = null; savePlacement(0, { skipped: true }); }, text: 'ข้าม เริ่มจาก A1' })));
+}
+function vTest() {
+  const T = ui.test;
+  const exit = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.test = null; go(placement() ? 'course' : 'home'); }, text: '‹ ออก' });
+  if (!T || T.phase === 'intro') {
+    if (!T) ui.test = { phase: 'intro', results: {}, score: {}, qs: [], i: 0, picked: null, lvIdx: 1, speak: null, ans: '', busy: false, err: '' };
+    return h('section', {}, exit, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('cheer'),
+      h('h2', { text: 'แบบทดสอบวัดระดับ' }),
+      h('p', { text: 'ข้อสอบจะปรับตามคำตอบของคุณ: ตอบถูกจะยากขึ้น ตอบผิดจะง่ายลง' }),
+      h('div', { class: 'tiles', style: 'width:100%;text-align:left' },
+        h('div', { class: 'tile', style: 'background:var(--lav)' }, h('b', { text: '1' }), h('span', { text: 'คำศัพท์ + ไวยากรณ์ ระดับละ 5 ข้อ' })),
+        h('div', { class: 'tile', style: 'background:var(--mint)' }, h('b', { text: '2' }), h('span', { text: canTTS ? 'ฟังประโยคแล้วตอบ (อยู่ในชุดข้อสอบ)' : 'เครื่องนี้ไม่มีเสียงอ่าน จะข้ามส่วนฟัง' })),
+        h('div', { class: 'tile', style: 'background:var(--peach)' }, h('b', { text: '3' }), h('span', { text: 'พูดแนะนำตัว แล้วพิมพ์ตามที่พูด' })),
+        h('div', { class: 'tile', style: 'background:var(--sky)' }, h('b', { text: '4' }), h('span', { text: 'ได้ระดับ + บทเริ่มต้นที่เหมาะ' }))),
+      h('p', { class: 'small muted', text: 'ไม่รู้ให้เลือก "ไม่แน่ใจ" ดีกว่าเดา ผลจะได้ตรงกับระดับจริง' }),
+      h('button', { class: 'btn primary', onclick: () => { loadLevel(1); render(true); }, text: 'เริ่มเลย!' })));
+  }
+  if (T.phase === 'q') {
+    const q = T.qs[T.i]; const lv = LV[T.lvIdx]; const done = Object.keys(T.results).length;
+    const prompt = q.listen
+      ? [h('span', { class: 'pill mint', text: 'ฟังแล้วตอบ' }), h('button', { class: 'say', style: 'width:72px;height:72px', 'aria-label': 'ฟังอีกครั้ง', onclick: () => say(q.listen, .9) }, ico('speaker', 36)), h('div', { class: 'th', style: 'font-size:19px', text: q.q }), h('div', { class: 'small muted', text: 'ฟังได้ 2 ครั้ง' })]
+      : [h('span', { class: 'pill', text: q.kind === 'vocab' ? 'คำศัพท์' : 'ไวยากรณ์' }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: q.q })];
+    const opts = h('div', { class: 'opts' }, q.opts.map((o, k) => h('button', { class: 'opt' + (T.picked === k ? ' sel' : ''), style: T.picked === k ? 'background:var(--lav);transform:translateY(-2px)' : null, onclick: () => { T.picked = k; render(); }, text: o })));
+    return h('section', {}, exit, h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('span', { class: 'pill butter', text: `ด่านทดสอบที่ ${done + 1} · ข้อ ${T.i + 1}/${T.qs.length}` }), h('span', { class: 'small muted', text: 'ระดับกำลังปรับตามคำตอบ' })),
+      h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(T.i + 1) / T.qs.length * 100}%` }))),
+      h('div', { class: 'wcard' }, prompt), opts,
+      h('div', { class: 'row between' }, h('button', { class: 'btn ghost sm', onclick: () => { T.picked = -1; nextQ(); }, text: 'ไม่แน่ใจ ข้าม' }),
+        h('button', { class: 'btn primary', disabled: T.picked == null || T.picked < 0 ? true : null, onclick: nextQ, text: T.i < T.qs.length - 1 ? 'ข้อต่อไป' : 'ส่งชุดนี้' })),
+      h('span', { class: 'small muted', style: 'display:none', text: lv })));
+  }
+  if (T.phase === 'speak') {
+    const best = mcqBest();
+    return h('section', {}, exit, h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('span', { class: 'pill butter', text: 'ส่วนสุดท้าย · การพูด' }), h('span', { class: 'pill lav', text: 'ผ่านข้อเขียนถึง ' + (best >= 0 ? LV[best] : 'ก่อน A1') })),
+      h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: 'Tell me about yourself and your job.' }), sayBtn('Tell me about yourself and your job.')),
+      h('p', { class: 'small', text: 'พูดออกเสียงให้ได้ประมาณ 30–60 วินาที เท่าที่พูดได้จริง แล้วพิมพ์ตามที่พูด ไม่ต้องแก้ให้สวย เจลลี่บูจะประเมินระดับการพูดให้' }),
+      h('textarea', { id: 'pt-ans', rows: 5, 'aria-label': 'คำตอบของคุณ', placeholder: 'My name is… I work as…', oninput: e => { T.ans = e.target.value; } }, T.ans),
+      T.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: T.err }) : null,
+      h('div', { class: 'row' },
+        !aiOff ? h('button', { class: 'btn primary', disabled: T.busy ? true : null, onclick: async () => { T.ans = $('#pt-ans').value; if (!T.ans.trim()) return; T.busy = true; T.err = ''; render(); try { const r = await aiPlace(T.ans.trim()); const i = LV.indexOf(String(r.cefr || '').toUpperCase()); T.speak = { cefr: i >= 0 ? LV[i] : null, idx: i, why: String(r.why_th || ''), strength: String(r.strength_th || ''), focus: String(r.focus_th || '') }; T.phase = 'result'; } catch (e) { T.err = aiErr(e); } T.busy = false; render(true); } }, T.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังประเมิน…'] : 'ส่งให้เจลลี่บูประเมิน') : null,
+        h('button', { class: 'btn ghost sm', onclick: () => { T.speak = null; T.phase = 'result'; render(true); }, text: 'ข้ามส่วนพูด' }))));
+  }
+  // result
+  const best = mcqBest(); const wMcq = Math.min(3, best + 1);
+  const sp = T.speak && T.speak.idx >= 0 ? T.speak.idx : null;
+  const wSpeak = sp == null ? null : Math.min(3, sp);
+  const rec = wSpeak == null ? wMcq : Math.min(wMcq, Math.max(0, wSpeak));
+  const levelName = i => i < 0 ? 'Starter' : LV[i];
+  const rows = LV.map(lv => T.results[lv] === undefined ? null : h('div', { class: 'levelrow' }, h('span', { class: 'pill ' + (T.results[lv] ? 'mint' : 'pink'), text: lv }), h('div', { class: 'bar' }, h('i', { style: `width:${(T.score[lv] || 0) / 5 * 100}%` })), h('span', { class: 'num small', text: `${T.score[lv] || 0}/5 ${T.results[lv] ? 'ผ่าน' : 'ยังไม่ผ่าน'}` })));
+  const opt = (w, label, primary) => { const u = UNITS[firstUnitOf(w)]; return h('button', { class: primary ? 'btn primary' : 'btn', onclick: () => savePlacement(w), text: `${label}: ${WORLDS[w].lv} บทที่ ${u.n} "${u.t}"` }); };
+  return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('cheer'),
+    h('div', { class: 'small muted', text: 'ระดับของคุณตอนนี้' }),
+    h('div', { class: 'big', style: 'font-family:var(--num);font-size:52px;font-weight:700;color:var(--lav-d);line-height:1', text: levelName(sp == null || best < 0 ? best : Math.min(sp, best)) }),
+    h('p', { class: 'small', text: `ข้อเขียน: ผ่านถึง ${levelName(best)}` + (T.speak && T.speak.cefr ? ` · การพูด: ${T.speak.cefr}` : '') })),
+    h('div', { class: 'card' }, h('h3', { text: 'ผลแต่ละระดับ' }), rows,
+      T.speak && T.speak.cefr ? h('div', { class: 'block nat' }, h('div', { class: 'lbl', text: `เจลลี่บูประเมินการพูด: ${T.speak.cefr}` }), h('div', { class: 'small', text: T.speak.why }), T.speak.strength ? h('div', { class: 'small', text: 'จุดแข็ง: ' + T.speak.strength }) : null, T.speak.focus ? h('div', { class: 'small', text: 'ควรฝึกต่อ: ' + T.speak.focus }) : null) : null),
+    h('div', { class: 'card' }, h('h3', { text: 'เลือกจุดเริ่มเรียน' }),
+      h('p', { class: 'small muted', text: rec < wMcq ? 'ไวยากรณ์ของคุณไปได้ไกลกว่าการพูด เจลลี่บูแนะนำให้เริ่มตามระดับการพูด เพื่อฝึกพูดคล่องก่อน แล้วจะขยับเร็วมาก' : 'บทก่อนหน้าทั้งหมดจะเปิดให้ทบทวนได้เสมอ ไม่ต้องเรียนซ้ำ' }),
+      opt(rec, 'แนะนำ', true), rec !== wMcq ? opt(wMcq, 'ตามข้อเขียน', false) : null,
+      rec > 0 ? h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => savePlacement(0), text: 'อยากเริ่มจาก A1 เพื่อเก็บพื้นฐาน' }) : null));
+}
+function nextQ() {
+  const T = ui.test; const q = T.qs[T.i];
+  if (T.picked === q.ans) T.score[LV[T.lvIdx]]++;
+  if (T.i < T.qs.length - 1) { T.i++; T.picked = null; render(); const n = T.qs[T.i]; if (n.listen) setTimeout(() => say(n.listen, .9), 300); }
+  else levelDone();
+}
+
+// ---------- daily treasure hunt ----------
+const TREASURES = [
+  { id: 'shell', name: 'เปลือกหอยชมพู', r: 'common', kind: 'shell', c: '#FF9EC6' },
+  { id: 'pearl', name: 'มุกเม็ดงาม', r: 'common', kind: 'pearl', c: '#F4EEFF' },
+  { id: 'coin', name: 'เหรียญโบราณ', r: 'common', kind: 'coin', c: '#FFD24A' },
+  { id: 'starfish', name: 'ดาวทะเลส้ม', r: 'common', kind: 'star', c: '#FFAE70' },
+  { id: 'mint', name: 'อัญมณีมิ้นต์', r: 'common', kind: 'gem', c: '#5FE3B4' },
+  { id: 'lilac', name: 'อัญมณีม่วง', r: 'rare', kind: 'gem', c: '#A985FF' },
+  { id: 'crystal', name: 'คริสตัลฟ้าใส', r: 'rare', kind: 'crystal', c: '#84C8FF' },
+  { id: 'key', name: 'กุญแจทองคำ', r: 'rare', kind: 'key', c: '#FFD24A' },
+  { id: 'feather', name: 'ขนนกวิเศษ', r: 'rare', kind: 'feather', c: '#FF8CC2' },
+  { id: 'crown', name: 'มงกุฎจิ๋ว', r: 'epic', kind: 'crown', c: '#FFD24A' },
+  { id: 'rainbow', name: 'อัญมณีสายรุ้ง', r: 'epic', kind: 'gem', c: 'rainbow' },
+];
+const RARITY = { common: ['ธรรมดา', 'mint'], rare: ['หายาก', 'lav'], epic: ['ตำนาน', 'butter'] };
+function itemSvg(t, size) {
+  const O = '#4A3566'; const id = 'it' + Math.random().toString(36).slice(2, 7);
+  const fill = t.c === 'rainbow' ? `url(#${id})` : t.c;
+  const defs = t.c === 'rainbow' ? `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8CC2"/><stop offset=".35" stop-color="#FFD24A"/><stop offset=".65" stop-color="#5FE3B4"/><stop offset="1" stop-color="#84C8FF"/></linearGradient></defs>` : '';
+  const shapes = {
+    gem: `<path d="M12 4h24l8 10-20 26L4 14z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M4 14h40M18 4l-4 10 10 26 10-26-4-10" fill="none" stroke="${O}" stroke-width="1.6" stroke-linejoin="round" opacity=".6"/><path d="M14 9l-3 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
+    crystal: `<path d="M24 2l10 14-10 30-10-30z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 16h20M24 2v44" stroke="${O}" stroke-width="1.4" opacity=".5"/><path d="M20 10l-2 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>`,
+    shell: `<path d="M24 40L6 18Q24 0 42 18z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 40L14 12M24 40V8M24 40l10-28" stroke="${O}" stroke-width="1.6" opacity=".55"/><rect x="18" y="38" width="12" height="6" rx="3" fill="${fill}" stroke="${O}" stroke-width="2.2"/>`,
+    pearl: `<circle cx="24" cy="24" r="16" fill="${fill}" stroke="${O}" stroke-width="2.4"/><circle cx="18" cy="18" r="5" fill="#fff"/><circle cx="30" cy="31" r="3" fill="#FFD6EC"/>`,
+    coin: `<circle cx="24" cy="24" r="17" fill="${fill}" stroke="${O}" stroke-width="2.4"/><circle cx="24" cy="24" r="11" fill="none" stroke="${O}" stroke-width="1.6" opacity=".55"/><path d="M24 17l2 4.4 4.8.6-3.5 3.3.9 4.7-4.2-2.3-4.2 2.3.9-4.7-3.5-3.3 4.8-.6z" fill="#fff" opacity=".85"/>`,
+    star: `<path d="M24 4l5.6 12 13 1.6-9.6 9 2.6 13-11.6-6.6-11.6 6.6 2.6-13-9.6-9 13-1.6z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><circle cx="20" cy="22" r="1.6" fill="#fff"/><circle cx="28" cy="22" r="1.6" fill="#fff"/><circle cx="24" cy="28" r="1.6" fill="#fff"/>`,
+    key: `<circle cx="16" cy="16" r="10" fill="${fill}" stroke="${O}" stroke-width="2.4"/><circle cx="16" cy="16" r="4" fill="#fff" stroke="${O}" stroke-width="1.8"/><path d="M23 23l17 17M33 33l-4 4M37 37l-4 4" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M23 23l17 17M33 33l-4 4M37 37l-4 4" stroke="${fill}" stroke-width="2.4" stroke-linecap="round"/>`,
+    feather: `<path d="M38 6C18 8 8 24 10 40 26 38 40 26 38 6z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><path d="M36 9L8 44" stroke="${O}" stroke-width="2" stroke-linecap="round"/><path d="M22 22l6 1M18 28l6 1M26 16l5 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>`,
+    crown: `<path d="M6 16l9 9 9-15 9 15 9-9-4 24H10z" fill="${fill}" stroke="${O}" stroke-width="2.4" stroke-linejoin="round"/><circle cx="24" cy="30" r="3.4" fill="#FF7EB6" stroke="${O}" stroke-width="1.6"/><circle cx="6" cy="16" r="2.6" fill="${fill}" stroke="${O}" stroke-width="1.6"/><circle cx="42" cy="16" r="2.6" fill="${fill}" stroke="${O}" stroke-width="1.6"/><circle cx="24" cy="9" r="2.6" fill="${fill}" stroke="${O}" stroke-width="1.6"/>`,
+  };
+  const e = document.createElement('span'); e.className = 'ico'; if (size) { e.style.width = size + 'px'; e.style.height = size + 'px'; }
+  e.innerHTML = `<svg viewBox="0 0 48 48" aria-hidden="true">${defs}${shapes[t.kind]}</svg>`; return e;
+}
+function seedRng(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; }; }
+function todaysTreasure(day) {
+  const r = seedRng('treasure' + day)(); const tier = r < .1 ? 'epic' : r < .4 ? 'rare' : 'common';
+  const pool = TREASURES.filter(t => t.r === tier); const pick = pool[Math.floor(seedRng('pick' + day)() * pool.length)];
+  return pick;
+}
+const RIDDLE_BANK = [['ทำงาน', 'work'], ['เพื่อน', 'friend'], ['ครอบครัว', 'family'], ['อาหารเช้า', 'breakfast'], ['วันหยุด', 'holiday'], ['ประชุม', 'meeting'], ['ตาราง/กำหนดการ', 'schedule'], ['ปัญหา', 'problem'], ['ปลอดภัย', 'safe'], ['เครื่องจักร', 'machine'], ['เดินทาง', 'travel'], ['สุขภาพ', 'health'], ['ความคิดเห็น', 'opinion'], ['ซ่อม', 'repair'], ['ความสำเร็จ', 'success'], ['อากาศ', 'weather'], ['ร้านอาหาร', 'restaurant'], ['เป้าหมาย', 'goal'], ['พัฒนา', 'improve'], ['รายงาน', 'report']];
+function todaysRiddle(day) {
+  const ws = allWords().filter(w => /^[a-z][a-z' -]{2,18}$/i.test(w.w) && w.th);
+  const rng = seedRng('riddle' + day);
+  if (ws.length >= 5) { const w = ws.sort((a, b) => a.w < b.w ? -1 : 1)[Math.floor(rng() * ws.length)]; return { th: w.th, en: w.w, ex: w.ex || '' }; }
+  const [th, en] = RIDDLE_BANK[Math.floor(rng() * RIDDLE_BANK.length)]; return { th, en, ex: '' };
+}
+const mondayOf = d => addDays(d, -((new Date(d + 'T00:00:00').getDay() + 6) % 7));
+const ISLANDS = [{ name: 'กาแล็กซีลูกกวาด', sea: '#BFE6FF', land: '#FFD6E7', land2: '#FFB8D6' }, { name: 'เนบิวลาปะการัง', sea: '#B5E8F2', land: '#FFE2C6', land2: '#FFC79A' }, { name: 'สถานีออฟฟิศ', sea: '#C6E2FF', land: '#CFF5E4', land2: '#9FE6C6' }, { name: 'ดาวมืออาชีพ', sea: '#D8D2FF', land: '#E3E9FF', land2: '#C3CDFF' }];
+const HUNT_PTS = [[16, 74], [46, 82], [80, 68], [58, 46], [24, 38], [78, 16]];
+const PL_SHORT = { learn: 'คำใหม่', review: 'ทบทวน', shadow: 'Shadowing', record: 'คุยกับบู', riddle: 'ปริศนา' };
+function huntStops() {
+  const c = questCounts(); const d = S.days.get(today()) || { steps: {} };
+  const qs = QUESTS().map(q => ({ ...q, n: q.id === 'shadow' ? (d.steps && d.steps.shadow ? 1 : 0) : Math.min(c[q.id] || 0, q.target), done: !!(d.steps && d.steps[q.id]) }));
+  qs.push({ id: 'riddle', title: 'ปริศนาประจำวัน', target: 1, unit: 'ข้อ', icon: 'spark', color: 'butter', go: 'riddle', n: d.steps && d.steps.riddle ? 1 : 0, done: !!(d.steps && d.steps.riddle) });
+  return qs;
+}
+function huntCard() {
+  const t = today(); const d = S.days.get(t) || { steps: {} };
+  const stops = huntStops(); const doneN = stops.filter(s => s.done).length; const all = doneN === stops.length;
+  const w = UNITS[currentUnit()].w; const isl = ISLANDS[w];
+  const cur = stops.findIndex(s => !s.done); const pos = HUNT_PTS[cur < 0 ? 5 : cur];
+  const map = h('div', { class: 'hmap space' });
+  const P = HUNT_PTS.map(([x, y]) => [x * 3.6, y * 3]);
+  let orbit = `M${P[0][0]} ${P[0][1]}`; for (let i = 1; i < P.length; i++) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; const mx = (x0 + x1) / 2; orbit += ` C${mx} ${y0} ${mx} ${y1} ${x1} ${y1}`; }
+  const rng = seedRng('stars');
+  let stars = ''; for (let i = 0; i < 46; i++) { const x = (rng() * 360).toFixed(1), y = (rng() * 300).toFixed(1), r = (rng() * 1.3 + .4).toFixed(2); stars += `<circle class="${i % 3 ? '' : 'tw'}" style="animation-delay:${(rng() * 3).toFixed(2)}s" cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`; }
+  const doneTo = cur < 0 ? 5 : cur;
+  let doneOrbit = `M${P[0][0]} ${P[0][1]}`; for (let i = 1; i <= doneTo; i++) { const [x0, y0] = P[i - 1], [x1, y1] = P[i]; const mx = (x0 + x1) / 2; doneOrbit += ` C${mx} ${y0} ${mx} ${y1} ${x1} ${y1}`; }
+  map.innerHTML = `<svg viewBox="0 0 360 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs>
+    <linearGradient id="spbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1A1250"/><stop offset=".55" stop-color="#3B1A78"/><stop offset="1" stop-color="#7A2A86"/></linearGradient>
+    <radialGradient id="neb1"><stop offset="0" stop-color="#FF6FB5" stop-opacity=".75"/><stop offset="1" stop-color="#FF6FB5" stop-opacity="0"/></radialGradient>
+    <radialGradient id="neb2"><stop offset="0" stop-color="#4FD0FF" stop-opacity=".6"/><stop offset="1" stop-color="#4FD0FF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="neb3"><stop offset="0" stop-color="#FFD24A" stop-opacity=".45"/><stop offset="1" stop-color="#FFD24A" stop-opacity="0"/></radialGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5FE3B4"/><stop offset=".5" stop-color="#FFD24A"/><stop offset="1" stop-color="#FF8CC2"/></linearGradient></defs>
+    <rect width="360" height="300" fill="url(#spbg)"/>
+    <ellipse cx="290" cy="60" rx="120" ry="80" fill="url(#neb1)"/><ellipse cx="60" cy="250" rx="130" ry="80" fill="url(#neb2)"/><ellipse cx="190" cy="150" rx="90" ry="70" fill="url(#neb3)"/>
+    <g class="stars">${stars}</g>
+    <g class="shoot"><path d="M0 0l-46 16" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".9"/></g>
+    <circle cx="330" cy="262" r="16" fill="#FFB86B" opacity=".55"/><ellipse cx="330" cy="262" rx="26" ry="6" fill="none" stroke="#FFE3B3" stroke-width="2" opacity=".55"/>
+    <circle cx="22" cy="24" r="9" fill="#9FA8FF" opacity=".55"/>
+    <path d="${orbit}" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.4" stroke-dasharray="1 8" stroke-linecap="round"/>
+    ${doneTo > 0 ? `<path d="${doneOrbit}" fill="none" stroke="url(#trail)" stroke-width="4" stroke-linecap="round" opacity=".95"/>` : ''}</svg>`;
+  stops.forEach((s, i) => {
+    const [x, y] = HUNT_PTS[i];
+    map.append(h('button', { class: `hnode planet p${i}` + (s.done ? ' done' : i === cur ? ' now' : ''), style: `left:${x}%;top:${y}%`, 'aria-label': `ดาวที่ ${i + 1} ${s.title}` + (s.done ? ' เสร็จแล้ว' : ''), onclick: () => huntGo(s) },
+      h('span', { class: 'pl-ico' }, s.done ? ico('check') : ico(s.icon)), s.done ? h('span', { class: 'flag' }) : null, h('span', { class: 'pl-name', text: PL_SHORT[s.id] || s.title.split(' ')[0] })));
+  });
+  const [cx, cy] = HUNT_PTS[5];
+  map.append(h('button', { class: 'hchest station' + (all && !d.treasure ? ' ready' : '') + (d.treasure ? ' open' : ''), style: `left:${cx}%;top:${cy}%`, 'aria-label': 'สถานีสมบัติ', onclick: () => { if (all && !d.treasure) openTreasure(); } }, h('span', { class: 'st-ring' }), ico(d.treasure ? 'chestOpen' : 'chest')));
+  const from = all ? [HUNT_PTS[5][0] - 16, HUNT_PTS[5][1] + 10] : cur > 0 ? HUNT_PTS[cur - 1] : [2, 96]; const to = all ? HUNT_PTS[5] : pos;
+  const rx = from[0] + (to[0] - from[0]) * .5, ry = from[1] + (to[1] - from[1]) * .5;
+  const ang = Math.atan2((to[1] - from[1]) * 3, (to[0] - from[0]) * 3.6) * 180 / Math.PI + 90;
+  const token = h('div', { class: 'htoken rocket', style: `left:${rx}%;top:${ry}%;--ang:${ang.toFixed(1)}deg` });
+  token.innerHTML = `<svg viewBox="0 0 60 84" aria-hidden="true"><g class="flame"><path d="M22 62q8 24 8 22 0 2 8-22z" fill="#FFB347"/><path d="M26 62q4 14 4 13 0 1 4-13z" fill="#FFE27A"/></g>
+    <path d="M18 46l-10 14 12-2zM42 46l10 14-12-2z" fill="#FF6FB5" stroke="#4A3566" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M30 4C45 16 47 40 42 62H18C13 40 15 16 30 4z" fill="#FFFFFF" stroke="#4A3566" stroke-width="2.6"/>
+    <path d="M22 12q8-6 16 0" fill="#FF6FB5" stroke="#4A3566" stroke-width="2" /><path d="M18 52h24" stroke="#A985FF" stroke-width="4"/>
+    <circle cx="30" cy="32" r="11" fill="#FFD3E6" stroke="#4A3566" stroke-width="2.4"/><circle cx="26.5" cy="31" r="1.9" fill="#B0306E"/><circle cx="33.5" cy="31" r="1.9" fill="#B0306E"/><path d="M27.5 35q2.5 2.6 5 0" stroke="#E2559A" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="24.5" cy="34.5" rx="2" ry="1.2" fill="#FF7EB6"/><ellipse cx="35.5" cy="34.5" rx="2" ry="1.2" fill="#FF7EB6"/><path d="M24 26q3-3 6-3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+  map.append(token);
+  const got = d.treasure ? TREASURES.find(x => x.id === d.treasure) : null;
+  const list = h('div', { class: 'quests' }, stops.map((s, i) => h('div', { class: 'quest' + (s.done ? ' done' : '') },
+    h('div', { class: 'qi', style: `background:var(--${s.color});color:var(--ink)` }, h('span', { class: 'qnum num', text: String(i + 1) }), ico(s.icon)),
+    h('div', { style: 'min-width:0' }, h('div', { class: 'qt', text: s.title }), h('div', { class: 'small muted num', text: s.id === 'shadow' || s.id === 'riddle' ? (s.done ? 'เสร็จแล้ว' : '+10 XP') : `${s.n} / ${s.target} ${s.unit} · +10 XP` }), s.id !== 'shadow' && s.id !== 'riddle' ? h('div', { class: 'qbar' }, h('i', { style: `width:${s.n / s.target * 100}%` })) : null),
+    h('button', { class: s.done ? 'btn sm' : 'btn sm primary', disabled: s.done ? true : null, onclick: () => huntGo(s), text: s.done ? 'เสร็จ' : 'ไปเลย' }))));
+  const status = got ? h('div', { class: 'treasure-got' }, itemSvg(got, 46), h('div', {}, h('div', { class: 'small', text: 'สมบัติของวันนี้' }), h('b', { text: got.name }), ' ', h('span', { class: 'pill ' + RARITY[got.r][1], text: RARITY[got.r][0] })))
+    : h('div', { class: 'small', style: 'font-weight:600', text: all ? 'ถึงสถานีสมบัติแล้ว! แตะหีบเพื่อเปิด' : `บินอีก ${stops.length - doneN} ดาวก็ถึงสถานีสมบัติ` });
+  return h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('div', {}, h('div', { class: 'small muted', text: isl.name + ' · ภารกิจวันนี้' }), h('h2', { text: 'ภารกิจท่องอวกาศ' })), h('span', { class: 'pill butter num', text: `${doneN}/${stops.length}` })),
+    map, status, list,
+    h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { const c2 = S.days.get(t) || { steps: {} }; put('days', t, { ...c2, minimum: !c2.minimum, updated: Date.now() }); }, text: d.minimum ? 'ยกเลิกโหมดมินิ' : 'วันยุ่งมาก? โหมดมินิ 2 นาที (ไฟไม่ดับ +5 XP)' }));
+}
+function huntGo(s) {
+  if (s.done) return;
+  if (s.id === 'riddle') { openRiddle(); return; }
+  if (s.id === 'shadow') { go('shadow'); return; }
+  go(s.go);
+}
+function openRiddle() {
+  const t = today(); const R = todaysRiddle(t); let tries = 0;
+  const hint = R.en.split('').map((ch, i) => i === 0 || ch === ' ' || ch === '-' ? ch : '_').join(' ');
+  const inp = h('input', { type: 'text', id: 'riddleIn', autocomplete: 'off', placeholder: 'พิมพ์คำภาษาอังกฤษ', 'aria-label': 'คำตอบ' });
+  const msg = h('div', { class: 'small', style: 'min-height:20px' });
+  const ov = h('div', { class: 'overlay' });
+  const finish = (win) => {
+    const cur = S.days.get(t) || { steps: {} }; put('days', t, { ...cur, steps: { ...(cur.steps || {}), riddle: true }, updated: Date.now() });
+    if (win) confetti(120);
+    ov.querySelector('.modal').replaceChildren(mascot(win ? 'cheer' : 'shy'), h('h2', { text: win ? 'ไขปริศนาสำเร็จ!' : 'ไม่เป็นไร จำไว้นะ' }), h('div', { class: 'row', style: 'justify-content:center' }, h('b', { style: 'font-size:24px;font-family:var(--display)', text: R.en }), sayBtn(R.en)), h('p', { class: 'small', text: R.th }), R.ex ? h('p', { class: 'small muted', text: R.ex }) : null, h('button', { class: 'btn primary', onclick: () => ov.remove(), text: 'กลับไปที่ยาน' }));
+    if (canTTS) say(R.en, ui.rate);
+  };
+  const check = () => {
+    const v = inp.value.trim().toLowerCase(); if (!v) return;
+    if (v === R.en.toLowerCase()) { finish(true); return; }
+    tries++; inp.value = ''; inp.focus();
+    if (tries >= 3) finish(false); else { msg.textContent = `ยังไม่ใช่ ลองอีก ${3 - tries} ครั้ง` + (tries === 2 ? ` · ใบ้: มี ${R.en.replace(/[^a-z]/gi, '').length} ตัวอักษร` : ''); msg.style.color = 'var(--pink-d)'; ov.querySelector('.modal').classList.remove('shake'); void ov.offsetWidth; ov.querySelector('.modal').classList.add('shake'); }
+  };
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
+  ov.append(h('div', { class: 'modal' }, mascot('think'), h('span', { class: 'pill butter', text: 'ปริศนาประจำวัน' }), h('h2', { text: `"${R.th}"` }), h('p', { class: 'small muted', text: 'ภาษาอังกฤษคือคำว่าอะไร? ตอบได้ 3 ครั้ง' }), h('div', { class: 'num', style: 'font-size:22px;letter-spacing:2px;font-weight:700', text: hint }), inp, msg,
+    h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: check, text: 'ตอบ' }), h('button', { class: 'btn ghost sm', onclick: () => ov.remove(), text: 'ไว้ทีหลัง' }))));
+  document.body.append(ov); inp.focus();
+}
+function openTreasure() {
+  const t = today(); const item = todaysTreasure(t); const cur = S.days.get(t) || { steps: {} };
+  put('days', t, { ...cur, quest: true, treasure: item.id, updated: Date.now() });
+  confetti(item.r === 'epic' ? 260 : 180);
+  modal([h('div', { class: 'reveal' }, itemSvg(item, 110)), h('span', { class: 'pill ' + RARITY[item.r][1], text: RARITY[item.r][0] }), h('h2', { text: item.name }), h('p', { class: 'small muted', text: 'เก็บเข้าอัลบั้มสมบัติแล้ว · +35 XP' }), h('p', { class: 'small', text: 'พรุ่งนี้แผนที่ใหม่และสมบัติใหม่รออยู่!' })], 'เยี่ยมเลย!');
+}
+function weekCard() {
+  const t = today(); const mon = mondayOf(t); const DOW = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+  const days = DOW.map((n, i) => { const day = addDays(mon, i); const d = S.days.get(day); return { n, day, tr: d && d.treasure ? TREASURES.find(x => x.id === d.treasure) : null, l: dayLevel(d) }; });
+  const got = days.filter(d => d.tr).length; const claimed = S.meta.get('week-' + mon);
+  return h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('h3', { text: 'หีบใหญ่ประจำสัปดาห์' }), h('span', { class: 'pill lav num', text: `${Math.min(got, 5)}/5 วัน` })),
+    h('div', { class: 'week' }, days.map(d => h('div', {}, h('i', { class: (d.tr ? 'l2 tr' : d.l ? 'l1' : '') + (d.day === t ? ' today' : '') }, d.tr ? itemSvg(d.tr, 24) : d.l ? ico('flame') : null), d.n))),
+    claimed ? h('div', { class: 'treasure-got' }, ico('chestOpen', 46), h('div', {}, h('b', { text: 'เปิดหีบใหญ่สัปดาห์นี้แล้ว +100 XP' }), h('div', { class: 'small muted', text: 'สัปดาห์หน้าเริ่มสะสมใหม่' })))
+      : got >= 5 ? h('button', { class: 'btn pink', onclick: () => { put('meta', 'week-' + mon, { claimed: true, date: t }); confetti(260); modal([ico('chestOpen', 96), h('h2', { text: 'หีบใหญ่ประจำสัปดาห์!' }), h('div', { class: 'big', text: '+100' }), h('p', { class: 'small', text: 'ล่าสมบัติครบ 5 วัน สุดยอดมาก!' })]); }, text: 'เปิดหีบใหญ่ +100 XP' })
+        : h('p', { class: 'small muted', text: `ล่าสมบัติให้ครบ 5 วันในสัปดาห์นี้ เพื่อเปิดหีบใหญ่ (อีก ${5 - got} วัน)` }));
+}
+function albumCard() {
+  const counts = {}; for (const d of S.days.values()) if (d.treasure) counts[d.treasure] = (counts[d.treasure] || 0) + 1;
+  const have = TREASURES.filter(t => counts[t.id]).length;
+  return h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'อัลบั้มสมบัติ' }), h('span', { class: 'pill butter', text: `${have} / ${TREASURES.length}` })),
+    h('div', { class: 'badges' }, TREASURES.map(t => { const n = counts[t.id] || 0; return h('div', { class: 'badge' + (n ? '' : ' off') }, h('div', { class: 'disc', style: `background:var(--${RARITY[t.r][1]})` }, n ? itemSvg(t, 38) : ico('lock')), h('span', {}, n ? t.name : '???', n > 1 ? h('b', { text: ' ×' + n }) : null), h('span', { class: 'small muted', text: RARITY[t.r][0] })); })));
+}
+
+// ---------- celebration ----------
+const cv = $('#confetti'); const cx = cv.getContext('2d'); let parts = [], raf = 0;
+function confetti(n = 120) {
+  if (reduced) return;
+  cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; cx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  const cols = ['#FF8CC2', '#A985FF', '#5FE3B4', '#FFD24A', '#84C8FF', '#FFAE70'];
+  for (let i = 0; i < n; i++) parts.push({ x: innerWidth / 2 + (Math.random() - .5) * 140, y: innerHeight * .35, vx: (Math.random() - .5) * 12, vy: -Math.random() * 12 - 4, r: Math.random() * 6 + 6, c: cols[i % cols.length], a: Math.random() * 6, va: (Math.random() - .5) * .3, life: 0, shape: i % 3 });
+  if (!raf) raf = requestAnimationFrame(step);
+}
+function step() {
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.life < 140 && p.y < innerHeight + 30);
+  for (const p of parts) {
+    p.life++; p.vy += .3; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.a); cx.fillStyle = p.c; cx.globalAlpha = Math.min(1, (140 - p.life) / 40); const r = p.r;
+    if (p.shape === 0) { cx.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? r * .45 : r; const an = k * Math.PI / 5 - Math.PI / 2; cx.lineTo(Math.cos(an) * rr, Math.sin(an) * rr); } cx.closePath(); cx.fill(); }
+    else if (p.shape === 1) { cx.beginPath(); cx.moveTo(0, r * .35); cx.bezierCurveTo(-r, -r * .3, -r * .4, -r, 0, -r * .35); cx.bezierCurveTo(r * .4, -r, r, -r * .3, 0, r * .35); cx.fill(); }
+    else { cx.beginPath(); cx.ellipse(0, 0, r * .55, r * .3, 0, 0, 7); cx.fill(); }
+    cx.restore();
+  }
+  raf = parts.length ? requestAnimationFrame(step) : 0;
+}
+function xpFloat(n) { const r = $('#xpBar').getBoundingClientRect(); const el = h('div', { class: 'xpfloat', text: '+' + n + ' XP' }); el.style.left = Math.max(12, r.right - 70) + 'px'; el.style.top = (r.top + 18) + 'px'; document.body.append(el); setTimeout(() => el.remove(), 1600); }
+function toast(b) { const el = h('div', { class: 'toast', role: 'status' }, h('div', { class: 'disc', style: `background:var(--${b.color})` }, ico(b.icon)), h('div', {}, h('div', { class: 'small', text: 'ปลดล็อกสติกเกอร์ใหม่' }), h('b', { text: b.name }))); document.body.append(el); setTimeout(() => el.remove(), 3200); }
+function modal(content, btn = 'ไปต่อกันเลย!') { const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) ov.remove(); } }, h('div', { class: 'modal' }, content, h('button', { class: 'btn primary', onclick: () => ov.remove(), text: btn }))); document.body.append(ov); ov.querySelector('.btn').focus(); }
+let prevXP = null;
+function celebrate() {
+  if (!loaded) return;
+  const xp = computeXP(); const li = levelInfo(xp); const seen = lsGet('epl-seen', null);
+  const earned = BADGES.filter(b => b.test()).map(b => b.id);
+  if (!seen) { lsSet('epl-seen', { level: li.level, badges: earned }); prevXP = xp; return; }
+  if (prevXP != null && xp > prevXP) xpFloat(xp - prevXP);
+  prevXP = xp;
+  const fresh = earned.filter(id => !seen.badges.includes(id));
+  fresh.forEach((id, i) => setTimeout(() => { const b = BADGES.find(x => x.id === id); if (b) { toast(b); confetti(60); } }, 300 + i * 900));
+  if (li.level > seen.level) setTimeout(() => { confetti(180); modal([mascot('cheer'), h('div', { class: 'small muted', text: 'เลเวลอัป!' }), h('div', { class: 'big', text: 'Lv ' + li.level }), h('h3', { text: titleFor(li.level) }), h('p', { class: 'muted small', text: 'ความพยายามทุกวันกำลังสะสมเป็นพัฒนาการจริง' })]); }, 500);
+  if (fresh.length || li.level !== seen.level) lsSet('epl-seen', { level: li.level, badges: earned });
+}
+
+// ---------- nav & state ----------
+const TABS = [['home', 'บ้าน', 'home'], ['course', 'คอร์ส', 'map'], ['review', 'ทบทวน', 'cards'], ['speak', 'พูด', 'chat'], ['bank', 'คลัง', 'book'], ['stats', 'สถิติ', 'chart']];
+let tab = (location.hash || '').slice(1); if (!TABS.some(t => t[0] === tab)) tab = lsGet('epl-tab', 'home');
+const ui = {
+  rate: lsGet('epl-rate', .9), world: null, unit: null, sub: null,
+  learn: null, shadow: null, review: null, exam: null,
+  chat: { unit: null, turns: [], view: [], busy: false, err: '' },
+  speakMode: 'chat',
+  sp: { q: '', world: 0, boss: false, ans: '', busy: false, err: '', res: null, secs: 0, running: false, start: 0, pauses: '', saved: false, added: false },
+  bank: { th: '', en: '', alt: '', note: '', busy: false, err: '' }, bankTab: 'words', filter: '', confirm: null,
+};
+const manual = { date: '', seconds: '', words: '', pauses: '' };
+let timerId = null;
+function go(t, opts) {
+  if (t === 'shadow') { const u = UNITS[currentUnit()]; ui.unit = u.id; ui.world = u.w; tab = 'course'; startShadow(u); return; }
+  tab = t; lsSet('epl-tab', t); if (opts && opts.keep) {} else { if (t !== 'course') { ui.sub = null; } }
+  render(true); window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+}
+
+// ---------- render ----------
+let lastTab = null, frozen = false;
+function render(force) {
+  renderHUD(); renderNav();
+  if (frozen) return;
+  const m = $('#main');
+  const active = document.activeElement; const keep = active && active.id; const caret = keep && active.selectionStart;
+  const view = { test: vTest, home: vHome, course: vCourse, review: vReview, speak: vSpeak, bank: vBank, stats: vStats }[tab]();
+  view.className = (tab !== lastTab || force) ? 'screen' : 'screen-still';
+  view.style.cssText = 'display:flex;flex-direction:column;gap:16px';
+  const bn = pageBanner(); if (bn) view.prepend(bn);
+  m.replaceChildren(view); lastTab = tab;
+  if (keep) { const el = document.getElementById(keep); if (el) { el.focus({ preventScroll: true }); try { if (caret != null) el.setSelectionRange(caret, caret); } catch {} } }
+  const ch = $('#chatbox'); if (ch) ch.scrollTop = ch.scrollHeight;
+  syncQuests(); celebrate(); updateSplash();
+}
+function freezeFor(ms, fn) { frozen = true; setTimeout(() => { frozen = false; if (fn) fn(); render(); }, ms); }
+
+function pageBanner() {
+  if (!loaded) return null;
+  let t = null;
+  const li = levelInfo(computeXP());
+  if (tab === 'course' && !ui.sub && placement()) { const u = UNITS[currentUnit()]; t = ['คอร์สของฉัน', `กำลังเรียน ${u.lv} · บทที่ ${u.n} ${u.t}`, 'happy', 'course']; }
+  else if (tab === 'review' && !ui.review && !ui.exam) { const d = dueItems().length; t = ['ห้องฝึกความจำ', d ? `มีการ์ดรอคุณ ${d} ใบ นึกก่อนพลิกนะ` : 'วันนี้ทวนครบแล้ว เก่งมาก!', d ? 'think' : 'cheer', 'review']; }
+  else if (tab === 'speak') t = ['ห้องฝึกพูด', 'พูดออกเสียงก่อน แล้วพิมพ์ตามที่พูด เจลลี่บูจะแก้ให้', 'happy', 'speak'];
+  else if (tab === 'bank') t = ['คลังของฉัน', `${S.words.size.toLocaleString()} คำ · ${S.phrases.size} ประโยค`, 'shy', 'bank'];
+  else if (tab === 'stats') t = ['ฉันเก่งขึ้นแค่ไหน', `เลเวล ${li.level} · ${li.total.toLocaleString()} XP สะสม`, 'cheer', 'stats'];
+  if (!t) return null;
+  return h('div', { class: 'banner ' + t[3] }, h('div', { class: 'bn-text' }, h('h1', { text: t[0] }), h('p', { text: t[1] })), mascot(t[2]));
+}
+function splash() {
+  if (lsGet('epl-splash', '') === today() || reduced && false) return;
+  const ov = h('div', { class: 'splash', id: 'splash', role: 'dialog', 'aria-label': 'ยินดีต้อนรับ' });
+  const floaters = h('div', { class: 'sp-float', 'aria-hidden': 'true' }, Array.from({ length: 14 }, (_, i) => h('i', { class: i % 3 === 0 ? 'hrt' : '', style: `left:${(i * 7.3 + 4) % 96}%;animation-delay:${(i * .37).toFixed(2)}s;animation-duration:${5 + (i % 4)}s;width:${10 + (i % 4) * 6}px;height:${10 + (i % 4) * 6}px` })));
+  const close = () => { lsSet('epl-splash', today()); ov.classList.add('out'); setTimeout(() => ov.remove(), 450); };
+  ov.append(floaters, h('div', { class: 'sp-card' },
+    h('div', { class: 'sp-m' }, mascot('cheer')),
+    h('div', { class: 'eyebrow', text: 'English Progress Lab' }),
+    h('h1', { class: 'sp-title', text: 'เก่งขึ้นทีละนิด ทุกวัน' }),
+    h('p', { class: 'muted', text: 'เรียนวันละ 12 นาทีกับเจลลี่บู พูดได้จริงในชีวิตและที่ทำงาน' }),
+    h('div', { class: 'sp-stats', id: 'spStats' }),
+    h('button', { class: 'btn primary sp-go', onclick: close, text: 'เริ่มเรียนวันนี้' }),
+    h('button', { class: 'btn ghost sm', onclick: close, text: 'ข้ามไปหน้าแรก' })));
+  document.body.append(ov); updateSplash();
+}
+function updateSplash() {
+  const el = document.getElementById('spStats'); if (!el) return;
+  const li = levelInfo(computeXP());
+  const tile = (v, l, c) => h('div', { class: 'sp-stat', style: `background:var(--${c})` }, h('b', { text: v }), h('span', { text: l }));
+  el.replaceChildren(tile(streak(), 'วันติดกัน', 'peach'), tile(S.words.size, 'คำที่เรียน', 'mint'), tile('Lv ' + li.level, titleFor(li.level), 'lav'));
+}
+function renderHUD() {
+  const li = levelInfo(computeXP()); const s = streak();
+  $('#lvlNum').textContent = li.level; $('#lvlTitle').textContent = titleFor(li.level);
+  $('#xpText').textContent = li.into + ' / ' + li.need + ' XP';
+  $('#xpBar').style.width = Math.round(li.into / li.need * 100) + '%';
+  const f = $('#flame'); if (!f.firstChild) f.innerHTML = I.flame;
+  $('#streakN').textContent = s; $('#streak').classList.toggle('lit', s > 0); f.style.filter = s > 0 ? '' : 'grayscale(1) opacity(.5)';
+}
+function renderNav() {
+  const done = dayLevel(S.days.get(today())) === 2;
+  $('#nav').replaceChildren(...TABS.map(([k, label, icon]) => h('button', { 'aria-current': k === tab ? 'page' : null, onclick: () => { if (k === 'course') { ui.sub = null; } go(k); } }, ico(icon), label,
+    k === 'review' && loaded && dueItems().length ? h('span', { class: 'dot', 'aria-label': 'มีการ์ดรอทบทวน' }) : null,
+    k === 'home' && loaded && !done ? h('span', { class: 'dot', 'aria-label': 'ภารกิจวันนี้ยังไม่ครบ' }) : null)));
+}
+const aiNeeded = () => h('div', { class: 'notice', text: 'ส่วนนี้ใช้ Claude สร้างบทเรียนให้ เปิดแอปนี้ใน Claude และกดอนุญาตเมื่อระบบถาม' });
+const loading = (msg) => h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('think'), h('p', { style: 'font-family:var(--display);font-weight:600' }, h('span', { class: 'spin', style: 'color:var(--lav-d);border-color:var(--lav)' }), ' ' + msg));
+
+// ---------- HOME ----------
+function mascotLine(s, lv, d, yMiss) {
+  if (!loaded) return ['happy', 'กำลังเปิดสมุดของเรา…'];
+  if (lv === 2) return ['cheer', d.quest ? 'วันนี้ครบทุกอย่างแล้ว เก่งมาก! พรุ่งนี้มาต่อนะ' : 'ครบ 4 ภารกิจแล้ว! เปิดหีบรับ XP เลย'];
+  if (lv === 1) return ['happy', 'อีกนิดเดียว หีบสมบัติรออยู่ข้างล่าง'];
+  if (yMiss && S.days.size) return ['sleepy', 'เมื่อวานพลาดไม่เป็นไร วันนี้กลับมาก็พอ เริ่มจากคำศัพท์ 5 คำนะ'];
+  if (s >= 3) return ['cheer', `ไฟกำลังลุก! ติดต่อกัน ${s} วันแล้ว`];
+  return ['happy', 'สวัสดี Tanp! วันนี้แค่ 12 นาที หรือ 2 นาทีในวันยุ่งก็นับ'];
+}
+function vHome() {
+  const t = today(); const d = S.days.get(t) || { steps: {} }; const lv = dayLevel(d);
+  const [mood, line] = mascotLine(streak(), lv, d, !dayLevel(S.days.get(addDays(t, -1))));
+  const hr = new Date().getHours(); const greet = hr < 12 ? 'อรุณสวัสดิ์' : hr < 17 ? 'สวัสดีตอนบ่าย' : 'สวัสดีตอนเย็น';
+  const hero = h('div', { class: 'banner big' }, h('div', { class: 'bn-text' }, h('div', { class: 'eyebrow', text: new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' }) }), h('h1', { text: greet + ', Tanp!' }), h('div', { class: 'bubble', text: line })), mascot(mood));
+  const c = questCounts();
+  const qs = QUESTS().map(q => {
+    const done = !!(d.steps && d.steps[q.id]);
+    const n = q.id === 'shadow' ? (done ? 1 : 0) : Math.min(c[q.id], q.target);
+    const icoBox = done ? h('span', { class: 'ico', style: 'width:30px;height:30px;background:var(--mint-d);border-radius:50%;border:2.5px solid #4A3566;padding:3px' }, ico('check')) : ico(q.icon);
+    return h('div', { class: 'quest' + (done ? ' done' : '') },
+      h('div', { class: 'qi', style: `background:var(--${q.color});color:var(--ink)` }, icoBox),
+      h('div', { style: 'min-width:0' }, h('div', { class: 'qt', text: q.title }), h('div', { class: 'small muted num', text: `${n} / ${q.target} ${q.unit} · +10 XP` }), h('div', { class: 'qbar' }, h('i', { style: `width:${n / q.target * 100}%` }))),
+      h('button', { class: done ? 'btn sm' : 'btn sm primary', disabled: done ? true : null, onclick: () => go(q.go), text: done ? 'เสร็จ' : 'ไปเลย' }));
+  });
+  const allDone = lv === 2;
+  const chest = h('div', { class: 'chest' + (allDone && !d.quest ? ' ready' : '') }, ico(d.quest ? 'chestOpen' : 'chest'),
+    h('div', { style: 'flex:1;min-width:0' }, h('b', { text: d.quest ? 'เปิดหีบวันนี้แล้ว +20 XP' : 'หีบสมบัติประจำวัน' }), h('div', { class: 'small', text: d.quest ? 'กลับมาพรุ่งนี้ รับหีบใหม่' : allDone ? 'ครบทุกภารกิจแล้ว แตะเพื่อเปิด!' : 'ทำครบ 4 ภารกิจเพื่อปลดล็อก' })),
+    allDone && !d.quest ? h('button', { class: 'btn pink', onclick: () => { const cur = S.days.get(t) || { steps: {} }; put('days', t, { ...cur, quest: true, updated: Date.now() }); confetti(200); }, text: 'เปิดหีบ' }) : null);
+  const quests = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h2', { text: 'ภารกิจวันนี้' }), h('span', { class: 'pill lav', text: '≈ 12 นาที' })), h('div', { class: 'quests' }, qs), chest,
+    h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { const cur = S.days.get(t) || { steps: {} }; put('days', t, { ...cur, minimum: !cur.minimum, updated: Date.now() }); }, text: d.minimum ? 'ยกเลิกโหมดมินิ' : 'วันยุ่งมาก? โหมดมินิ 2 นาที (ไฟไม่ดับ +5 XP)' }));
+  const ci = currentUnit(); const u = UNITS[ci]; const n = unitWords(u.id).length; const wd = WORLDS[u.w];
+  const cont = h('div', { class: 'card', style: `background:linear-gradient(150deg,var(--${wd.color}),var(--card) 70%)` },
+    h('div', { class: 'row between' }, h('span', { class: 'pill', text: `${u.lv} · บทที่ ${u.n}` }), h('span', { class: 'tag ' + u.use, text: { life: 'ชีวิตประจำวัน', work: 'ที่ทำงาน', exam: 'สอบ/ทั่วไป' }[u.use] })),
+    h('h2', { text: `${u.t} · ${u.th}` }), h('p', { class: 'small muted', text: 'โครงสร้างประโยค: ' + u.f }),
+    h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, n / u.target * 100)}%` })), h('div', { class: 'small num', text: `${n} / ${u.target} คำในบทนี้` }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.world = u.w; ui.unit = u.id; ui.sub = 'unit'; go('course', { keep: true }); }, text: 'เรียนต่อ' })));
+  const DOW = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']; const mon = addDays(t, -((new Date(t + 'T00:00:00').getDay() + 6) % 7));
+  const week = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'สัปดาห์นี้' }), h('span', { class: 'small muted', text: 'พลาด 1 วันได้ อย่าพลาด 2 วันติด' })),
+    h('div', { class: 'week' }, DOW.map((nm, i) => { const day = addDays(mon, i); const l = dayLevel(S.days.get(day)); return h('div', {}, h('i', { class: (l ? 'l' + l : '') + (day === t ? ' today' : '') }, l ? ico(l === 2 ? 'check' : 'flame') : null), nm); })));
+  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), weekCard(), cont);
+}
+
+// ---------- COURSE ----------
+const ringSvg = (p, color) => { const e = document.createElement('div'); e.innerHTML = `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="24" fill="none" stroke="var(--bg2)" stroke-width="7"/><circle cx="30" cy="30" r="24" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round" stroke-dasharray="151" stroke-dashoffset="${151 * (1 - p)}"/></svg>`; return e.firstChild; };
+function vCourse() {
+  if (ui.sub === 'learn') return vLearn();
+  if (ui.sub === 'shadow') return vShadow();
+  if (ui.sub === 'unit' && ui.unit) return vUnit();
+  if (ui.world == null) ui.world = UNITS[currentUnit()].w;
+  const wb = h('div', { class: 'worldbar' }, WORLDS.map((w, i) => {
+    const us = UNITS.filter(u => u.w === i); const got = us.reduce((a, u) => a + Math.min(u.target, unitWords(u.id).length), 0); const tot = us.reduce((a, u) => a + u.target, 0);
+    return h('button', { class: 'world' + (worldOpen(i) ? '' : ' locked'), 'aria-pressed': String(ui.world === i), style: `background:var(--${w.color})`, onclick: () => { ui.world = i; render(); } },
+      h('div', { class: 'lv', text: w.lv }), h('div', { class: 'sm', text: worldOpen(i) ? `${got}/${tot} คำ` : 'ล็อก' }));
+  }));
+  const W = WORLDS[ui.world]; const open = worldOpen(ui.world);
+  const head = h('div', { class: 'card', style: `background:linear-gradient(150deg,var(--${W.color}),var(--card) 75%)` },
+    h('div', { class: 'row between' }, h('span', { class: 'pill', text: `โลก ${ui.world + 1} · ${W.lv}` }), h('span', { class: 'small muted', text: W.sub })),
+    h('h2', { text: W.name }),
+    open ? h('p', { class: 'small', text: 'แต่ละบท: เรียนคำศัพท์ทีละแพ็ก → Shadowing บทสนทนา → คุยกับเจลลี่บู ครบ 50% ปลดล็อกบทถัดไป' })
+      : h('div', { class: 'notice', text: `ปลดล็อกเมื่อชนะบอสของโลก ${ui.world}` + (W.wpm ? ` และเช็กพอยต์พูดได้ ${W.wpm} คำ/นาที (ดีที่สุดตอนนี้ ${bestWpm() || 0})` : '') }));
+  const list = h('div', { class: 'units' }, UNITS.filter(u => u.w === ui.world).map(u => {
+    const i = u.n - 1; const op = unitOpen(i); const p = unitProgress(u);
+    const ring = h('div', { class: 'uring' }, ringSvg(p, p >= 1 ? 'var(--mint-d)' : 'var(--pink-d)'), h('b', {}, op ? (p >= 1 ? ico('star', 28) : String(u.n)) : ico('lock', 22)));
+    return h('button', { class: 'unit' + (op ? '' : ' locked'), disabled: op ? null : true, onclick: () => { ui.unit = u.id; ui.sub = 'unit'; render(true); window.scrollTo({ top: 0 }); } },
+      ring, h('div', { style: 'min-width:0' }, h('b', { text: u.t }), h('div', { class: 'small muted', text: u.th }), h('div', { class: 'row', style: 'gap:6px;margin-top:2px' }, h('span', { class: 'tag ' + u.use, text: { life: 'ชีวิต', work: 'งาน', exam: 'สอบ' }[u.use] }), h('span', { class: 'small num muted', text: `${unitWords(u.id).length}/${u.target} คำ` }))),
+      op ? h('span', { class: 'small', style: 'color:var(--lav-d);font-weight:600', text: '›' }) : null);
+  }));
+  const boss = h('div', { class: 'boss' }, ico('boss'), h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'small', text: `บอสประจำโลก ${W.lv} · พูดอย่างน้อย ${W.secs} วินาที และได้ 2 ดาว` }), h('b', { text: W.boss })),
+    open ? h('button', { class: 'btn pink sm', onclick: () => { setSpeak(ui.world, true); ui.speakMode = 'answer'; go('speak'); }, text: bossCleared(ui.world) ? 'ท้าอีกรอบ' : 'ท้าบอส!' }) : null);
+  return h('section', {}, loaded && !placement() ? testCard() : null, wb, head, list, h('div', { class: 'card' }, boss, bossCleared(ui.world) ? h('span', { class: 'pill mint', style: 'align-self:flex-start', text: 'ชนะบอสแล้ว' }) : null));
+}
+function vUnit() {
+  const u = UNITS.find(x => x.id === ui.unit); const W = WORLDS[u.w]; const ws = unitWords(u.id); const ud = unitDoc(u.id);
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.sub = null; render(true); }, text: '‹ กลับไปที่โลก ' + W.lv });
+  const head = h('div', { class: 'card', style: `background:linear-gradient(150deg,var(--${W.color}),var(--card) 75%)` },
+    h('div', { class: 'row between' }, h('span', { class: 'pill', text: `${u.lv} · บทที่ ${u.n}` }), h('span', { class: 'tag ' + u.use, text: { life: 'ชีวิตประจำวัน', work: 'ที่ทำงาน', exam: 'สอบ/ทั่วไป' }[u.use] })),
+    h('h2', { text: u.t }), h('p', { text: u.th + ' · ' + u.scene }),
+    h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'โครงสร้างประโยคของบทนี้' }), h('b', { text: u.f })),
+    h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, ws.length / u.target * 100)}%` })),
+    h('div', { class: 'row between small num' }, h('span', { text: `${ws.length} / ${u.target} คำ` }), h('span', { text: `Shadowing ${ud.shadowDone || 0} รอบ` })));
+  const acts = h('div', { class: 'acts' },
+    h('button', { class: 'act', style: 'background:var(--lav)', onclick: () => startLearn(u) }, ico('learn'), 'เรียนคำใหม่', h('small', { text: `แพ็กละ ${packSize()} คำ` })),
+    h('button', { class: 'act', style: 'background:var(--mint)', onclick: () => startShadow(u) }, ico('speaker'), 'Shadowing', h('small', { text: 'ฟังแล้วพูดตาม' })),
+    h('button', { class: 'act', style: 'background:var(--peach)', onclick: () => { startChat(u); ui.speakMode = 'chat'; go('speak'); } }, ico('chat'), 'คุยกับเจลลี่บู', h('small', { text: 'บทบาทสมมติ' })));
+  const wl = h('div', { class: 'card' }, h('h3', { text: 'คำศัพท์ในบทนี้' }), ws.length
+    ? h('div', { class: 'plist' }, ws.sort((a, b) => (b.created || 0) - (a.created || 0)).map(w => h('div', { class: 'pitem' }, h('div', { style: 'min-width:0' }, h('b', { text: w.w }), ' ', h('span', { class: 'small muted', text: `(${w.pos || ''}) ${w.th || ''}` }), h('div', { class: 'small muted', text: w.chunk || '' })), sayBtn(w.w, 'sm'))))
+    : h('p', { class: 'muted small', text: 'ยังไม่มีคำในบทนี้ กด "เรียนคำใหม่" เพื่อเริ่ม' }));
+  return h('section', {}, back, head, acts, wl);
+}
+
+// learn
+async function startLearn(u) {
+  ui.unit = u.id; ui.sub = 'learn'; ui.learn = { unit: u.id, items: [], i: 0, phase: 'load', err: '', known: new Set(), quiz: [], qi: 0, picked: null, right: 0 };
+  render(true); window.scrollTo({ top: 0 });
+  if (!sample) { ui.learn.phase = 'noai'; render(); return; }
+  try {
+    const arr = await aiPack(u, packSize());
+    const have = new Set(allWords().map(w => w.w.toLowerCase()));
+    const items = (Array.isArray(arr) ? arr : []).filter(x => x && x.w && !have.has(String(x.w).toLowerCase())).map(x => ({ w: String(x.w), pos: String(x.pos || ''), th: String(x.th || ''), chunk: String(x.chunk || ''), ex: String(x.ex || ''), exTh: String(x.exTh || '') }));
+    if (!items.length) throw { code: 'empty' };
+    Object.assign(ui.learn, { items, phase: 'intro' });
+    say(items[0].w, ui.rate);
+  } catch (e) { ui.learn.phase = 'err'; ui.learn.err = aiErr(e); }
+  render(true);
+}
+function buildQuiz() {
+  const L = ui.learn; const pool = L.items.filter(x => !L.known.has(x.w));
+  L.quiz = shuffle(pool).map(x => {
+    const blank = x.ex.replace(new RegExp(x.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '_____');
+    const type = blank !== x.ex && Math.random() < .6 ? 'cloze' : 'mean';
+    const distract = shuffle(L.items.filter(y => y.w !== x.w)).slice(0, 3);
+    return { x, type, blank, opts: shuffle([x, ...distract]) };
+  });
+  L.qi = 0; L.picked = null; L.right = 0; L.phase = L.quiz.length ? 'quiz' : 'done';
+  if (L.phase === 'done') finishLearn();
+}
+function finishLearn() {
+  const L = ui.learn; const u = UNITS.find(x => x.id === L.unit); const t = today(); const now = Date.now();
+  const res = new Map(L.quiz.map(q => [q.x.w, q.ok]));
+  L.items.forEach((x, k) => {
+    const known = L.known.has(x.w); const ok = res.get(x.w);
+    const box = known ? 4 : ok ? 1 : 0; const due = known ? addDays(t, 14) : ok ? addDays(t, 1) : t;
+    put('words', slug(x.w), { ...x, unit: u.id, level: u.lv, box, due, created: now + k, reviews: 0, known: known || null }, true);
+  });
+  L.phase = 'done'; confetti(140); render();
+}
+function vLearn() {
+  const L = ui.learn; const u = UNITS.find(x => x.id === L.unit);
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.sub = 'unit'; if (canTTS) speechSynthesis.cancel(); render(true); }, text: '‹ ' + u.t });
+  if (L.phase === 'load') return h('section', {}, back, loading('เจลลี่บูกำลังเตรียมคำศัพท์ที่ใช้ได้จริงให้…'));
+  if (L.phase === 'noai') return h('section', {}, back, aiNeeded());
+  if (L.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: L.err || 'สร้างแพ็กไม่สำเร็จ' }), h('button', { class: 'btn primary', onclick: () => startLearn(u), text: 'ลองอีกครั้ง' })));
+  if (L.phase === 'intro') {
+    const x = L.items[L.i];
+    const card = h('div', { class: 'wcard', key: L.i },
+      h('div', { class: 'row', style: 'justify-content:center' }, h('span', { class: 'w', text: x.w }), sayBtn(x.w)),
+      h('div', { class: 'pos', text: x.pos }), h('div', { class: 'th', text: x.th }),
+      x.chunk ? h('div', { class: 'chunk', text: x.chunk }) : null,
+      h('div', { class: 'row', style: 'justify-content:center;flex-wrap:nowrap' }, h('div', { class: 'ex', text: x.ex }), sayBtn(x.ex, 'sm')),
+      h('div', { class: 'small muted', text: x.exTh }));
+    const next = () => { if (L.i < L.items.length - 1) { L.i++; render(); say(L.items[L.i].w, ui.rate); } else { buildQuiz(); render(); } };
+    return h('section', {}, back, h('div', { class: 'card' },
+      h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(L.i + 1) / L.items.length * 100}%` })), h('span', { class: 'num small', text: `${L.i + 1}/${L.items.length}` })),
+      card, h('p', { class: 'small muted', style: 'text-align:center', text: 'ฟัง แล้วพูดคำและประโยคตัวอย่างออกเสียง 2 รอบ' }),
+      h('div', { class: 'row', style: 'justify-content:center' },
+        h('button', { class: 'btn', onclick: () => { L.known.add(x.w); next(); }, text: 'รู้จักแล้ว ข้าม' }),
+        h('button', { class: 'btn primary', onclick: () => { L.known.delete(x.w); next(); }, text: L.i < L.items.length - 1 ? 'คำถัดไป' : 'ไปทดสอบความจำ' }))));
+  }
+  if (L.phase === 'quiz') {
+    const q = L.quiz[L.qi];
+    const prompt = q.type === 'cloze' ? [h('div', { class: 'small muted', text: 'เติมคำที่หายไป' }), h('div', { class: 'ex', style: 'font-size:18px;font-weight:600', text: q.blank }), h('div', { class: 'small muted', text: q.x.exTh })]
+      : [h('div', { class: 'small muted', text: 'คำไหนแปลว่า…' }), h('div', { class: 'th', style: 'font-size:24px', text: q.x.th })];
+    const opts = h('div', { class: 'opts' }, q.opts.map(o => {
+      const st = L.picked == null ? '' : o.w === q.x.w ? ' ok' : L.picked === o.w ? ' no' : '';
+      return h('button', { class: 'opt' + st, disabled: L.picked != null ? true : null, onclick: () => { L.picked = o.w; q.ok = o.w === q.x.w; if (q.ok) { L.right++; } say(q.x.w, ui.rate); render(); }, text: o.w });
+    }));
+    return h('section', {}, back, h('div', { class: 'card' },
+      h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(L.qi + 1) / L.quiz.length * 100}%` })), h('span', { class: 'num small', text: `${L.qi + 1}/${L.quiz.length}` })),
+      h('div', { class: 'wcard' }, prompt), opts,
+      L.picked != null ? h('div', { class: 'row between' }, h('span', { style: `font-family:var(--display);font-weight:700;color:var(--${q.ok ? 'mint' : 'pink'}-d)`, text: q.ok ? 'ถูกต้อง! เก่งมาก' : `คำตอบคือ "${q.x.w}" จำไว้นะ` }),
+        h('button', { class: 'btn primary', onclick: () => { if (L.qi < L.quiz.length - 1) { L.qi++; L.picked = null; render(); } else finishLearn(); }, text: L.qi < L.quiz.length - 1 ? 'ข้อต่อไป' : 'จบแพ็ก' })) : null));
+  }
+  const total = L.quiz.length; const stars = !total ? 3 : L.right / total >= .8 ? 3 : L.right / total >= .5 ? 2 : 1;
+  return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('cheer'),
+    h('h2', { text: `ได้คำใหม่ ${L.items.length} คำ!` }),
+    h('div', { class: 'stars' }, [0, 1, 2].map(k => { const e = ico(k < stars ? 'star' : 'starOff'); if (k < stars) { e.classList.add('on'); e.style.animationDelay = (k * .25) + 's'; } return e; })),
+    h('p', { class: 'small muted', text: `ตอบถูก ${L.right}/${total} · รู้อยู่แล้ว ${L.known.size} คำ · คำเหล่านี้จะกลับมาให้ทบทวนตามรอบ` }),
+    h('div', {}, h('div', { class: 'small', style: 'margin-bottom:6px', text: 'แพ็กนี้เป็นยังไงบ้าง?' }), h('div', { class: 'diff' },
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', Math.max(-1, diff() - 1)); render(); }, text: 'ยากไป' }),
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', 0); render(); }, text: 'พอดี' }),
+      h('button', { class: 'btn sm', onclick: () => { lsSet('epl-diff', Math.min(1, diff() + 1)); render(); }, text: 'ง่ายไป' })),
+      h('div', { class: 'small muted', style: 'margin-top:4px', text: 'ระดับแพ็กถัดไป: ' + (diff() < 0 ? 'ง่ายลง' : diff() > 0 ? 'ท้าทายขึ้น' : 'ปกติ') })),
+    h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: () => startLearn(u), text: 'เรียนอีกแพ็ก' }), h('button', { class: 'btn', onclick: () => startShadow(u), text: 'ไป Shadowing' }), h('button', { class: 'btn ghost', onclick: () => { ui.sub = 'unit'; render(true); }, text: 'กลับบท' }))));
+}
+
+// shadowing
+async function startShadow(u) {
+  ui.unit = u.id; ui.world = u.w; ui.sub = 'shadow'; tab = 'course'; lsSet('epl-tab', tab);
+  const ud = unitDoc(u.id);
+  ui.shadow = { unit: u.id, phase: ud.shadow ? 'ready' : 'load', ticks: new Set(), hide: false, playing: -1, err: '', step: 1 };
+  render(true); window.scrollTo({ top: 0 });
+  if (ud.shadow) return;
+  await genShadow(u);
+}
+async function genShadow(u) {
+  if (!sample) { ui.shadow.phase = 'noai'; render(); return; }
+  ui.shadow.phase = 'load'; render();
+  try {
+    const r = await aiShadow(u); const lines = (r && Array.isArray(r.lines) ? r.lines : []).filter(l => l && l.en).map(l => ({ who: l.who === 'B' ? 'B' : 'A', en: String(l.en), th: String(l.th || '') }));
+    if (!lines.length) throw { code: 'empty' };
+    const ud = unitDoc(u.id); await put('units', u.id, { ...ud, shadow: { title: String(r.title || u.t), lines }, updated: Date.now() });
+    ui.shadow.phase = 'ready'; ui.shadow.ticks = new Set();
+  } catch (e) { ui.shadow.phase = 'err'; ui.shadow.err = aiErr(e); }
+  render();
+}
+function playAll(lines, i = 0) {
+  const sh = ui.shadow; if (!sh || i >= lines.length) { if (sh) { sh.playing = -1; render(); } return; }
+  sh.playing = i; render();
+  say(lines[i].en, ui.rate, () => { if (!ui.shadow || ui.shadow.playing !== i) return; const gap = sh.step === 3 ? 300 : 900 + words(lines[i].en) * 380; setTimeout(() => { if (ui.shadow && ui.shadow.playing === i) playAll(lines, i + 1); }, gap); });
+}
+function vShadow() {
+  const sh = ui.shadow; const u = UNITS.find(x => x.id === sh.unit); const ud = unitDoc(u.id);
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { if (canTTS) speechSynthesis.cancel(); ui.shadow.playing = -1; ui.sub = 'unit'; render(true); }, text: '‹ ' + u.t });
+  if (sh.phase === 'load') return h('section', {}, back, loading('เจลลี่บูกำลังเขียนบทสนทนาให้ฝึกพูดตาม…'));
+  if (sh.phase === 'noai') return h('section', {}, back, aiNeeded());
+  if (sh.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: sh.err || 'สร้างบทไม่สำเร็จ' }), h('button', { class: 'btn primary', onclick: () => genShadow(u), text: 'ลองอีกครั้ง' })));
+  const s = ud.shadow; if (!s) return h('section', {}, back, loading('กำลังโหลด…'));
+  const steps = h('div', { class: 'seg', role: 'group', 'aria-label': 'ขั้นตอน Shadowing' }, [[1, '1 ฟัง+อ่าน'], [2, '2 พูดตามทีละบรรทัด'], [3, '3 พูดพร้อมกัน']].map(([k, l]) => h('button', { 'aria-pressed': String(sh.step === k), onclick: () => { sh.step = k; sh.hide = k === 3; render(); }, text: l })));
+  const tip = { 1: 'ฟังทั้งบทพร้อมอ่านคำแปล จับความหมายก่อน', 2: 'กดฟังทีละบรรทัด แล้วพูดตามให้เหมือนที่สุดทั้งจังหวะและน้ำเสียง จากนั้นติ๊กถูก', 3: 'ซ่อนข้อความแล้วกดเล่นทั้งบท พูดไปพร้อมเสียงแบบไม่หยุด' }[sh.step];
+  const speeds = h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'small muted', text: 'ความเร็ว' }), [[.7, 'ช้า'], [.85, 'กลาง'], [1, 'ปกติ']].map(([r, l]) => h('button', { class: 'btn sm' + (Math.abs(ui.rate - r) < .01 ? ' primary' : ''), onclick: () => { ui.rate = r; lsSet('epl-rate', r); render(); }, text: l })));
+  const lines = h('div', { class: 'lines' }, s.lines.map((l, i) => h('div', { class: `line ${l.who}` + (sh.playing === i ? ' playing' : '') + (sh.hide ? ' hide' : '') },
+    h('div', { class: 'who', text: l.who === 'B' ? 'คุณ' : 'A', style: l.who === 'B' ? 'font-size:12px' : null }),
+    h('div', { style: 'min-width:0' }, h('div', { class: 'en', text: l.en }), sh.step < 3 ? h('div', { class: 'small muted thl', text: l.th }) : null),
+    h('div', { class: 'row', style: 'gap:6px;flex-wrap:nowrap' }, canTTS ? h('button', { class: 'say sm', 'aria-label': 'ฟังบรรทัดนี้', onclick: () => { sh.playing = i; render(); say(l.en, ui.rate, () => { if (ui.shadow && ui.shadow.playing === i) { ui.shadow.playing = -1; render(); } }); } }, ico('speaker')) : null,
+      sh.step === 2 ? h('button', { class: 'tickb' + (sh.ticks.has(i) ? ' on' : ''), 'aria-label': 'พูดตามบรรทัดนี้แล้ว', onclick: () => { sh.ticks.has(i) ? sh.ticks.delete(i) : sh.ticks.add(i); render(); } }, sh.ticks.has(i) ? ico('check') : null) : null))));
+  const allTicked = sh.ticks.size >= s.lines.length;
+  const doneBtn = h('button', { class: 'btn mint', disabled: (sh.step === 2 && !allTicked) || sh.step === 1 ? true : null, onclick: () => {
+    put('units', u.id, { ...ud, shadowDone: (ud.shadowDone || 0) + 1, lastShadow: Date.now() }); markStep('shadow'); confetti(140);
+    modal([mascot('cheer'), h('h2', { text: 'Shadowing สำเร็จ!' }), h('p', { class: 'small', text: 'พูดบทเดิมซ้ำอีก 2–3 วัน จะเริ่มพูดได้ลื่นโดยไม่ต้องคิด' }), h('div', { class: 'big', text: '+15' })], 'เยี่ยม!');
+  }, text: sh.step === 1 ? 'ไปขั้นที่ 2 ก่อนนะ' : sh.step === 2 && !allTicked ? `ติ๊กให้ครบ (${sh.ticks.size}/${s.lines.length})` : 'จบรอบนี้ +15 XP' });
+  return h('section', {}, back, h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('h2', { text: s.title }), h('span', { class: 'pill mint', text: `ฝึกแล้ว ${ud.shadowDone || 0} รอบ` })),
+    steps, h('p', { class: 'small', text: tip }), speeds,
+    !canTTS ? h('div', { class: 'notice', text: 'อุปกรณ์นี้เล่นเสียงอ่านไม่ได้ ลองอ่านออกเสียงเองตามบท หรือเปิดในเบราว์เซอร์อื่น' }) : null,
+    h('div', { class: 'row' }, canTTS ? h('button', { class: 'btn primary', onclick: () => { if (sh.playing >= 0) { sh.playing = -1; speechSynthesis.cancel(); render(); } else playAll(s.lines); } }, sh.playing >= 0 ? 'หยุด' : [ico('play', 16), ' เล่นทั้งบท']) : null,
+      h('button', { class: 'btn sm ghost', onclick: () => { sh.hide = !sh.hide; render(); }, text: sh.hide ? 'แสดงข้อความ' : 'ซ่อนข้อความ' }),
+      h('button', { class: 'btn sm ghost', onclick: () => genShadow(u), text: 'ขอบทใหม่' })),
+    lines, doneBtn));
+}
+
+// ---------- REVIEW (active recall) ----------
+function startReview(extra) {
+  let items = dueItems();
+  if (extra || !items.length) { const ids = new Set(items.map(x => x.id)); const rest = shuffle([...S.words.entries()].map(([id, x]) => ({ col: 'words', id, ...x })).concat([...S.phrases.entries()].map(([id, x]) => ({ col: 'phrases', id, ...x }))).filter(x => !ids.has(x.id))).slice(0, 8); items = items.concat(rest); }
+  items = shuffle(items).slice(0, 25);
+  const wl = allWords();
+  items.forEach(it => {
+    if (it.col === 'phrases') { it.mode = 'recall'; return; }
+    const modes = ['recall']; if (wl.length >= 4 && it.ex) modes.push('cloze', 'cloze'); if (canTTS) modes.push('listen');
+    it.mode = modes[Math.floor(Math.random() * modes.length)];
+    if (it.mode === 'cloze') { const blank = it.ex.replace(new RegExp(it.w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '_____'); if (blank === it.ex) it.mode = 'recall'; else { it.blank = blank; it.opts = shuffle([it.w, ...shuffle(wl.filter(w => w.w !== it.w)).slice(0, 3).map(w => w.w)]); } }
+  });
+  ui.review = { items, i: 0, combo: 0, best: 0, got: 0, near: 0, miss: 0, xp: 0, picked: null };
+  render(true); const f = items[0]; if (f && f.mode === 'listen') setTimeout(() => say(f.w, ui.rate), 400);
+}
+function rateItem(kind) {
+  const r = ui.review; const it = r.items[r.i]; const doc = S[it.col].get(it.id);
+  if (kind === 'got') { r.combo++; r.got++; r.best = Math.max(r.best, r.combo); } else { r.combo = 0; kind === 'near' ? r.near++ : r.miss++; }
+  if (kind === 'miss') { r.items.push({ ...it, mode: it.col === 'words' ? 'recall' : it.mode }); const c = $('#rvCard'); if (c) c.classList.add('shake'); }
+  r.i++; r.xp += 2; r.picked = null;
+  if (r.combo && r.combo % 5 === 0) confetti(50);
+  if (doc) {
+    let box = doc.box || 0, due;
+    if (kind === 'got') { box = Math.min(box + 1, INTERVALS.length - 1); due = addDays(today(), INTERVALS[box]); } else if (kind === 'near') due = addDays(today(), 1); else { box = 0; due = addDays(today(), 1); }
+    put(it.col, it.id, { ...doc, box, due, lastSeen: Date.now(), reviews: (doc.reviews || 0) + 1 }, true);
+  }
+  if (r.i >= r.items.length) setTimeout(() => confetti(140), 200);
+  freezeFor(kind === 'miss' ? 420 : 140, () => { const n = r.items[r.i]; if (n && n.mode === 'listen') setTimeout(() => say(n.w, ui.rate), 250); });
+}
+function vReview() {
+  if (ui.exam) return vExam();
+  const r = ui.review;
+  if (!loaded) return h('section', {}, loading('กำลังสับการ์ด…'));
+  if (!S.words.size && !S.phrases.size) return h('section', {}, h('div', { class: 'card' }, h('h2', { text: 'ยังไม่มีการ์ด' }), h('p', { class: 'muted', text: 'เรียนคำศัพท์แพ็กแรกในคอร์สก่อน แล้วการ์ดจะมาอยู่ที่นี่' }), h('div', {}, h('button', { class: 'btn primary', onclick: () => go('course'), text: 'ไปที่คอร์ส' }))));
+  if (r && r.i >= r.items.length) {
+    const acc = r.got / Math.max(1, r.got + r.near + r.miss); const stars = acc >= .8 ? 3 : acc >= .5 ? 2 : 1;
+    return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot(stars === 3 ? 'cheer' : 'happy'),
+      h('h2', { text: stars === 3 ? 'สุดยอด! จำได้เกือบหมด' : stars === 2 ? 'ดีมาก! เก่งขึ้นทุกรอบ' : 'ทำได้! คำที่ลืมจะวนกลับมาพรุ่งนี้' }),
+      h('div', { class: 'stars' }, [0, 1, 2].map(k => { const e = ico(k < stars ? 'star' : 'starOff'); if (k < stars) { e.classList.add('on'); e.style.animationDelay = (k * .25) + 's'; } return e; })),
+      h('div', { class: 'row', style: 'justify-content:center' }, h('span', { class: 'pill mint', text: `นึกออก ${r.got}` }), h('span', { class: 'pill peach', text: `เกือบ ${r.near}` }), h('span', { class: 'pill pink', text: `ลืม ${r.miss}` }), h('span', { class: 'pill lav', text: `คอมโบ ${r.best}` })),
+      h('div', { class: 'num', style: 'font-size:22px;color:var(--lav-d)', text: `+${r.xp} XP` }),
+      h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: () => { ui.review = null; go('home'); }, text: 'กลับบ้าน' }), h('button', { class: 'btn', onclick: () => startReview(true), text: 'เล่นอีกรอบ' }))));
+  }
+  if (!r) {
+    const due = dueItems().length;
+    return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('happy'),
+      h('h2', { text: due ? `มีการ์ดรอคุณ ${due} ใบ` : 'วันนี้ทวนครบแล้ว' }),
+      h('p', { class: 'small muted', text: 'มี 3 แบบสลับกัน: นึกคำจากความหมาย · ฟังแล้วบอกความหมาย · เติมคำในประโยค พูดออกเสียงก่อนพลิกทุกครั้ง' }),
+      h('div', { class: 'row', style: 'justify-content:center' }, due ? h('button', { class: 'btn primary', onclick: () => startReview(false), text: 'เริ่มทบทวน' }) : null, h('button', { class: due ? 'btn' : 'btn primary', onclick: () => startReview(true), text: due ? 'ทบทวน + สุ่มเพิ่ม' : 'สุ่มทบทวน 8 ใบ' })),
+      h('p', { class: 'small muted', text: 'นึกออก → เว้นนานขึ้น 1, 3, 7, 14, 30, 60 วัน · เกือบ → พรุ่งนี้ · ลืม → วนกลับมาในรอบนี้' })),
+      h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', {}, 'ข้อสอบจำลอง TOEIC Part 5'), ico('exam', 30)), h('p', { class: 'small muted', text: '5 ข้อ เติมคำในประโยคแนวที่ทำงาน ใช้คำที่คุณเรียนมา พร้อมเฉลยภาษาไทย' }),
+        h('button', { class: 'btn pink', style: 'align-self:flex-start', disabled: aiOff ? true : null, onclick: startExam, text: aiOff ? 'ต้องเปิดใน Claude' : 'เริ่มทำข้อสอบ' })));
+  }
+  const it = r.items[r.i]; const isW = it.col === 'words';
+  const top = h('div', { class: 'gtop' }, h('button', { class: 'btn ghost sm', onclick: () => { ui.review = null; render(true); }, 'aria-label': 'ออกจากรอบนี้', text: '✕' }), h('div', { class: 'bar' }, h('i', { style: `width:${r.i / r.items.length * 100}%` })), h('div', { class: 'combo' + (r.combo > 1 ? ' bump' : ''), text: r.combo > 1 ? `x${r.combo} คอมโบ` : `${r.i + 1}/${r.items.length}` }));
+  if (it.mode === 'cloze') {
+    const opts = h('div', { class: 'opts' }, it.opts.map(o => { const st = r.picked == null ? '' : o === it.w ? ' ok' : r.picked === o ? ' no' : ''; return h('button', { class: 'opt' + st, disabled: r.picked != null ? true : null, onclick: () => { r.picked = o; say(it.ex, ui.rate); render(); }, text: o }); }));
+    return h('section', {}, h('div', { class: 'card', id: 'rvCard' }, top,
+      h('div', { class: 'wcard' }, h('span', { class: 'pill', text: 'เติมคำในประโยค' }), h('div', { class: 'ex', style: 'font-size:19px;font-weight:600', text: it.blank }), h('div', { class: 'small muted', text: it.exTh || '' })),
+      opts, r.picked != null ? h('div', { class: 'row between' }, h('span', { style: `font-family:var(--display);font-weight:700;color:var(--${r.picked === it.w ? 'mint' : 'pink'}-d)`, text: r.picked === it.w ? 'ถูกต้อง!' : `คำตอบคือ "${it.w}" (${it.th})` }), h('button', { class: 'btn primary', onclick: () => rateItem(r.picked === it.w ? 'got' : 'miss'), text: 'ต่อไป' })) : null));
+  }
+  const front = it.mode === 'listen'
+    ? [h('span', { class: 'pill', text: 'ฟังแล้วบอกความหมาย' }), h('button', { class: 'say', style: 'width:72px;height:72px', 'aria-label': 'ฟังอีกครั้ง', onclick: e => { e.stopPropagation(); say(it.w, ui.rate); } }, ico('speaker', 36)), h('div', { class: 'sub', text: 'พูดคำนี้ตาม แล้วบอกความหมายในใจ' })]
+    : [h('span', { class: 'pill', text: 'พูดเป็นภาษาอังกฤษ' }), h('div', { class: 'th', text: it.th || '' }), isW && it.chunk ? h('div', { class: 'sub', text: 'ใบ้: ขึ้นต้นด้วย "' + it.w.slice(0, 1) + '…"' }) : null, h('div', { class: 'sub', text: 'พูดออกเสียงก่อน แล้วแตะพลิก' })];
+  const back = isW ? [h('div', { class: 'row', style: 'justify-content:center' }, h('div', { class: 'en', text: it.w }), sayBtn(it.w, 'sm')), h('div', { class: 'sub', text: `${it.th || ''}${it.chunk ? ' · ' + it.chunk : ''}` }), it.ex ? h('div', { class: 'sub', style: 'color:var(--ink)', text: it.ex }) : null]
+    : [h('div', { class: 'row', style: 'justify-content:center' }, h('div', { class: 'en', text: it.en || '' }), sayBtn(it.en || '', 'sm')), it.alt ? h('div', { class: 'sub', text: 'หรือ: ' + it.alt }) : null, it.note ? h('div', { class: 'sub', text: it.note }) : null];
+  const flip = h('div', { class: 'flip' }, h('div', { class: 'face front' }, front), h('div', { class: 'face back' }, back));
+  const rateRow = h('div', { class: 'rate', hidden: true }, h('button', { class: 'btn pink', onclick: () => rateItem('miss'), text: 'ลืม' }), h('button', { class: 'btn', style: 'background:var(--peach)', onclick: () => rateItem('near'), text: 'เกือบได้' }), h('button', { class: 'btn mint', onclick: () => rateItem('got'), text: 'นึกออก!' }));
+  const reveal = h('button', { class: 'btn primary', style: 'width:100%', onclick: () => { flip.classList.add('on'); reveal.hidden = true; rateRow.hidden = false; if (isW && it.mode !== 'listen') say(it.w, ui.rate); } , text: 'พลิกดูเฉลย' });
+  flip.addEventListener('click', () => { if (!flip.classList.contains('on')) reveal.click(); });
+  return h('section', {}, h('div', { class: 'card', id: 'rvCard' }, top, h('div', { class: 'scene' }, flip), reveal, rateRow));
+}
+async function startExam() {
+  const lv = WORLDS[UNITS[currentUnit()].w].lv;
+  ui.exam = { phase: 'load', qs: [], i: 0, picked: null, right: 0, lv }; render(true);
+  try { const arr = await aiExam(lv); const qs = (Array.isArray(arr) ? arr : []).filter(q => q && q.q && Array.isArray(q.options) && q.options.length === 4).map(q => ({ q: String(q.q), options: q.options.map(String), answer: Math.max(0, Math.min(3, Number(q.answer) || 0)), why: String(q.why_th || '') })); if (!qs.length) throw { code: 'empty' }; Object.assign(ui.exam, { qs, phase: 'q' }); }
+  catch (e) { ui.exam.phase = 'err'; ui.exam.err = aiErr(e); }
+  render(true);
+}
+function vExam() {
+  const X = ui.exam; const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.exam = null; render(true); }, text: '‹ กลับ' });
+  if (X.phase === 'load') return h('section', {}, back, loading('เจลลี่บูกำลังออกข้อสอบให้…'));
+  if (X.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: X.err || 'สร้างข้อสอบไม่สำเร็จ' }), h('button', { class: 'btn primary', onclick: startExam, text: 'ลองอีกครั้ง' })));
+  if (X.phase === 'done') return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot(X.right >= 4 ? 'cheer' : 'happy'), h('h2', { text: `ได้ ${X.right} / ${X.qs.length} คะแนน` }), h('p', { class: 'small muted', text: X.right >= 4 ? 'พร้อมสอบมากขึ้นทุกวัน!' : 'ข้อที่ผิดคือสิ่งที่ต้องเรียนต่อ ดีกว่าไปพลาดในห้องสอบจริง' }),
+    h('div', { class: 'row', style: 'justify-content:center' }, h('button', { class: 'btn primary', onclick: startExam, text: 'ทำอีกชุด' }), h('button', { class: 'btn', onclick: () => { ui.exam = null; render(true); }, text: 'กลับ' }))));
+  const q = X.qs[X.i];
+  return h('section', {}, back, h('div', { class: 'card exq' },
+    h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(X.i + 1) / X.qs.length * 100}%` })), h('span', { class: 'num small', text: `${X.i + 1}/${X.qs.length}` })),
+    h('span', { class: 'pill butter', style: 'align-self:flex-start', text: `TOEIC Part 5 · ${X.lv}` }), h('div', { class: 'q', text: q.q }),
+    h('div', { class: 'opts' }, q.options.map((o, k) => { const st = X.picked == null ? '' : k === q.answer ? ' ok' : X.picked === k ? ' no' : ''; return h('button', { class: 'opt' + st, disabled: X.picked != null ? true : null, onclick: () => { X.picked = k; if (k === q.answer) X.right++; render(); }, text: `(${'ABCD'[k]}) ${o}` }); })),
+    X.picked != null ? h('div', { class: 'block' + (X.picked === q.answer ? ' nat' : '') }, h('div', { class: 'lbl', text: X.picked === q.answer ? 'ถูกต้อง!' : `เฉลย (${'ABCD'[q.answer]}) ${q.options[q.answer]}` }), h('div', { class: 'small', text: q.why })) : null,
+    X.picked != null ? h('button', { class: 'btn primary', style: 'align-self:flex-end', onclick: () => { if (X.i < X.qs.length - 1) { X.i++; X.picked = null; } else { X.phase = 'done'; put('checks', uid(), { kind: 'exam', score: X.right, of: X.qs.length, lv: X.lv, created: Date.now() }); confetti(X.right >= 4 ? 160 : 60); } render(); }, text: X.i < X.qs.length - 1 ? 'ข้อต่อไป' : 'ดูคะแนน' }) : null));
+}
+
+// ---------- SPEAK ----------
+function startChat(u) { if (ui.chat.unit !== u.id) ui.chat = { unit: u.id, turns: [], view: [{ role: 'ai', en: u.open, th: '' }], busy: false, err: '' }; }
+async function sendChat() {
+  const C = ui.chat; const box = $('#chatIn'); const text = (box ? box.value : '').trim(); if (!text || C.busy || !sample) return;
+  const u = UNITS.find(x => x.id === C.unit);
+  C.view.push({ role: 'me', en: text }); C.turns.push({ role: 'user', content: text }); C.busy = true; C.err = ''; if (box) box.value = ''; C.draft = ''; render();
+  try {
+    const r = await aiChat(u, C.turns.slice(-14));
+    const fix = r && r.fix && r.fix.better ? { better: String(r.fix.better), why: String(r.fix.why_th || '') } : null;
+    if (fix) C.view.push({ role: 'fix', ...fix });
+    const reply = String((r && r.reply) || '…'); C.view.push({ role: 'ai', en: reply, th: String((r && r.reply_th) || ''), hint: String((r && r.hint_th) || '') });
+    C.turns.push({ role: 'assistant', content: reply });
+    put('checks', uid(), { kind: 'chat', unit: u.id, said: text, better: fix ? fix.better : null, used: Array.isArray(r && r.used) ? r.used.slice(0, 10).map(String) : [], created: Date.now() }, true);
+    say(reply, ui.rate);
+  } catch (e) { C.err = aiErr(e); C.turns.pop(); }
+  C.busy = false; render();
+}
+function setSpeak(w, boss) { const W = WORLDS[w]; Object.assign(ui.sp, { world: w, boss, q: boss ? W.boss : W.qs[Math.floor(Math.random() * W.qs.length)], res: null, err: '', saved: false, added: false }); }
+const fmt = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+const ringTarget = () => ui.sp.boss ? WORLDS[ui.sp.world].secs : 60;
+function tick() { const sp = ui.sp; const secs = Math.floor((Date.now() - sp.start) / 1000); const tv = $('#ringTv'); if (tv) tv.textContent = fmt(secs); const c = $('#ringC'); if (c) { c.style.strokeDashoffset = String(314 * (1 - Math.min(1, secs / ringTarget()))); if (secs >= ringTarget()) c.style.stroke = 'var(--mint-d)'; } }
+function toggleTimer() { const sp = ui.sp; if (sp.running) { sp.running = false; sp.secs = Math.max(1, Math.round((Date.now() - sp.start) / 1000)); clearInterval(timerId); } else { sp.running = true; sp.start = Date.now(); sp.secs = 0; sp.saved = false; timerId = setInterval(tick, 250); } render(); }
+async function doCheck() {
+  const sp = ui.sp; if (!sp.ans.trim() || !sample) return; sp.busy = true; sp.err = ''; sp.res = null; sp.added = false; render();
+  try {
+    const W = WORLDS[sp.world]; const r = await aiCheck(sp.q, sp.ans.trim(), sp.world);
+    const stars = Math.max(1, Math.min(3, Number(r.stars) || 1)); const pass = sp.boss && stars >= 2 && sp.secs >= W.secs;
+    sp.res = { ...r, stars, pass };
+    put('checks', uid(), { kind: 'answer', q: sp.q, answer: sp.ans.trim(), natural: String(r.natural || ''), stars, mistakes: Array.isArray(r.mistakes) ? r.mistakes.slice(0, 5) : [], secs: sp.secs || null, words: words(sp.ans), world: sp.world, boss: sp.boss, pass, created: Date.now() });
+    if (pass) setTimeout(() => { confetti(220); modal([ico('crown', 72), h('h2', { text: 'ชนะบอสแล้ว!' }), h('p', { text: `ผ่านโลก ${W.lv}: ${W.name}` }), h('div', { class: 'big', text: '+100' }), h('p', { class: 'small muted', text: 'โลกถัดไปรอคุณอยู่ในคอร์ส' })]); }, 300);
+    else if (stars === 3) confetti(80);
+  } catch (e) { sp.err = aiErr(e); }
+  sp.busy = false; render();
+}
+function vSpeak() {
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'โหมดฝึกพูด' }, [['chat', 'คุยกับเจลลี่บู'], ['answer', 'ตอบคำถาม + บอส']].map(([k, l]) => h('button', { 'aria-pressed': String(ui.speakMode === k), onclick: () => { ui.speakMode = k; render(); }, text: l })));
+  return h('section', {}, seg, ...(ui.speakMode === 'chat' ? vChat() : vAnswer()));
+}
+function vChat() {
+  if (!ui.chat.unit) startChat(UNITS[currentUnit()]);
+  const C = ui.chat; const u = UNITS.find(x => x.id === C.unit);
+  const pick = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('div', { style: 'min-width:0' }, h('div', { class: 'small muted', text: `สถานการณ์จากบทที่ ${u.n} · ${u.lv}` }), h('b', { text: u.scene })),
+    h('button', { class: 'btn sm', onclick: () => { const open = UNITS.filter((x, i) => unitOpen(i)); const n = open[(open.indexOf(u) + 1) % open.length]; ui.chat.unit = null; startChat(n); render(); }, text: 'เปลี่ยนสถานการณ์' })),
+    h('p', { class: 'small muted', text: 'พิมพ์สิ่งที่คุณพูดออกเสียง เจลลี่บูจะตอบ แก้ประโยคให้ถูก และใบ้ว่าควรพูดอะไรต่อ ลองใช้โครงสร้าง: ' + u.f }));
+  const msgs = h('div', { class: 'chat', id: 'chatbox' }, C.view.map((m, k) => m.role === 'fix'
+    ? h('div', { class: 'fix' }, h('div', {}, h('b', { text: 'พูดแบบนี้จะดีกว่า: ' }), m.better), m.why ? h('div', { class: 'small', text: m.why }) : null)
+    : h('div', { class: 'msg ' + m.role }, h('div', { class: 'row', style: 'gap:6px;flex-wrap:nowrap;align-items:flex-start' }, h('div', { style: 'min-width:0;flex:1', text: m.en }), m.role === 'ai' ? sayBtn(m.en, 'sm') : null), m.th ? h('div', { class: 'th', text: m.th }) : null, m.hint && k === C.view.length - 1 ? h('div', { class: 'hint', text: 'ใบ้: ' + m.hint }) : null)),
+    C.busy ? h('div', { class: 'msg ai' }, h('span', { class: 'spin', style: 'color:var(--lav-d);border-color:var(--lav)' }), ' เจลลี่บูกำลังพิมพ์…') : null);
+  const comp = aiOff ? aiNeeded() : h('div', { class: 'composer' }, h('textarea', { id: 'chatIn', rows: 2, placeholder: 'พูดออกเสียงก่อน แล้วพิมพ์ตามที่พูด…', 'aria-label': 'ข้อความของคุณ', oninput: e => { C.draft = e.target.value; }, onkeydown: e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } } }, C.draft || ''), h('button', { class: 'btn primary', disabled: C.busy ? true : null, onclick: sendChat, text: 'ส่ง' }));
+  const talkToday = questCounts().record;
+  return [pick, h('div', { class: 'card' }, msgs, C.err ? h('div', { class: 'small', style: 'color:var(--pink-d)', text: C.err }) : null, comp, h('div', { class: 'small muted', text: `วันนี้คุยแล้ว ${Math.min(talkToday, 99)} ประโยค · ภารกิจ 3 ประโยค` }))];
+}
+function vAnswer() {
+  const sp = ui.sp; if (!sp.q) setSpeak(UNITS[currentUnit()].w, false);
+  const W = WORLDS[sp.world]; const w = words(sp.ans); const target = ringTarget(); const live = sp.running ? Math.floor((Date.now() - sp.start) / 1000) : sp.secs;
+  const metaText = () => { const ww = words(sp.ans); const r = sp.secs && ww ? Math.round(ww / (sp.secs / 60)) : null; return `${ww} คำ` + (sp.secs ? ` · พูด ${sp.secs} วินาที` : '') + (r ? ` · ≈ ${r} คำ/นาที` : ''); };
+  const ring = h('div', { class: 'ring' }); ring.innerHTML = `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg2)" stroke-width="12"/><circle id="ringC" cx="60" cy="60" r="50" fill="none" stroke="${live >= target ? 'var(--mint-d)' : 'var(--pink-d)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="${314 * (1 - Math.min(1, live / target))}"/></svg>`; ring.append(h('div', { class: 'tv', id: 'ringTv', text: fmt(live) }));
+  const card = h('div', { class: 'card' },
+    h('div', { class: 'row between' }, h('span', { class: 'pill ' + W.color, text: `โลก ${W.lv}` }), sp.boss ? null : h('button', { class: 'btn ghost sm', onclick: () => { let n; do { n = W.qs[Math.floor(Math.random() * W.qs.length)]; } while (n === sp.q && W.qs.length > 1); sp.q = n; sp.res = null; render(); }, text: 'สุ่มคำถามใหม่' })),
+    sp.boss ? h('div', { class: 'boss' }, ico('boss'), h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'small', text: `บอส! พูดให้ได้ ${W.secs} วินาทีขึ้นไป และได้ 2 ดาว` }), h('b', { text: sp.q })), h('button', { class: 'btn ghost sm', onclick: () => { setSpeak(sp.world, false); render(); }, text: 'ออก' }))
+      : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: sp.q }), sayBtn(sp.q)),
+    h('div', { class: 'ringwrap' }, ring, h('div', { style: 'display:flex;flex-direction:column;gap:8px;min-width:0;flex:1' }, h('button', { class: sp.running ? 'btn pink' : 'btn primary', onclick: toggleTimer, text: sp.running ? 'หยุด' : (sp.secs ? 'เริ่มพูดใหม่' : 'เริ่มพูด!') }), h('div', { class: 'small muted', text: sp.boss ? 'วงแหวนเต็ม = ถึงเวลาขั้นต่ำของบอส' : 'ตอบ → because → For example → So' }))),
+    h('label', { class: 'f' }, 'พิมพ์สิ่งที่คุณพูด (ผิดได้เต็มที่)', h('textarea', { id: 'sp-ans', rows: 4, oninput: e => { sp.ans = e.target.value; const m = $('#sp-meta'); if (m) m.textContent = metaText(); } }, sp.ans)),
+    h('div', { class: 'small muted num', id: 'sp-meta', text: metaText() }),
+    !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: sp.busy || sp.running ? true : null, onclick: () => { sp.ans = $('#sp-ans').value; doCheck(); } }, sp.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังตรวจ…'] : 'ให้ตรวจคำตอบ'), sp.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: sp.err }) : null) : aiNeeded());
+  const out = [card];
+  if (sp.res) {
+    const r = sp.res; const ms = Array.isArray(r.mistakes) ? r.mistakes : [];
+    out.push(h('div', { class: 'card' },
+      h('div', { class: 'stars' }, [0, 1, 2].map(k => { const e = ico(k < r.stars ? 'star' : 'starOff'); if (k < r.stars) { e.classList.add('on'); e.style.animationDelay = (k * .25) + 's'; } return e; })),
+      sp.boss ? h('div', { class: 'notice', style: `background:${r.pass ? '#CDF5E6' : '#FFD6E7'}`, text: r.pass ? 'ชนะบอส! โลกนี้ผ่านแล้ว' : `ยังไม่ชนะบอส: ต้องพูด ≥ ${W.secs} วินาที (ได้ ${sp.secs || 0}) และ 2 ดาวขึ้นไป เอาเวอร์ชันข้างล่างไปพูดซ้ำแล้วท้าใหม่` }) : null,
+      r.praise_th ? h('p', { style: 'color:var(--mint-d);font-weight:600', text: r.praise_th }) : null,
+      h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'แก้เฉพาะที่ผิด' }), h('div', { text: r.corrected || '' })),
+      ms.length ? h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'ที่พูด' }), h('th', { text: 'ที่ถูก' }), h('th', { text: 'ทำไม' }))), h('tbody', {}, ms.map(m => h('tr', {}, h('td', {}, h('span', { class: 'wrong', text: m.wrong || '' })), h('td', {}, h('span', { class: 'right', text: m.right || '' })), h('td', { text: m.why_th || '' })))))) : h('p', { class: 'small', style: 'color:var(--mint-d)', text: 'ไม่มีจุดผิดเลย!' }),
+      h('div', { class: 'block nat' }, h('div', { class: 'row between', style: 'flex-wrap:nowrap' }, h('div', { class: 'lbl', text: 'แบบที่คนพูดจริง (ฟังแล้วพูดตาม 3 รอบ)' }), sayBtn(r.natural || '', 'sm')), h('div', { style: 'font-weight:600', text: r.natural || '' }), r.natural_th ? h('div', { class: 'small muted', text: r.natural_th }) : null),
+      r.next_th ? h('p', { class: 'small', text: 'ครั้งหน้า: ' + r.next_th }) : null,
+      r.natural && r.natural_th ? h('button', { class: 'btn', style: 'align-self:flex-start', disabled: sp.added ? true : null, onclick: () => { put('phrases', uid(), { th: String(r.natural_th), en: String(r.natural), alt: '', note: 'จากคำถาม: ' + sp.q, box: 0, due: addDays(today(), 1), created: Date.now(), source: 'check' }); sp.added = true; }, text: sp.added ? 'เก็บเป็นการ์ดแล้ว' : 'เก็บประโยคนี้เป็นการ์ด +5 XP' }) : null));
+  }
+  if (sp.secs && w && !sp.running) {
+    const wpm = Math.round(w / (sp.secs / 60));
+    out.push(h('div', { class: 'card' }, h('h3', { text: 'บันทึกเป็นเช็กพอยต์ +30 XP' }), h('p', { class: 'small muted', text: 'ทำเดือนละครั้งด้วยคำถามเดิม "Tell me about yourself and your job." โลก B1 และ B2 ใช้คำ/นาทีจากตรงนี้ปลดล็อก' }),
+      h('div', { class: 'grid2' }, h('div', {}, h('div', { class: 'small muted', text: 'ครั้งนี้' }), h('div', { class: 'num', text: `${sp.secs} วิ · ${w} คำ · ${wpm} คำ/นาที` })), h('label', { class: 'f' }, 'เงียบเกิน 3 วิกี่ครั้ง', h('input', { type: 'number', min: 0, id: 'sp-pause', value: sp.pauses, oninput: e => { sp.pauses = e.target.value; } }))),
+      h('button', { class: 'btn', style: 'align-self:flex-start', disabled: sp.saved ? true : null, onclick: () => { put('checkpoints', uid(), { date: today(), seconds: sp.secs, words: w, wpm, pauses: sp.pauses === '' ? null : Number(sp.pauses), q: sp.q, created: Date.now() }); sp.saved = true; render(); }, text: sp.saved ? 'บันทึกแล้ว' : 'บันทึกเช็กพอยต์' })));
+  }
+  return out;
+}
+
+// ---------- BANK ----------
+async function doTranslate() { const b = ui.bank; if (!b.th.trim() || !sample) return; b.busy = true; b.err = ''; render(); try { const r = await aiTranslate(b.th.trim()); b.en = String(r.en || ''); b.alt = String(r.alt || ''); b.note = String(r.note_th || ''); } catch (e) { b.err = aiErr(e); } b.busy = false; render(); }
+function vBank() {
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'คลัง' }, [['words', `คำศัพท์ ${S.words.size}`], ['phrases', `ประโยคของฉัน ${S.phrases.size}`]].map(([k, l]) => h('button', { 'aria-pressed': String(ui.bankTab === k), onclick: () => { ui.bankTab = k; render(); }, text: l })));
+  const f = ui.filter.toLowerCase();
+  const filter = h('input', { type: 'text', id: 'bk-filter', placeholder: 'ค้นหา', value: ui.filter, oninput: e => { ui.filter = e.target.value; render(); } });
+  const hearts = b => h('span', { class: 'hearts', title: 'ระดับ ' + (b || 0) + '/6' }, Array.from({ length: 6 }, (_, i) => h('i', { class: i < (b || 0) ? 'on' : '' })));
+  if (ui.bankTab === 'words') {
+    const items = [...S.words.entries()].map(([id, w]) => ({ id, ...w })).filter(w => !f || (w.w + ' ' + w.th).toLowerCase().includes(f)).sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 300);
+    return h('section', {}, seg, h('div', { class: 'card' }, filter, items.length ? h('div', { class: 'plist' }, items.map(w => h('div', { class: 'pitem' },
+      h('div', { style: 'min-width:0' }, h('b', { text: w.w }), ' ', h('span', { class: 'small muted', text: `(${w.pos || ''}) ${w.th || ''}` }), w.ex ? h('div', { class: 'small', text: w.ex }) : null, h('div', { class: 'meta' }, hearts(w.box), h('span', { text: w.level || '' }), h('span', { text: (w.due || '') <= today() ? 'รอทบทวนวันนี้' : 'ทบทวน ' + thDate(w.due) }))),
+      sayBtn(w.w, 'sm')))) : h('p', { class: 'muted', text: loaded ? 'ยังไม่มีคำศัพท์ เริ่มเรียนแพ็กแรกในคอร์ส' : 'กำลังโหลด…' }),
+      S.words.size > 300 && !f ? h('p', { class: 'small muted', text: 'แสดง 300 คำล่าสุด ใช้ช่องค้นหาเพื่อดูคำอื่น' }) : null));
+  }
+  const b = ui.bank;
+  const form = h('div', { class: 'card' }, h('h3', { text: 'วันนี้อยากพูดว่าอะไร' }), h('p', { class: 'small muted', text: 'พิมพ์ภาษาไทยเรื่องที่นึกไม่ออก แล้วให้เจลลี่บูแปลเป็นประโยคพูดจริง เก็บเป็นการ์ดทบทวน' }),
+    h('textarea', { id: 'bk-th', rows: 2, 'aria-label': 'ภาษาไทย', placeholder: 'เช่น สุดสัปดาห์นี้จะไปคาเฟ่กับเพื่อน', oninput: e => { b.th = e.target.value; } }, b.th),
+    !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: b.busy ? true : null, onclick: () => { b.th = $('#bk-th').value; doTranslate(); } }, b.busy ? [h('span', { class: 'spin' }), ' กำลังแปล…'] : 'แปลเป็นประโยคพูดจริง'), b.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: b.err }) : null) : null,
+    h('div', { class: 'grid2' }, h('label', { class: 'f' }, 'ภาษาอังกฤษ', h('input', { type: 'text', id: 'bk-en', value: b.en, oninput: e => { b.en = e.target.value; } })), h('label', { class: 'f' }, 'อีกแบบที่พูดได้', h('input', { type: 'text', id: 'bk-alt', value: b.alt, oninput: e => { b.alt = e.target.value; } }))),
+    h('label', { class: 'f' }, 'โน้ต', h('input', { type: 'text', id: 'bk-note', value: b.note, oninput: e => { b.note = e.target.value; } })),
+    h('button', { class: 'btn pink', style: 'align-self:flex-start', onclick: () => { b.th = $('#bk-th').value; if (!b.th.trim() || !b.en.trim()) return; put('phrases', uid(), { th: b.th.trim(), en: b.en.trim(), alt: b.alt.trim(), note: b.note.trim(), box: 0, due: today(), created: Date.now(), source: 'me' }); ui.bank = { th: '', en: '', alt: '', note: '', busy: false, err: '' }; }, text: 'เก็บเป็นการ์ด +5 XP' }));
+  const items = [...S.phrases.entries()].map(([id, p]) => ({ id, ...p })).filter(p => !f || (p.th + ' ' + p.en).toLowerCase().includes(f)).sort((a, c) => (c.created || 0) - (a.created || 0));
+  const list = h('div', { class: 'card' }, filter, items.length ? h('div', { class: 'plist' }, items.map(p => h('div', { class: 'pitem' },
+    h('div', { style: 'min-width:0' }, h('div', { style: 'font-weight:600', text: p.en }), h('div', { text: p.th }), h('div', { class: 'meta' }, hearts(p.box), h('span', { text: (p.due || '') <= today() ? 'รอทบทวนวันนี้' : 'ทบทวน ' + thDate(p.due) }), p.source === 'starter' ? h('span', { class: 'pill', text: 'ประโยคเริ่มต้น' }) : null)),
+    ui.confirm === p.id ? h('div', { class: 'row' }, h('button', { class: 'btn sm pink', onclick: () => { ui.confirm = null; del('phrases', p.id); }, text: 'ลบเลย' }), h('button', { class: 'btn ghost sm', onclick: () => { ui.confirm = null; render(); }, text: 'ไม่ลบ' })) : h('button', { class: 'btn ghost sm', 'aria-label': 'ลบ ' + p.en, onclick: () => { ui.confirm = p.id; render(); }, text: 'ลบ' })))) : h('p', { class: 'muted', text: 'ยังไม่มีประโยค' }));
+  return h('section', {}, seg, form, list);
+}
+
+// ---------- STATS ----------
+function chartSVG(cps) {
+  const NS = 'http://www.w3.org/2000/svg'; const s = (tag, a, ...k) => { const el = document.createElementNS(NS, tag); for (const [x, v] of Object.entries(a || {})) el.setAttribute(x, v); k.forEach(c => el.append(String(c))); return el; };
+  const W = 520, H = 230, L = 38, R = 16, T = 22, B = 30; const maxY = Math.max(130, ...cps.map(c => c.wpm + 15));
+  const X = i => cps.length === 1 ? (L + (W - L - R) / 2) : L + i * (W - L - R) / (cps.length - 1); const Y = v => T + (1 - v / maxY) * (H - T - B);
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'กราฟคำต่อนาทีในแต่ละเช็กพอยต์' });
+  for (let v = 0; v <= maxY; v += 20) { svg.append(s('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--line)', 'stroke-width': 1.5 })); svg.append(s('text', { x: L - 6, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--ink2)', 'font-family': 'Fredoka, sans-serif' }, v)); }
+  [[75, 'ปลดล็อก B1'], [90, 'ปลดล็อก B2']].forEach(([v, t]) => { svg.append(s('line', { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: 'var(--mint-d)', 'stroke-dasharray': '6 5', 'stroke-width': 1.5 })); svg.append(s('text', { x: W - R, y: Y(v) - 6, 'text-anchor': 'end', 'font-size': 11.5, fill: 'var(--mint-d)' }, `${t} · ${v}`)); });
+  if (cps.length > 1) { const d = cps.map((c, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(c.wpm)).join(' '); svg.append(s('path', { d: d + ` L${X(cps.length - 1)} ${Y(0)} L${X(0)} ${Y(0)} Z`, fill: 'var(--lav-d)', 'fill-opacity': .15 })); svg.append(s('path', { d, fill: 'none', stroke: 'var(--lav-d)', 'stroke-width': 3, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' })); }
+  cps.forEach((c, i) => { const last = i === cps.length - 1; svg.append(s('circle', { cx: X(i), cy: Y(c.wpm), r: last ? 7 : 4.5, fill: last ? 'var(--pink-d)' : 'var(--card)', stroke: last ? 'var(--pink-d)' : 'var(--lav-d)', 'stroke-width': 2.5 })); if (last || cps.length <= 8) svg.append(s('text', { x: X(i), y: Y(c.wpm) - 12, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600, fill: 'var(--ink)', 'font-family': 'Fredoka, sans-serif' }, c.wpm)); if (cps.length <= 8 || i === 0 || last) svg.append(s('text', { x: X(i), y: H - 10, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--ink2)' }, thDate(c.date))); });
+  return svg;
+}
+function vStats() {
+  const t = today(); const cps = sortedCps(); const li = levelInfo(computeXP()); const n = learnedCount();
+  const last30 = Array.from({ length: 30 }, (_, i) => dayLevel(S.days.get(addDays(t, -i)))).filter(Boolean).length;
+  let acc = 0; const marks = WORLDS.map((w, i) => { acc += UNITS.filter(u => u.w === i).reduce((a, u) => a + u.target, 0); return [w.lv, acc]; });
+  const pct = v => Math.min(100, v / TOTAL_TARGET * 100); const pl = placement(); const placed = UNITS.slice(0, placedStart()).reduce((a, u) => a + u.target, 0);
+  const big = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h2', { text: 'เส้นทางสู่ 3,000+ คำ' }), h('span', { class: 'num', style: 'font-size:22px;font-weight:700;color:var(--lav-d)', text: n.toLocaleString() })),
+    h('div', { class: 'big3k' }, h('div', { class: 'track' }, h('i', { style: `width:${pct(n + placed)}%` }), placed ? h('b', { class: 'pl', style: `width:${pct(placed)}%` }) : null, marks.map(([, v]) => h('em', { style: `left:${pct(v)}%` }))), h('div', { class: 'marks' }, marks.map(([lv, v]) => h('span', { style: `left:${Math.min(96, pct(v))}%`, text: `${lv} ${v.toLocaleString()}` })))),
+    WORLDS.map((w, i) => { const us = UNITS.filter(u => u.w === i); const got = allWords().filter(x => x.level === w.lv).length; const tot = us.reduce((a, u) => a + u.target, 0); return h('div', { class: 'levelrow' }, h('span', { class: 'pill ' + w.color, text: w.lv }), h('div', { class: 'bar' }, h('i', { style: `width:${Math.min(100, got / tot * 100)}%` })), h('span', { class: 'num small', text: `${got}/${tot}` })); }),
+    placed ? h('p', { class: 'small', text: `ลายทาง = ประมาณ ${placed.toLocaleString()} คำของระดับที่ผ่านด้วยแบบทดสอบ (${pl.level}) · เรียนในแอปแล้ว ${n.toLocaleString()} คำ` }) : null,
+    h('div', { class: 'row' }, h('span', { class: 'small muted', text: pl ? `ระดับจากแบบทดสอบ: ${pl.skipped ? 'ข้ามการทดสอบ' : pl.level} (${pl.date ? thDate(pl.date) : ''})` : 'ยังไม่ได้ทดสอบระดับ' }), h('button', { class: 'btn sm', onclick: startTest, text: pl ? 'ทดสอบระดับใหม่' : 'ทดสอบระดับ' })),
+    h('p', { class: 'small muted', text: `จำแม่นแล้ว ${allWords().filter(w => (w.box || 0) >= 4).length} คำ · เรียนวันละ ${packSize()} คำ จะครบในประมาณ ${Math.max(0, Math.ceil((TOTAL_TARGET - n - placed) / packSize()))} วันเรียน` }),
+    h('div', { class: 'row' }, h('span', { class: 'small muted', text: 'คำใหม่ต่อแพ็ก' }), [5, 8, 10].map(k => h('button', { class: 'btn sm' + (packSize() === k ? ' primary' : ''), onclick: () => { lsSet('epl-pack', k); render(); }, text: String(k) }))));
+  const tile = (v, label, c) => h('div', { class: 'tile', style: `background:var(--${c})` }, h('b', { text: v }), h('span', { text: label }));
+  const shTotal = [...S.units.values()].reduce((a, u) => a + (u.shadowDone || 0), 0); const chats = [...S.checks.values()].filter(c => c.kind === 'chat').length;
+  const tiles = h('div', { class: 'card' }, h('h3', { text: 'ฉันเก่งขึ้นแค่ไหน' }), h('div', { class: 'tiles' }, tile(li.total, 'XP สะสม', 'lav'), tile(bestStreak(), 'ติดต่อกันนานสุด (วัน)', 'peach'), tile(shTotal, 'Shadowing (รอบ)', 'mint'), tile(chats, 'ประโยคที่คุยกับเจลลี่บู', 'pink'), tile(last30, 'วันที่ฝึกใน 30 วัน', 'sky'), tile(S.phrases.size, 'ประโยคของฉัน', 'butter')));
+  const chart = h('div', { class: 'card chart' }, h('h3', { text: 'พูดได้กี่คำต่อนาที' }), h('p', { class: 'small muted', text: 'เป้าคร่าวๆ: เดือน 1 ≈ 50–60 · เดือน 3 ≈ 70–80 · เดือน 6 ≈ 90–100 · เดือน 12 ≈ 110+' }),
+    cps.length ? h('div', { class: 'tw' }, chartSVG(cps)) : h('div', { class: 'notice', text: 'ยังไม่มีเช็กพอยต์ ไปที่ "พูด" → ตอบคำถาม จับเวลาตอบ "Tell me about yourself and your job." แล้วกดบันทึก' }));
+  const earned = BADGES.filter(b => b.test()).length;
+  const badges = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'สติกเกอร์สะสม' }), h('span', { class: 'pill butter', text: `${earned} / ${BADGES.length}` })),
+    h('div', { class: 'badges' }, BADGES.map(b => { const on = b.test(); return h('div', { class: 'badge' + (on ? '' : ' off') }, h('div', { class: 'disc', style: `background:var(--${b.color})` }, ico(on ? b.icon : 'lock')), h('span', { text: b.name })); })));
+  const start = addDays(t, -((new Date(t + 'T00:00:00').getDay() + 6) % 7) - 7 * 15); const cells = []; for (let i = 0; i < 112; i++) { const day = addDays(start, i); const l = dayLevel(S.days.get(day)); cells.push(h('i', { class: l ? 'l' + l : '', title: thDate(day), style: day > t ? 'opacity:.3' : null })); }
+  const heat = h('div', { class: 'card' }, h('h3', { text: '16 สัปดาห์ล่าสุด' }), h('div', { class: 'heat', role: 'img', 'aria-label': 'ปฏิทินวันที่ฝึก' }, cells));
+  const table = cps.length ? h('div', { class: 'card' }, h('h3', { text: 'บันทึกเช็กพอยต์' }), h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'วันที่' }), h('th', { class: 'r', text: 'วิ' }), h('th', { class: 'r', text: 'คำ' }), h('th', { class: 'r', text: 'คำ/นาที' }), h('th', { class: 'r', text: 'เงียบ' }), h('th', { text: '' }))),
+    h('tbody', {}, cps.slice().reverse().map(c => h('tr', {}, h('td', { text: thDate(c.date) }), h('td', { class: 'r num', text: c.seconds ?? '–' }), h('td', { class: 'r num', text: c.words ?? '–' }), h('td', { class: 'r num', text: c.wpm }), h('td', { class: 'r num', text: c.pauses ?? '–' }),
+      h('td', {}, ui.confirm === c.id ? h('button', { class: 'btn ghost sm', style: 'color:var(--pink-d)', onclick: () => { ui.confirm = null; del('checkpoints', c.id); }, text: 'ยืนยัน' }) : h('button', { class: 'btn ghost sm', onclick: () => { ui.confirm = c.id; render(); }, text: 'ลบ' })))))))) : null;
+  const add = h('details', { class: 'card' }, h('summary', { text: 'เพิ่มเช็กพอยต์จากไฟล์เสียงในมือถือ' }),
+    h('div', { class: 'grid2' }, h('label', { class: 'f' }, 'วันที่', h('input', { type: 'date', id: 'm-date', value: manual.date || t, oninput: e => manual.date = e.target.value })), h('label', { class: 'f' }, 'พูดได้กี่วินาที', h('input', { type: 'number', min: 1, id: 'm-sec', value: manual.seconds, oninput: e => manual.seconds = e.target.value })),
+      h('label', { class: 'f' }, 'จำนวนคำ', h('input', { type: 'number', min: 1, id: 'm-words', value: manual.words, oninput: e => manual.words = e.target.value })), h('label', { class: 'f' }, 'เงียบเกิน 3 วิ (ครั้ง)', h('input', { type: 'number', min: 0, id: 'm-pause', value: manual.pauses, oninput: e => manual.pauses = e.target.value }))),
+    h('button', { class: 'btn', style: 'align-self:flex-start', onclick: () => { const sec = Number(manual.seconds), w = Number(manual.words); if (!(sec > 0 && w > 0)) return; put('checkpoints', uid(), { date: manual.date || t, seconds: sec, words: w, wpm: Math.round(w / (sec / 60)), pauses: manual.pauses === '' ? null : Number(manual.pauses), created: Date.now() }); Object.assign(manual, { date: '', seconds: '', words: '', pauses: '' }); }, text: 'บันทึก' }));
+  const why = h('details', { class: 'card' }, h('summary', { text: 'ทำไมแอปนี้ช่วยให้พูดได้จริง' }), h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, [
+    ['ตอบสั้นได้ แต่ต้องแปลในหัว', 'Active Recall 3 แบบ ฝึกดึงคำออกมาเองก่อนดูเฉลย'], ['พูดยาวไม่ได้', 'Shadowing บทสนทนาทุกบท + บอสที่ต้องพูดนานขึ้นทีละโลก'],
+    ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
+    ['ไม่เห็นพัฒนาการ ท้อ', 'แถบ 3,000 คำ เลเวล สติกเกอร์ และกราฟคำต่อนาที'], ['เวลาน้อย', 'ภารกิจ 12 นาที โหมดมินิ 2 นาที และปรับความยากได้ทุกแพ็ก'],
+  ].map(([a, b]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b })))))));
+  return h('section', {}, big, tiles, chart, albumCard(), badges, heat, table, add, why);
+}
+
+if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
+splash();
+render(true);
+initStore();
+
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
