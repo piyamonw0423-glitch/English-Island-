@@ -136,6 +136,8 @@
 .nav button[aria-current="page"]::after{content:"";position:absolute;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--pink-d)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .splash{background:linear-gradient(160deg,#3A1F4A,#2B1F52 55%,#1C3C64)}}
 :root[data-theme="dark"] .splash{background:linear-gradient(160deg,#3A1F4A,#2B1F52 55%,#1C3C64)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .sp-card{background:rgba(40,28,74,.9);color:#F3EAFF;border-color:#C9B8F0;box-shadow:0 18px 40px rgba(0,0,0,.45)} :root:not([data-theme="light"]) .sp-card .muted{color:#CBB9E8} :root:not([data-theme="light"]) .sp-stat{color:#F3EAFF;border-color:#C9B8F0} :root:not([data-theme="light"]) .sp-card .eyebrow{color:#C4A8FF}}
+:root[data-theme="dark"] .sp-card{background:rgba(40,28,74,.9);color:#F3EAFF;border-color:#C9B8F0;box-shadow:0 18px 40px rgba(0,0,0,.45)}:root[data-theme="dark"] .sp-card .muted{color:#CBB9E8}:root[data-theme="dark"] .sp-stat{color:#F3EAFF;border-color:#C9B8F0}:root[data-theme="dark"] .sp-card .eyebrow{color:#C4A8FF}
 
 .mascot.jelly .ghost{animation:jwob 2.2s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
 @keyframes jwob{0%,100%{transform:scale(1,1) rotate(0)}25%{transform:scale(1.03,.97) rotate(-2deg)}50%{transform:scale(.97,1.04) rotate(0)}75%{transform:scale(1.02,.98) rotate(2deg)}}
