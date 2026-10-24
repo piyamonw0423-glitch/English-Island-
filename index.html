@@ -2450,12 +2450,12 @@ function rcQueue(st, n) {
 function rcGenPrompt(k, lv, st) {
   const recent = (st.recent[k.id] || []).join(' | '); const tags = rcTopTags(st).slice(0, 4).map(x => RC_TAGS[x]);
   return `${ME}\n\nCreate ONE active-recall exercise.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\n${rcChalNote()}` + (recent ? `Do not repeat or closely copy these recent tasks: ${recent}\n` : '') + (tags.length ? `Her frequent mistakes (touch one of them if natural): ${tags.join(', ')}\n` : '') +
-    'Use natural, everyday vocabulary. Thai text must be natural Thai.\nReply with ONLY JSON: {"instruction_th": "one short Thai line telling her what to do", "task": "the task", "hint_th": "short Thai hint naming the structure, not the answer", "model_answer": "one natural correct answer"}';
+    'Use natural, everyday vocabulary. Thai text must be natural Thai. Before replying, double-check that model_answer is 100% grammatically correct, uses the target pattern, and (for a fill-in-the-blank) is exactly the task sentence with the blank filled and nothing else changed. There must be only ONE correct way to fill a blank.\nReply with ONLY JSON: {"instruction_th": "one short Thai line telling her what to do", "task": "the task", "hint_th": "short Thai hint naming the structure, not the answer", "model_answer": "the full correct answer sentence", "self_check": "one short English line confirming the answer is correct and fits the task"}';
 }
 function rcGradePrompt(k, lv, item, ans) {
   return `${ME}\n\nYou are a kind but exact English teacher checking her answer.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\nInstruction: ${item.instruction_th}\nTask: ${item.task}\nReference answer: ${item.model_answer}\nHer answer: ${ans}\n\n` +
     'Judge: "correct" = grammatical, natural enough, and uses the target pattern correctly (other valid answers count; ignore only a missing final period). "almost" = one small error (capital letter, article, small word choice) but the pattern is right. "wrong" = the pattern is missing or wrong, grammar errors change the meaning, or she answered in Thai.\n' +
-    `Reply with ONLY JSON: {"result": "correct"|"almost"|"wrong", "corrected": "her sentence with the minimum fixes", "natural": "how a native speaker would say it", "feedback_th": "Thai, at most 3 short lines; each line names one error as ❌ wrong → ✅ right with a short reason; if correct, praise one specific thing", "tip_th": "one short Thai line: a rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "pattern": {"name_th": "short Thai name of the grammar point", "formula": "the structure as a formula, e.g. Subject + was/were + adjective/V3 (past)", "use_th": "one short Thai line: when to use it", "examples": [3 objects {"en": "short everyday-life example sentence (home, work, friends, shopping, travel)", "th": "Thai translation"}]}}`;
+    `Rules for your reply: "corrected" = HER sentence with the minimum fixes; for a fill-in-the-blank it MUST be exactly the task sentence with the blank correctly filled (same words as the task, only the blank changes). "natural" = how a native speaker would say it while KEEPING the same target grammar point (never switch to a different structure; if corrected is already natural, repeat corrected). Double-check every English sentence you write is correct before replying.\nReply with ONLY JSON: {"result": "correct"|"almost"|"wrong", "corrected": "...", "natural": "...", "feedback_th": "Thai, at most 3 short lines; each line names one error as ❌ wrong → ✅ right with a short reason; if correct, praise one specific thing", "tip_th": "one short Thai line: a rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "pattern": {"name_th": "short Thai name of the grammar point", "formula": "the structure as a formula, e.g. Subject + was/were + adjective/V3 (past)", "use_th": "one short Thai line: when to use it", "examples": [3 objects {"en": "short everyday-life example sentence (home, work, friends, shopping, travel)", "th": "Thai translation"}]}}`;
 }
 function rcFreePrompt(text) {
   return `${ME}\n\nShe wrote this to say to her English teacher or about her life:\n"""${text}"""\n\n` +
@@ -2504,10 +2504,17 @@ async function rcNext() {
   const k = RC_SKILLS.find(x => x.id === id); const s = st.skills[id];
   return rcGen(R, { id, k, lv: s.mastered ? (Math.random() < .5 ? 3 : 4) : s.level }, st);
 }
+function rcFits(task, sent) {
+  if (!task || !sent || task.indexOf('___') < 0) return true;
+  const norm = x => String(x).replace(/\s*\([^)]*\)/g, '').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '').toLowerCase();
+  const parts = norm(task).split(/_{2,}/).map(p => p.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  try { return new RegExp('^' + parts.join('\\s*(.+?)\\s*') + '$').test(norm(sent)); } catch { return true; }
+}
 async function rcGen(R, cur, st) {
   Object.assign(R, { phase: 'load', cur, ans: '', hinted: false, res: null, err: '' }); render(true);
   try {
-    const item = await sample.json(rcGenPrompt(cur.k, cur.lv, st), { modelTier: 'quick', cache: false });
+    let item = await sample.json(rcGenPrompt(cur.k, cur.lv, st), { modelTier: 'quick', cache: false });
+    if (item && item.task && !rcFits(item.task, item.model_answer)) item = await sample.json(rcGenPrompt(cur.k, cur.lv, st), { cache: false });
     if (!item || !item.task) throw { code: 'bad_json' };
     cur.item = { instruction_th: String(item.instruction_th || ''), task: String(item.task), hint_th: String(item.hint_th || ''), model_answer: String(item.model_answer || '') };
     R.phase = 'q';
@@ -2520,6 +2527,8 @@ async function rcGrade() {
   try {
     const c = R.cur; const g = await sample.json(rcGradePrompt(c.k, c.lv, c.item, ans), { cache: false });
     if (!g || !g.result) throw { code: 'bad_json' };
+    if (!rcFits(c.item.task, g.corrected) && rcFits(c.item.task, c.item.model_answer)) { g.corrected = rcFits(c.item.task, ans) && g.result === 'correct' ? ans : c.item.model_answer; }
+    if (g.natural && !rcFits(c.item.task, g.natural)) g.natural_alt = true;
     rcApply(c, ans, g); R.res = g; R.phase = 'res';
   } catch (e) { R.phase = 'err'; R.err = aiErr(e) || 'ตรวจไม่สำเร็จ'; R.retry = () => { R.phase = 'q'; render(true); }; }
   render(true);
@@ -2543,7 +2552,7 @@ function rcApply(c, ans, g) {
   st.recent[c.id] = (st.recent[c.id] || []).concat(c.item.task).slice(-5);
   if (!st.today || st.today.date !== t) st.today = { date: t, n: 0 }; st.today.n++;
   rcMaybeUnlock(st); c.res = res;
-  if (res !== 'correct') { const nat = String(g.natural || g.corrected || c.item.model_answer || ''); c.card = addFixCard(ans, nat, String(g.tip_th || '')); }
+  if (res !== 'correct') { const nat = String(g.corrected || c.item.model_answer || g.natural || ''); c.card = addFixCard(ans, nat, String(g.tip_th || '')); }
   put('checks', uid(), { kind: 'recall', skill: c.id, level: c.lv, task: c.item.task, answer: ans, result: res, corrected: String(g.corrected || ''), natural: String(g.natural || ''), tags: Array.isArray(g.tags) ? g.tags.slice(0, 6).map(String) : [], created: Date.now() }, true);
   rcLogDay(); rcSave(st);
 }
@@ -2569,7 +2578,7 @@ function rcResultBlock(res, ans, g) {
   if (ans && !same && res !== 'correct') b.append(h('div', { class: 'rcbox mine' }, h('div', { class: 'lbl', text: '❌ ที่คุณพิมพ์' }), h('div', { class: 'txt', text: ans })));
   const right = String(g.corrected || ans || '');
   if (right) b.append(h('div', { class: 'rcbox right' }, h('div', { class: 'lbl', text: res === 'correct' ? '✅ ประโยคของคุณ' : '✅ ฉบับที่ถูก' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'txt', style: 'flex:1;min-width:0', text: right }), sayBtn(right, 'sm'))));
-  if (g.natural && String(g.natural).trim() !== right.trim()) b.append(h('div', { class: 'rcbox nat' }, h('div', { class: 'lbl', text: '🗣 แบบที่เจ้าของภาษาพูด' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'txt', style: 'flex:1;min-width:0', text: String(g.natural) }), sayBtn(String(g.natural), 'sm'))));
+  if (g.natural && String(g.natural).trim() !== right.trim()) b.append(h('div', { class: 'rcbox nat' }, h('div', { class: 'lbl', text: g.natural_alt ? '🗣 พูดอีกแบบได้ (เสริม ไม่ใช่เฉลยของช่องว่าง)' : '🗣 แบบที่เจ้าของภาษาพูด' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'txt', style: 'flex:1;min-width:0', text: String(g.natural) }), sayBtn(String(g.natural), 'sm'))));
   if (g.feedback_th) b.append(h('div', { class: 'rcbox why' }, h('div', { class: 'lbl', text: '💡 ทำไม' }), h('div', { class: 'small fb', text: String(g.feedback_th) })));
   const p = g.pattern && typeof g.pattern === 'object' ? g.pattern : null;
   if (p && (p.formula || (Array.isArray(p.examples) && p.examples.length))) {
@@ -2684,7 +2693,7 @@ function vRecall() {
   const recentWrong = [...S.checks.values()].filter(c => c.kind === 'recall' && c.result && c.result !== 'correct').sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 10);
   const bank = h('div', { class: 'card' }, h('h3', { text: 'คลังจุดพลาด' }), rcTagBars(st),
     recentWrong.length ? h('div', { class: 'qt', style: 'margin-top:6px', text: 'ประโยคที่เคยผิด · นึกคำตอบก่อนแตะ' }) : null,
-    recentWrong.map(c => h('details', { class: 'block' }, h('summary', { class: 'small', text: c.skill === 'free' ? 'พูดให้เป็นธรรมชาติ: ' + String(c.answer || '').slice(0, 90) : c.task }), h('div', { style: 'color:var(--mint-d);font-weight:600;margin-top:4px', text: c.natural || c.corrected || '' }))));
+    recentWrong.map(c => h('details', { class: 'block' }, h('summary', { class: 'small', text: c.skill === 'free' ? 'พูดให้เป็นธรรมชาติ: ' + String(c.answer || '').slice(0, 90) : c.task }), h('div', { style: 'color:var(--mint-d);font-weight:600;margin-top:4px', text: '✅ ' + (c.corrected || c.natural || '') }), c.natural && c.corrected && c.natural !== c.corrected ? h('div', { class: 'small muted', text: 'พูดอีกแบบได้: ' + c.natural }) : null)));
   return h('section', {}, back, head, free, ladder, bank);
 }
 
