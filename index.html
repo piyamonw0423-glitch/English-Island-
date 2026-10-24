@@ -512,7 +512,21 @@ tr.known td{background:var(--mint)}
 .rcmeter i.on{background:linear-gradient(90deg,#A985FF,#FF8CC0);border-color:var(--edge)}
 .rcsk.mastered .rcmeter i{background:linear-gradient(90deg,#4FD9A6,#169C6F);border-color:var(--edge)}
 .rcres{border-radius:20px;border:2.5px solid var(--edge);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.rcres.correct{background:var(--mint)} .rcres.almost{background:var(--butter)} .rcres.wrong{background:var(--pink)}
+.rcres{background:var(--card)}
+.rcv{font-family:var(--display);font-weight:700;font-size:17px;padding:6px 14px;border-radius:999px;border:2px solid var(--edge);align-self:flex-start}
+.rcv.ok{background:var(--mint)} .rcv.near{background:var(--butter)} .rcv.bad{background:var(--pink)}
+.rcbox{border-radius:16px;border:2px solid var(--edge);padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rcbox .lbl{font-family:var(--display);font-weight:600;font-size:12.5px;color:var(--ink2)}
+.rcbox.mine{background:var(--bg);border-style:dashed}
+.rcbox.mine .txt{text-decoration:line-through;text-decoration-color:var(--pink-d);text-decoration-thickness:2px;color:var(--ink2)}
+.rcbox.right{background:var(--mint)}
+.rcbox.right .txt,.rcbox.nat .txt{font-weight:700;font-size:16px;color:var(--ink)}
+.rcbox.nat{background:var(--sky)}
+.rcbox.why{background:var(--bg2)}
+.rcbox.pat{background:var(--lav)}
+.rcbox.pat .formula{font-family:var(--num);font-weight:600;font-size:15.5px;background:var(--card);border:2px solid var(--edge);border-radius:12px;padding:6px 10px;overflow-wrap:anywhere}
+.rcex{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:6px 0;border-top:1.5px dashed var(--line)}
+.rcex:first-of-type{border-top:0}
 .rctags{display:flex;flex-direction:column;gap:8px}
 .fb{white-space:pre-line}
 .tl{display:grid;grid-template-columns:repeat(5,minmax(96px,1fr));gap:6px;min-width:520px}
@@ -2423,11 +2437,11 @@ function rcGenPrompt(k, lv, st) {
 function rcGradePrompt(k, lv, item, ans) {
   return `${ME}\n\nYou are a kind but exact English teacher checking her answer.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\nInstruction: ${item.instruction_th}\nTask: ${item.task}\nReference answer: ${item.model_answer}\nHer answer: ${ans}\n\n` +
     'Judge: "correct" = grammatical, natural enough, and uses the target pattern correctly (other valid answers count; ignore only a missing final period). "almost" = one small error (capital letter, article, small word choice) but the pattern is right. "wrong" = the pattern is missing or wrong, grammar errors change the meaning, or she answered in Thai.\n' +
-    `Reply with ONLY JSON: {"result": "correct"|"almost"|"wrong", "corrected": "her sentence with the minimum fixes", "natural": "how a native speaker would say it", "feedback_th": "Thai, at most 3 short lines; each line names one error as ❌ wrong → ✅ right with a short reason; if correct, praise one specific thing", "tip_th": "one short Thai line: a rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}}`;
+    `Reply with ONLY JSON: {"result": "correct"|"almost"|"wrong", "corrected": "her sentence with the minimum fixes", "natural": "how a native speaker would say it", "feedback_th": "Thai, at most 3 short lines; each line names one error as ❌ wrong → ✅ right with a short reason; if correct, praise one specific thing", "tip_th": "one short Thai line: a rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "pattern": {"name_th": "short Thai name of the grammar point", "formula": "the structure as a formula, e.g. Subject + was/were + adjective/V3 (past)", "use_th": "one short Thai line: when to use it", "examples": [3 objects {"en": "short everyday-life example sentence (home, work, friends, shopping, travel)", "th": "Thai translation"}]}}`;
 }
 function rcFreePrompt(text) {
   return `${ME}\n\nShe wrote this to say to her English teacher or about her life:\n"""${text}"""\n\n` +
-    `Reply with ONLY JSON: {"corrected": "her text with minimum grammar fixes, keep her meaning", "natural": "how a native speaker would naturally say it, same meaning, simple words", "feedback_th": "Thai, up to 5 short lines, most important errors first, each as ❌ → ✅ with a short reason; if there are no errors say what she did well", "tip_th": "one short Thai line: the single most useful rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "follow_up": "one simple English question a teacher might ask next"}`;
+    `Reply with ONLY JSON: {"corrected": "her text with minimum grammar fixes, keep her meaning", "natural": "how a native speaker would naturally say it, same meaning, simple words", "feedback_th": "Thai, up to 5 short lines, most important errors first, each as ❌ → ✅ with a short reason; if there are no errors say what she did well", "tip_th": "one short Thai line: the single most useful rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "follow_up": "one simple English question a teacher might ask next", "pattern": {"name_th": "short Thai name of the grammar point", "formula": "the structure as a formula, e.g. Subject + was/were + adjective/V3 (past)", "use_th": "one short Thai line: when to use it", "examples": [3 objects {"en": "short everyday-life example sentence (home, work, friends, shopping, travel)", "th": "Thai translation"}]} (the pattern is the most important grammar point to fix in her text)}`;
 }
 function rcLogDay() { const t = today(); const d = S.days.get(t) || { steps: {} }; put('days', t, { ...d, recall: (d.recall || 0) + 1, updated: Date.now() }, true); }
 function rcAddTags(st, tags) { (Array.isArray(tags) ? tags : []).forEach(tg => { if (RC_TAGS[tg]) st.tags[tg] = (st.tags[tg] || 0) + 1; }); }
@@ -2497,12 +2511,23 @@ async function rcFreeCheck() {
   F.busy = false; render();
 }
 function rcResultBlock(res, ans, g) {
-  const b = h('div', { class: 'rcres ' + res }, h('b', { text: res === 'correct' ? 'ถูกต้อง' : res === 'almost' ? 'เกือบถูก' : 'ยังไม่ถูก' }));
-  if (ans && g.corrected && String(g.corrected).trim() !== ans.trim()) b.append(h('div', {}, h('div', { class: 'lbl small muted', text: 'ที่พิมพ์' }), h('span', { class: 'wrong', text: ans })));
-  if (g.corrected) b.append(h('div', {}, h('div', { class: 'lbl small muted', text: 'ฉบับที่ถูก' }), h('b', { text: String(g.corrected) })));
-  if (g.natural && g.natural !== g.corrected) b.append(h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:flex-start' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'lbl small muted', text: 'แบบเจ้าของภาษา' }), h('b', { text: String(g.natural) })), sayBtn(String(g.natural), 'sm')));
-  if (g.feedback_th) b.append(h('div', { class: 'small fb', text: String(g.feedback_th) }));
-  if (g.tip_th) b.append(h('div', { class: 'small', text: 'จำไว้: ' + g.tip_th }));
+  const V = { correct: ['ok', '✅ ถูกต้อง'], almost: ['near', '🟡 เกือบถูก แก้นิดเดียว'], wrong: ['bad', '❌ ยังไม่ถูก ดูฉบับที่ถูกด้านล่าง'] }[res] || ['bad', '❌ ยังไม่ถูก'];
+  const b = h('div', { class: 'rcres' }, h('span', { class: 'rcv ' + V[0], text: V[1] }));
+  const same = ans && g.corrected && String(g.corrected).trim().toLowerCase() === ans.trim().toLowerCase();
+  if (ans && !same && res !== 'correct') b.append(h('div', { class: 'rcbox mine' }, h('div', { class: 'lbl', text: '❌ ที่คุณพิมพ์' }), h('div', { class: 'txt', text: ans })));
+  const right = String(g.corrected || ans || '');
+  if (right) b.append(h('div', { class: 'rcbox right' }, h('div', { class: 'lbl', text: res === 'correct' ? '✅ ประโยคของคุณ' : '✅ ฉบับที่ถูก' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'txt', style: 'flex:1;min-width:0', text: right }), sayBtn(right, 'sm'))));
+  if (g.natural && String(g.natural).trim() !== right.trim()) b.append(h('div', { class: 'rcbox nat' }, h('div', { class: 'lbl', text: '🗣 แบบที่เจ้าของภาษาพูด' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'txt', style: 'flex:1;min-width:0', text: String(g.natural) }), sayBtn(String(g.natural), 'sm'))));
+  if (g.feedback_th) b.append(h('div', { class: 'rcbox why' }, h('div', { class: 'lbl', text: '💡 ทำไม' }), h('div', { class: 'small fb', text: String(g.feedback_th) })));
+  const p = g.pattern && typeof g.pattern === 'object' ? g.pattern : null;
+  if (p && (p.formula || (Array.isArray(p.examples) && p.examples.length))) {
+    b.append(h('div', { class: 'rcbox pat' }, h('div', { class: 'lbl', text: '📐 Pattern ' + (p.name_th ? '· ' + p.name_th : '') }),
+      p.formula ? h('div', { class: 'formula', text: String(p.formula) }) : null,
+      p.use_th ? h('div', { class: 'small', text: 'ใช้เมื่อ: ' + p.use_th }) : null,
+      Array.isArray(p.examples) && p.examples.length ? h('div', { class: 'lbl', style: 'margin-top:4px', text: 'ตัวอย่างในชีวิตประจำวัน' }) : null,
+      ...(Array.isArray(p.examples) ? p.examples.slice(0, 3).map(x => h('div', { class: 'rcex' }, h('b', { text: String(x.en || '') }), sayBtn(String(x.en || ''), 'sm'), h('span', { class: 'small muted', text: String(x.th || '') }))) : [])));
+  }
+  if (g.tip_th) b.append(h('div', { class: 'small', style: 'font-weight:600', text: '📌 จำไว้: ' + g.tip_th }));
   return b;
 }
 function rcSkillGrid(st) {
