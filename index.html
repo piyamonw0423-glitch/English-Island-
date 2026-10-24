@@ -2077,9 +2077,21 @@ function micHelp() {
       h('div', { class: 'tip' + (isMac ? ' hl' : '') }, h('div', {}, h('div', { class: 'qt', text: 'Mac' }), h('div', { class: 'small muted', text: 'กดปุ่ม Fn (🌐) สองครั้ง หรือเปิด Dictation ในการตั้งค่า' })))),
     h('p', { class: 'small muted', text: 'ถ้าเบราว์เซอร์บล็อกหน้าต่างไมค์ของบู ให้กดอนุญาตป๊อปอัปสำหรับหน้านี้' })], 'เข้าใจแล้ว');
 }
+function micInline(getBox) {
+  const b = getBox && getBox(); if (b) { b.focus(); try { b.setSelectionRange(b.value.length, b.value.length); } catch {} }
+  const ua = navigator.userAgent || ''; const pf = navigator.platform || '';
+  const how = /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(pf) && navigator.maxTouchPoints > 1) ? 'แตะไมค์ 🎤 มุมล่างของคีย์บอร์ด แล้วพูดภาษาอังกฤษได้เลย (ตั้งคีย์บอร์ดเป็น English ก่อน)'
+    : /Android/.test(ua) ? 'แตะไมค์ 🎤 บนคีย์บอร์ด (Gboard) แล้วพูดภาษาอังกฤษได้เลย'
+    : /Win/.test(pf) ? 'กด ⊞ Win + H แล้วพูดภาษาอังกฤษได้เลย ข้อความจะขึ้นในช่องนี้'
+    : /Mac/.test(pf) ? 'กดปุ่ม Fn (🌐) 2 ครั้ง แล้วพูดภาษาอังกฤษได้เลย'
+    : 'ใช้ไมค์บนคีย์บอร์ดของเครื่อง แล้วพูดภาษาอังกฤษได้เลย';
+  document.querySelectorAll('.toast.mic-tip').forEach(x => x.remove());
+  const el = h('div', { class: 'toast mic-tip', role: 'status' }, h('div', { class: 'disc', style: 'background:#FFD6E7' }, ico('mic')), h('div', {}, h('b', { text: 'พูดได้เลยในช่องนี้' }), h('div', { class: 'small', text: how })));
+  document.body.append(el); setTimeout(() => el.remove(), 8000);
+}
 function micBtn(getBox, onStop) {
   const on = !!micState;
-  const b = h('button', { class: 'mic-boo' + (on ? ' on' : '') + (micAllowed ? '' : ' off'), type: 'button', title: on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-label': on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-pressed': String(on), onclick: () => micAllowed ? toggleMic(getBox, onStop) : openMicWindow(getBox, onStop) },
+  const b = h('button', { class: 'mic-boo' + (on ? ' on' : '') + (micAllowed ? '' : ' off'), type: 'button', title: on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-label': on ? 'หยุดพูด' : 'พูดผ่านไมค์', 'aria-pressed': String(on), onclick: () => micAllowed ? toggleMic(getBox, onStop) : micInline(getBox) },
     mascot(on ? 'cheer' : 'happy'), h('span', { class: 'mic-badge' }, ico('mic')));
   return h('span', { class: 'mic-wrap' }, b, on ? h('span', { class: 'mic-chip', text: 'บูกำลังฟัง… แตะบูเพื่อหยุด' }) : null);
 }
@@ -2092,9 +2104,9 @@ function toggleMic(getBox, onStop) {
     let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; }
     const b = getBox(); if (b) { b.value = (base ? base + ' ' : '') + finalText + interim; b.dispatchEvent(new Event('input')); }
   };
-  rec.onerror = e => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) { micAllowed = false; setTimeout(() => openMicWindow(st.target, st.onStop), 100); } else if (e.error === 'network') note2('ไมค์ต้องใช้อินเทอร์เน็ต ลองใหม่อีกครั้ง'); };
+  rec.onerror = e => { if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(e.error)) { micAllowed = false; setTimeout(() => micInline(st.target), 100); } else if (e.error === 'network') note2('ไมค์ต้องใช้อินเทอร์เน็ต ลองใหม่อีกครั้ง'); };
   rec.onend = () => { const secs = Math.max(1, Math.round((Date.now() - st.start) / 1000)); if (micState === st) micState = null; render(); if (st.onStop) st.onStop(secs); };
-  micState = st; try { rec.start(); } catch { micState = null; micAllowed = false; micHelp(); } render();
+  micState = st; try { rec.start(); } catch { micState = null; micAllowed = false; micInline(getBox); } render();
 }
 
 // ---------- corrections become review cards ----------
@@ -2269,7 +2281,7 @@ function vAnswer() {
       : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('h2', { style: 'flex:1', text: sp.q }), sayBtn(sp.q)),
     h('div', { class: 'ringwrap' }, ring, h('div', { style: 'display:flex;flex-direction:column;gap:8px;min-width:0;flex:1' }, h('button', { class: sp.running ? 'btn pink' : 'btn primary', onclick: toggleTimer, text: sp.running ? 'หยุด' : (sp.secs ? 'เริ่มพูดใหม่' : 'เริ่มพูด!') }), h('div', { class: 'small muted', text: sp.boss ? 'วงแหวนเต็ม = ถึงเวลาขั้นต่ำของบอส' : 'ตอบ → because → For example → So' }))),
     h('label', { class: 'f' }, 'พิมพ์สิ่งที่คุณพูด (ผิดได้เต็มที่)', h('textarea', { id: 'sp-ans', rows: 4, oninput: e => { sp.ans = e.target.value; const m = $('#sp-meta'); if (m) m.textContent = metaText(); } }, sp.ans)),
-    h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: micAllowed ? 'แตะบูแล้วพูด แอปพิมพ์ให้ + จับเวลาเอง' : 'แตะบู → หน้าต่างไมค์จะเปิด พูดแล้วกดส่งกลับ' })),
+    h('div', { class: 'row', style: 'align-items:center' }, micBtn(() => $('#sp-ans'), secs => { if (!sp.running && !sp.secs) { sp.secs = secs; render(); } }), h('span', { class: 'small muted', text: micAllowed ? 'แตะบูแล้วพูด แอปพิมพ์ให้ + จับเวลาเอง' : 'แตะบู แล้วพูดผ่านไมค์บนคีย์บอร์ด ข้อความจะขึ้นในช่องนี้' })),
     h('div', { class: 'small muted num', id: 'sp-meta', text: metaText() }),
     !aiOff ? h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: sp.busy || sp.running ? true : null, onclick: () => { sp.ans = $('#sp-ans').value; doCheck(); } }, sp.busy ? [h('span', { class: 'spin' }), ' เจลลี่บูกำลังตรวจ…'] : 'ให้ตรวจคำตอบ'), sp.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: sp.err }) : null) : aiNeeded());
   const out = [card];
