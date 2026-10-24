@@ -502,6 +502,21 @@ details summary{cursor:pointer;font-family:var(--display);font-weight:600}
 .forms{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.form{border:2px solid var(--edge);border-radius:14px;padding:6px 4px;text-align:center;background:var(--bg2);min-width:0;overflow-wrap:anywhere}
 tr.known td{background:var(--mint)}
 @media (max-width:380px){.forms{grid-template-columns:repeat(2,1fr)}}
+.rcgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:440px){.rcgrid{grid-template-columns:1fr}}
+.rcsk{border:2.5px solid var(--edge);border-radius:20px;padding:10px 12px;background:var(--card);display:flex;flex-direction:column;gap:6px;min-width:0}
+.rcsk.locked{opacity:.55;border-style:dashed}
+.rcsk.mastered{background:var(--mint)}
+.rcmeter{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.rcmeter i{height:9px;border-radius:999px;background:var(--bg2);border:1.5px solid var(--line)}
+.rcmeter i.on{background:linear-gradient(90deg,#A985FF,#FF8CC0);border-color:var(--edge)}
+.rcsk.mastered .rcmeter i{background:linear-gradient(90deg,#4FD9A6,#169C6F);border-color:var(--edge)}
+.rcres{border-radius:20px;border:2.5px solid var(--edge);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.rcres.correct{background:var(--mint)} .rcres.almost{background:var(--butter)} .rcres.wrong{background:var(--pink)}
+.rctags{display:flex;flex-direction:column;gap:8px}
+.fb{white-space:pre-line}
+.tl{display:grid;grid-template-columns:repeat(5,minmax(96px,1fr));gap:6px;min-width:520px}
+.tl-i{border:2px solid var(--edge);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:2px;text-align:center}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -777,14 +792,14 @@ function computeXP() {
   for (const k of S.meta.keys()) if (k.startsWith('week-')) xp += 100;
   for (const p of S.phrases.values()) { if (p.source !== 'starter') xp += 5; xp += (p.reviews || 0) * 2; if ((p.box || 0) >= 4) xp += 10; }
   for (const w of S.words.values()) { xp += 3 + (w.reviews || 0) * 2; if ((w.box || 0) >= 4) xp += 5; }
-  for (const c of S.checks.values()) { xp += c.kind === 'chat' ? 5 : c.kind === 'exam' ? 3 : 15; if (c.boss && c.pass) xp += 100; }
+  for (const c of S.checks.values()) { xp += c.kind === 'chat' ? 5 : c.kind === 'exam' ? 3 : c.kind === 'recall' ? 4 : 15; if (c.boss && c.pass) xp += 100; }
   for (const u of S.units.values()) xp += (u.shadowDone || 0) * 15;
   xp += S.checkpoints.size * 30;
   return xp;
 }
 function levelInfo(xp) { let n = 1, need = 200, rest = xp; while (rest >= need) { rest -= need; n++; need = 200 + 50 * (n - 1); } return { level: n, into: rest, need, total: xp }; }
 const titleFor = lv => TITLES[Math.min(TITLES.length - 1, Math.floor((lv - 1) / 2))];
-function dayLevel(d) { if (!d) return 0; const n = Object.values(d.steps || {}).filter(Boolean).length; if (n >= 4) return 2; if (n > 0 || d.minimum) return 1; return 0; }
+function dayLevel(d) { if (!d) return 0; const n = Object.values(d.steps || {}).filter(Boolean).length; if (n >= 4) return 2; if (n > 0 || d.minimum || d.recall) return 1; return 0; }
 function streak() { let s = 0, cur = today(); if (!dayLevel(S.days.get(cur))) cur = addDays(cur, -1); while (dayLevel(S.days.get(cur))) { s++; cur = addDays(cur, -1); } return s; }
 function bestStreak() { const ks = [...S.days.keys()].filter(k => dayLevel(S.days.get(k))).sort(); let best = 0, run = 0, prev = null; for (const k of ks) { run = prev && addDays(prev, 1) === k ? run + 1 : 1; best = Math.max(best, run); prev = k; } return best; }
 const sortedCps = () => [...S.checkpoints.entries()].map(([id, c]) => ({ id, ...c })).sort((a, b) => a.date < b.date ? -1 : 1);
@@ -1288,6 +1303,7 @@ const ui = {
   speakMode: 'story', story: null,
   sp: { q: '', world: 0, boss: false, ans: '', busy: false, err: '', res: null, secs: 0, running: false, start: 0, pauses: '', saved: false, added: false },
   bank: { th: '', en: '', alt: '', note: '', busy: false, err: '' }, bankTab: 'words', filter: '', confirm: null,
+  rmode: null, rc: null, rcFree: null,
 };
 const manual = { date: '', seconds: '', words: '', pauses: '' };
 let timerId = null;
@@ -1320,7 +1336,7 @@ function pageBanner() {
   let t = null;
   const li = levelInfo(computeXP());
   if (tab === 'course' && !ui.sub && placement()) { const u = UNITS[currentUnit()]; t = ['คอร์สของฉัน', `กำลังเรียน ${u.lv} · บทที่ ${u.n} ${u.t}`, 'happy', 'course']; }
-  else if (tab === 'review' && !ui.review && !ui.exam) { const d = dueItems().length; t = ['ห้องฝึกความจำ', d ? `มีการ์ดรอคุณ ${d} ใบ นึกก่อนพลิกนะ` : 'วันนี้ทวนครบแล้ว เก่งมาก!', d ? 'think' : 'cheer', 'review']; }
+  else if (tab === 'review' && !ui.review && !ui.exam && !ui.rmode) { const d = dueItems().length; t = ['ห้องฝึกความจำ', d ? `มีการ์ดรอคุณ ${d} ใบ นึกก่อนพลิกนะ` : 'วันนี้ทวนครบแล้ว เก่งมาก!', d ? 'think' : 'cheer', 'review']; }
   else if (tab === 'speak') t = ['ห้องฝึกพูด', 'พูดออกเสียงก่อน แล้วพิมพ์ตามที่พูด เจลลี่บูจะแก้ให้', 'happy', 'speak'];
   else if (tab === 'bank') t = ['คลังของฉัน', `${S.words.size.toLocaleString()} คำ · ${S.phrases.size} ประโยค`, 'shy', 'bank'];
   else if (tab === 'stats') t = ['ฉันเก่งขึ้นแค่ไหน', `เลเวล ${li.level} · ${li.total.toLocaleString()} XP สะสม`, 'cheer', 'stats'];
@@ -1358,7 +1374,7 @@ function renderHUD() {
 }
 function renderNav() {
   const done = dayLevel(S.days.get(today())) === 2;
-  $('#nav').replaceChildren(...TABS.map(([k, label, icon]) => h('button', { 'aria-current': k === tab ? 'page' : null, onclick: () => { if (k === 'course') { ui.sub = null; } go(k); } }, ico(icon), label,
+  $('#nav').replaceChildren(...TABS.map(([k, label, icon]) => h('button', { 'aria-current': k === tab ? 'page' : null, onclick: () => { if (k === 'course') { ui.sub = null; } if (k === 'review') { ui.rmode = null; } go(k); } }, ico(icon), label,
     k === 'review' && loaded && dueItems().length ? h('span', { class: 'dot', 'aria-label': 'มีการ์ดรอทบทวน' }) : null,
     k === 'home' && loaded && !done ? h('span', { class: 'dot', 'aria-label': 'ภารกิจวันนี้ยังไม่ครบ' }) : null)));
 }
@@ -1489,7 +1505,7 @@ function vHome() {
   const DOW = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']; const mon = addDays(t, -((new Date(t + 'T00:00:00').getDay() + 6) % 7));
   const week = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'สัปดาห์นี้' }), h('span', { class: 'small muted', text: 'พลาด 1 วันได้ อย่าพลาด 2 วันติด' })),
     h('div', { class: 'week' }, DOW.map((nm, i) => { const day = addDays(mon, i); const l = dayLevel(S.days.get(day)); return h('div', {}, h('i', { class: (l ? 'l' + l : '') + (day === t ? ' today' : '') }, l ? ico(l === 2 ? 'check' : 'flame') : null), nm); })));
-  return h('section', {}, loaded && !placement() ? testCard() : hero, huntCard(), loaded && huntStops().every(x => x.done) ? insightCard(false) : null, benchCard(), weekCard(), cont);
+  return h('section', {}, loaded && !placement() ? testCard() : hero, rcHomeCard(), huntCard(), loaded && huntStops().every(x => x.done) ? insightCard(false) : null, benchCard(), weekCard(), cont);
 }
 
 // ---------- COURSE ----------
@@ -1900,9 +1916,11 @@ function rateItem(kind) {
 }
 function vReview() {
   if (ui.exam) return vExam();
+  if (ui.rmode === 'recall') return vRecall();
+  if (ui.rmode === 'tense') return vTense();
   const r = ui.review;
   if (!loaded) return h('section', {}, loading('กำลังสับการ์ด…'));
-  if (!S.words.size && !S.phrases.size) return h('section', {}, h('div', { class: 'card' }, h('h2', { text: 'ยังไม่มีการ์ด' }), h('p', { class: 'muted', text: 'เรียนคำศัพท์แพ็กแรกในคอร์สก่อน แล้วการ์ดจะมาอยู่ที่นี่' }), h('div', {}, h('button', { class: 'btn primary', onclick: () => go('course'), text: 'ไปที่คอร์ส' }))));
+  if (!S.words.size && !S.phrases.size) return h('section', {}, rcEntryCards(), h('div', { class: 'card' }, h('h2', { text: 'ยังไม่มีการ์ดคำศัพท์' }), h('p', { class: 'muted', text: 'เรียนคำศัพท์แพ็กแรกในคอร์สก่อน แล้วการ์ดจะมาอยู่ที่นี่' }), h('div', {}, h('button', { class: 'btn primary', onclick: () => go('course'), text: 'ไปที่คอร์ส' }))));
   if (r && r.i >= r.items.length) {
     const acc = r.got / Math.max(1, r.got + r.near + r.miss); const stars = acc >= .8 ? 3 : acc >= .5 ? 2 : 1;
     return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot(stars === 3 ? 'cheer' : 'happy'),
@@ -1914,7 +1932,7 @@ function vReview() {
   }
   if (!r) {
     const due = dueItems().length;
-    return h('section', {}, h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('happy'),
+    return h('section', {}, rcEntryCards(), h('div', { class: 'card', style: 'align-items:center;text-align:center' }, mascot('happy'),
       h('h2', { text: due ? `มีการ์ดรอคุณ ${due} ใบ` : 'วันนี้ทวนครบแล้ว' }),
       h('p', { class: 'small muted', text: 'มี 3 แบบสลับกัน: นึกคำจากความหมาย · ฟังแล้วบอกความหมาย · เติมคำในประโยค พูดออกเสียงก่อนพลิกทุกครั้ง' }),
       h('div', { class: 'row', style: 'justify-content:center' }, due ? h('button', { class: 'btn primary', onclick: () => startReview(false), text: 'เริ่มทบทวน' }) : null, h('button', { class: due ? 'btn' : 'btn primary', onclick: () => startReview(true), text: due ? 'ทบทวน + สุ่มเพิ่ม' : 'สุ่มทบทวน 8 ใบ' })),
@@ -2182,6 +2200,7 @@ function classPrepCard() {
   const C = ui.cls || (ui.cls = { en: '', th: '' });
   return h('div', { class: 'card' },
     h('div', { class: 'row between' }, h('h3', { text: 'คลาสกับครู' }), h('span', { class: 'pill sky', text: 'จ.–ศ. 20:15–20:45' })),
+    rcClassBlock(),
     h('div', { class: 'tip' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'qt', text: 'ก่อนคลาส: ซ้อม 3 นาที' }), h('div', { class: 'small muted', text: pick ? `ซ้อม "${pick.tp.th}" แล้วเล่าให้ครูฟังในคลาส` : 'เริ่มเรื่องเล่าเรื่องแรกด้านล่าง แล้วเอาไปเล่าให้ครูฟัง' })),
       pick ? h('button', { class: 'btn sm primary', onclick: () => { ui.story = { id: pick.tp.id, step: 'practice', round: 0, hide: false }; render(true); }, text: 'ซ้อมเลย' }) : null),
     h('div', { class: 'qt', style: 'margin-top:4px', text: 'หลังคลาส: จดประโยคใหม่จากครู' }),
@@ -2332,10 +2351,315 @@ function vStats() {
     h('button', { class: 'btn', style: 'align-self:flex-start', onclick: () => { const sec = Number(manual.seconds), w = Number(manual.words); if (!(sec > 0 && w > 0)) return; put('checkpoints', uid(), { date: manual.date || t, seconds: sec, words: w, wpm: Math.round(w / (sec / 60)), pauses: manual.pauses === '' ? null : Number(manual.pauses), created: Date.now() }); Object.assign(manual, { date: '', seconds: '', words: '', pauses: '' }); }, text: 'บันทึก' }));
   const why = h('details', { class: 'card' }, h('summary', { text: 'ทำไมแอปนี้ช่วยให้พูดได้จริง' }), h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, [
     ['ตอบสั้นได้ แต่ต้องแปลในหัว', 'Active Recall 3 แบบ ฝึกดึงคำออกมาเองก่อนดูเฉลย'], ['พูดยาวไม่ได้', 'Shadowing บทสนทนาทุกบท + บอสที่ต้องพูดนานขึ้นทีละโลก'],
-    ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
+    ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['Tense ผิด ดึงโครงสร้างมาใช้ไม่ทัน', 'ฝึกโครงสร้างวันละ 6 ข้อ ไล่ 4 เลเวลจนใช้คล่อง + คู่มือ Tense'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
     ['ไม่เห็นพัฒนาการ ท้อ', 'แถบ 3,000 คำ เลเวล สติกเกอร์ และกราฟคำต่อนาที'], ['เวลาน้อย', 'ภารกิจ 12 นาที โหมดมินิ 2 นาที และปรับความยากได้ทุกแพ็ก'],
   ].map(([a, b]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b })))))));
   return h('section', {}, big, insightCard(true), benchCompare(), tiles, chart, albumCard(), badges, heat, table, add, why);
+}
+
+// ---------- DAILY RECALL: structure ladder + Tense guide + 20-hour class plan ----------
+const RC_SKILLS = [
+  { id: 'be', g: 1, th: 'verb to be', pat: "am/is/are/was/were as the main verb; every English sentence needs a verb (e.g. 'You're not rich', 'It was great')" },
+  { id: 'past', g: 1, th: 'Past Simple เล่าเรื่อง', pat: 'Past Simple for finished events and storytelling: V2, didn\'t + V1, Did + V1? Keep the whole story in past tense' },
+  { id: 'pres', g: 1, th: 'Present Simple กิจวัตร', pat: 'Present Simple for routines and facts with frequency (usually, twice a week, how often); he/she/it + V-s; Do/Does + V1' },
+  { id: 'q', g: 2, th: 'กฎทองตั้งคำถาม', pat: 'Forming questions: move be/modal/have to the front, otherwise add do/does/did + base verb; subject questions (Who told you?) have no did; Wh- questions' },
+  { id: 'wonder', g: 2, th: 'I wonder if / Ask him if', pat: "Embedded questions with statement word order: I wonder if you are..., Do you think you'll..., Ask him where he lives" },
+  { id: 'cont', g: 2, th: 'be + V-ing (ตอนนี้/อนาคต)', pat: "am/is/are + V-ing for actions happening now/these days AND for arranged future plans (I'm meeting my teacher at 8 tonight); stative verbs like know/like/have(own) are not used in -ing" },
+  { id: 'perf', g: 3, th: 'Present Perfect ประสบการณ์', pat: "have/has + V3 for experience and life-so-far: Have you ever...?, the best ... I've ever ..., has always been" },
+  { id: 'perfc', g: 3, th: 'have been + V-ing (for/since)', pat: 'Present Perfect Continuous for something that started in the past and continues now, with for + duration / since + starting point; How long have you been ...?' },
+  { id: 'ving', g: 3, th: 'รูป V-ing หลังคำเฉพาะ', pat: 'Verb patterns with -ing: enjoy/finish/mind + V-ing, after/before/without + V-ing, spend time + V-ing, worry about + V-ing, V-ing as subject' },
+  { id: 'link', g: 3, th: 'คำเชื่อม so / because / even if', pat: "Linking ideas: because (reason), so (result), after that, then, but, even if (hypothetical), I don't think + clause" },
+  { id: 'fut', g: 4, th: 'อนาคต will / going to', pat: "Future: will (decide now / prediction), be going to (intention), in + time (in two years) vs ago; When do you think you'll...?" },
+  { id: 'work', g: 4, th: 'ภาษาอังกฤษในงาน', pat: 'Workplace English for a maintenance planning engineer at a power plant: describe job duties, explain a problem and solution, talk about experience in a job interview, using correct tenses' },
+];
+const RC_LV = ['', 'เลเวล 1 · เติมคำ', 'เลเวล 2 · แปล', 'เลเวล 3 · แต่งเอง', 'เลเวล 4 · ตอบและถามกลับ'];
+const RC_TAGS = { 'missing-be': 'ลืม verb to be', tense: 'Tense ไม่ตรงเวลา', 'verb-after-aux': 'กริยาหลัง did/does/can ไม่เป็น V1', 'third-s': 'ลืม s กับ he/she/it', plural: 'ลืม s พหูพจน์', 'for-since': 'for / since', ving: 'รูป V-ing / to + V1', article: 'a / an / the', preposition: 'คำบุพบท', 'word-order': 'ลำดับคำในคำถาม', 'caps-punct': 'ตัวใหญ่ / เครื่องหมาย', 'word-choice': 'เลือกคำไม่เป็นธรรมชาติ', connector: 'คำเชื่อม so/because', possessive: 'my / your / his' };
+const RC_INT = [1, 1, 2, 4, 7, 14, 30];
+const RC_PER_DAY = 6;
+const RC_WEEKS = [
+  { wk: 'สัปดาห์ 1–2', t: 'เล่าเรื่องอดีต', d: 'Past Simple + was/were · after that, then, finally', goal: 'เล่าเมื่อวาน 5 ประโยค ไม่ผิด tense' },
+  { wk: 'สัปดาห์ 3–4', t: 'ถามกลับ ถามต่อ', d: 'กฎทอง be/modal/have/do · How often, How long', goal: 'ถามครูกลับ 3 คำถามต่อหัวข้อ' },
+  { wk: 'สัปดาห์ 5–6', t: 'ประสบการณ์และความเห็น', d: "Present Perfect · I've been… · I think / I don't think · because", goal: 'พูดเรื่องเดียวต่อเนื่อง 1 นาที' },
+  { wk: 'สัปดาห์ 7–8', t: 'ภาษาอังกฤษในงาน', d: 'แนะนำตัว · อธิบายงาน · เล่าปัญหาที่แก้ได้', goal: 'Tell me about yourself 2 นาที' },
+];
+const RC_LEVEL_SPEC = {
+  1: 'Fill-in-the-blank: one natural English sentence with exactly one ___ blank testing the pattern. Put the base verb in brackets if a verb form is tested. Give the Thai meaning in instruction_th.',
+  2: 'Translation: one short Thai sentence (everyday life or work) that she must translate into English using the pattern. task = the Thai sentence.',
+  3: 'Personal sentence: ask her to write 1-2 sentences about her OWN life using the pattern. task = a short concrete topic in Thai (e.g. what she did after work yesterday).',
+  4: 'Conversation: task = a natural question an English teacher would ask in English that requires the pattern. instruction_th tells her to answer in 2 full sentences AND ask the teacher one follow-up question back.',
+};
+const rcNew = () => ({ level: 1, streak: 0, wrongRun: 0, box: 0, due: today(), seen: 0, correct: 0, mastered: false });
+function rcState() {
+  const s = S.meta.get('recall') || {};
+  const st = { unlocked: 1, classDone: 9.5, classTotal: 30, ...s, skills: { ...(s.skills || {}) }, tags: { ...(s.tags || {}) }, recent: { ...(s.recent || {}) }, today: s.today || { date: '', n: 0 } };
+  RC_SKILLS.forEach(k => { st.skills[k.id] = st.skills[k.id] ? { ...st.skills[k.id] } : rcNew(); });
+  return st;
+}
+const rcSave = st => put('meta', 'recall', st);
+const rcOpen = st => RC_SKILLS.filter(k => k.g <= st.unlocked);
+const rcDue = st => { const t = today(); return rcOpen(st).filter(k => st.skills[k.id].due <= t); };
+const rcTodayN = st => st.today && st.today.date === today() ? st.today.n : 0;
+const rcLeft = st => Math.max(0, (st.classTotal || 30) - (st.classDone || 0));
+const rcWeek = st => RC_WEEKS[Math.max(0, Math.min(3, Math.floor(((st.classDone || 0) - 10) / 5)))];
+const rcTopTags = st => Object.keys(st.tags).filter(k => st.tags[k] > 0).sort((a, b) => st.tags[b] - st.tags[a]);
+function rcMaybeUnlock(st) {
+  while (st.unlocked < 4) {
+    if (!rcOpen(st).every(k => st.skills[k.id].level >= 2 || st.skills[k.id].mastered)) break;
+    st.unlocked++; RC_SKILLS.forEach(k => { if (k.g === st.unlocked) st.skills[k.id].due = today(); });
+  }
+}
+function rcQueue(st, n) {
+  const t = today();
+  return rcOpen(st).slice().sort((a, b) => {
+    const A = st.skills[a.id], B = st.skills[b.id]; const ad = A.due <= t ? 0 : 1, bd = B.due <= t ? 0 : 1;
+    if (ad !== bd) return ad - bd; if (A.due !== B.due) return A.due < B.due ? -1 : 1; return A.box - B.box;
+  }).slice(0, n || RC_PER_DAY).map(k => k.id);
+}
+function rcGenPrompt(k, lv, st) {
+  const recent = (st.recent[k.id] || []).join(' | '); const tags = rcTopTags(st).slice(0, 4).map(x => RC_TAGS[x]);
+  return `${ME}\n\nCreate ONE active-recall exercise.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\n` + (recent ? `Do not repeat or closely copy these recent tasks: ${recent}\n` : '') + (tags.length ? `Her frequent mistakes (touch one of them if natural): ${tags.join(', ')}\n` : '') +
+    'Use natural, everyday vocabulary. Thai text must be natural Thai.\nReply with ONLY JSON: {"instruction_th": "one short Thai line telling her what to do", "task": "the task", "hint_th": "short Thai hint naming the structure, not the answer", "model_answer": "one natural correct answer"}';
+}
+function rcGradePrompt(k, lv, item, ans) {
+  return `${ME}\n\nYou are a kind but exact English teacher checking her answer.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\nInstruction: ${item.instruction_th}\nTask: ${item.task}\nReference answer: ${item.model_answer}\nHer answer: ${ans}\n\n` +
+    'Judge: "correct" = grammatical, natural enough, and uses the target pattern correctly (other valid answers count; ignore only a missing final period). "almost" = one small error (capital letter, article, small word choice) but the pattern is right. "wrong" = the pattern is missing or wrong, grammar errors change the meaning, or she answered in Thai.\n' +
+    `Reply with ONLY JSON: {"result": "correct"|"almost"|"wrong", "corrected": "her sentence with the minimum fixes", "natural": "how a native speaker would say it", "feedback_th": "Thai, at most 3 short lines; each line names one error as ❌ wrong → ✅ right with a short reason; if correct, praise one specific thing", "tip_th": "one short Thai line: a rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}}`;
+}
+function rcFreePrompt(text) {
+  return `${ME}\n\nShe wrote this to say to her English teacher or about her life:\n"""${text}"""\n\n` +
+    `Reply with ONLY JSON: {"corrected": "her text with minimum grammar fixes, keep her meaning", "natural": "how a native speaker would naturally say it, same meaning, simple words", "feedback_th": "Thai, up to 5 short lines, most important errors first, each as ❌ → ✅ with a short reason; if there are no errors say what she did well", "tip_th": "one short Thai line: the single most useful rule to remember", "tags": zero or more of ${JSON.stringify(Object.keys(RC_TAGS))}, "follow_up": "one simple English question a teacher might ask next"}`;
+}
+function rcLogDay() { const t = today(); const d = S.days.get(t) || { steps: {} }; put('days', t, { ...d, recall: (d.recall || 0) + 1, updated: Date.now() }, true); }
+function rcAddTags(st, tags) { (Array.isArray(tags) ? tags : []).forEach(tg => { if (RC_TAGS[tg]) st.tags[tg] = (st.tags[tg] || 0) + 1; }); }
+function rcStart(extra) {
+  if (!sample || aiOff) { ui.rc = { phase: 'noai' }; render(true); return; }
+  const st = rcState(); let q = rcQueue(st, extra ? 3 : RC_PER_DAY);
+  if (!extra && rcTodayN(st) >= RC_PER_DAY) q = q.slice(0, 3);
+  ui.rc = { phase: 'load', queue: q, total: q.length, done: 0 }; rcNext();
+}
+async function rcNext() {
+  const R = ui.rc; if (!R.queue.length) { R.phase = 'done'; render(true); confetti(120); return; }
+  const st = rcState(); const id = R.queue[0]; const k = RC_SKILLS.find(x => x.id === id); const s = st.skills[id];
+  const lv = s.mastered ? (Math.random() < .5 ? 3 : 4) : s.level;
+  Object.assign(R, { phase: 'load', cur: { id, k, lv }, ans: '', hinted: false, res: null, err: '' }); render(true);
+  try {
+    const item = await sample.json(rcGenPrompt(k, lv, st), { modelTier: 'quick', cache: false });
+    if (!item || !item.task) throw { code: 'bad_json' };
+    R.cur.item = { instruction_th: String(item.instruction_th || ''), task: String(item.task), hint_th: String(item.hint_th || ''), model_answer: String(item.model_answer || '') };
+    R.phase = 'q';
+  } catch (e) { R.phase = 'err'; R.err = aiErr(e) || 'สร้างโจทย์ไม่สำเร็จ'; R.retry = rcNext; }
+  render(true);
+}
+async function rcGrade() {
+  const R = ui.rc; const box = $('#rc-ans'); const ans = (box ? box.value : R.ans || '').trim(); if (!ans) { if (box) box.focus(); return; }
+  R.ans = ans; R.phase = 'grading'; render(true);
+  try {
+    const c = R.cur; const g = await sample.json(rcGradePrompt(c.k, c.lv, c.item, ans), { cache: false });
+    if (!g || !g.result) throw { code: 'bad_json' };
+    rcApply(c, ans, g); R.res = g; R.phase = 'res';
+  } catch (e) { R.phase = 'err'; R.err = aiErr(e) || 'ตรวจไม่สำเร็จ'; R.retry = () => { R.phase = 'q'; render(true); }; }
+  render(true);
+}
+function rcApply(c, ans, g) {
+  const st = rcState(); const s = st.skills[c.id]; const t = today();
+  let res = ['correct', 'almost', 'wrong'].includes(g.result) ? g.result : 'wrong'; if (res === 'correct' && ui.rc.hinted) res = 'almost';
+  s.seen++;
+  if (res === 'correct') {
+    s.correct++; s.wrongRun = 0; s.streak++; s.box = Math.min(6, s.box + 1);
+    if (s.streak >= 2) { if (s.level < 4) { s.level++; s.streak = 0; c.levelUp = true; } else if (!s.mastered) { s.mastered = true; c.mastered = true; } }
+    s.due = addDays(t, RC_INT[s.box]);
+  } else if (res === 'almost') { s.correct++; s.wrongRun = 0; s.due = addDays(t, 1); }
+  else {
+    s.streak = 0; s.box = Math.max(0, s.box - 2); s.wrongRun++; s.due = addDays(t, 1);
+    if (s.mastered) { s.mastered = false; s.level = 4; } else if (s.wrongRun >= 2 && s.level > 1) { s.level--; s.wrongRun = 0; c.levelDown = true; }
+  }
+  rcAddTags(st, g.tags);
+  st.recent[c.id] = (st.recent[c.id] || []).concat(c.item.task).slice(-5);
+  if (!st.today || st.today.date !== t) st.today = { date: t, n: 0 }; st.today.n++;
+  rcMaybeUnlock(st); c.res = res;
+  if (res !== 'correct') { const nat = String(g.natural || g.corrected || c.item.model_answer || ''); c.card = addFixCard(ans, nat, String(g.tip_th || '')); }
+  put('checks', uid(), { kind: 'recall', skill: c.id, level: c.lv, task: c.item.task, answer: ans, result: res, corrected: String(g.corrected || ''), natural: String(g.natural || ''), tags: Array.isArray(g.tags) ? g.tags.slice(0, 6).map(String) : [], created: Date.now() }, true);
+  rcLogDay(); rcSave(st);
+}
+async function rcFreeCheck() {
+  const F = ui.rcFree || (ui.rcFree = {}); const box = $('#rc-free'); const text = (box ? box.value : F.text || '').trim(); F.text = text;
+  if (!text) { if (box) box.focus(); return; }
+  if (!sample || aiOff) { F.err = 'ส่วนนี้ต้องใช้ AI'; render(); return; }
+  F.busy = true; F.err = ''; F.res = null; render();
+  try {
+    const g = await sample.json(rcFreePrompt(text), { cache: false });
+    F.res = g; const st = rcState(); rcAddTags(st, g.tags); rcSave(st);
+    const fixed = String(g.natural || g.corrected || '');
+    if (Array.isArray(g.tags) && g.tags.length && fixed) F.card = addFixCard(text.slice(0, 160), fixed, String(g.tip_th || ''));
+    put('checks', uid(), { kind: 'recall', skill: 'free', level: 0, task: 'เขียนอิสระ', answer: text, result: Array.isArray(g.tags) && g.tags.length ? 'almost' : 'correct', corrected: String(g.corrected || ''), natural: String(g.natural || ''), tags: Array.isArray(g.tags) ? g.tags.slice(0, 6).map(String) : [], created: Date.now() }, true);
+    rcLogDay();
+  } catch (e) { F.err = aiErr(e) || 'ตรวจไม่สำเร็จ'; }
+  F.busy = false; render();
+}
+function rcResultBlock(res, ans, g) {
+  const b = h('div', { class: 'rcres ' + res }, h('b', { text: res === 'correct' ? 'ถูกต้อง' : res === 'almost' ? 'เกือบถูก' : 'ยังไม่ถูก' }));
+  if (ans && g.corrected && String(g.corrected).trim() !== ans.trim()) b.append(h('div', {}, h('div', { class: 'lbl small muted', text: 'ที่พิมพ์' }), h('span', { class: 'wrong', text: ans })));
+  if (g.corrected) b.append(h('div', {}, h('div', { class: 'lbl small muted', text: 'ฉบับที่ถูก' }), h('b', { text: String(g.corrected) })));
+  if (g.natural && g.natural !== g.corrected) b.append(h('div', { class: 'row', style: 'flex-wrap:nowrap;align-items:flex-start' }, h('div', { style: 'flex:1;min-width:0' }, h('div', { class: 'lbl small muted', text: 'แบบเจ้าของภาษา' }), h('b', { text: String(g.natural) })), sayBtn(String(g.natural), 'sm')));
+  if (g.feedback_th) b.append(h('div', { class: 'small fb', text: String(g.feedback_th) }));
+  if (g.tip_th) b.append(h('div', { class: 'small', text: 'จำไว้: ' + g.tip_th }));
+  return b;
+}
+function rcSkillGrid(st) {
+  const t = today();
+  return h('div', { class: 'rcgrid' }, RC_SKILLS.map(k => {
+    const s = st.skills[k.id]; const locked = k.g > st.unlocked;
+    const days = Math.round((new Date(s.due + 'T00:00:00') - new Date(t + 'T00:00:00')) / 864e5);
+    return h('div', { class: 'rcsk' + (locked ? ' locked' : '') + (s.mastered ? ' mastered' : '') },
+      h('div', { class: 'row between', style: 'gap:6px;flex-wrap:nowrap;align-items:baseline' }, h('b', { style: 'min-width:0', text: k.th }), h('span', { class: 'small ' + (!locked && days <= 0 ? '' : 'muted'), style: !locked && days <= 0 ? 'color:var(--pink-d);font-weight:600;white-space:nowrap' : 'white-space:nowrap', text: locked ? 'กลุ่ม ' + k.g + ' · ล็อก' : days <= 0 ? 'ถึงรอบ' : `อีก ${days} วัน` })),
+      h('div', { class: 'rcmeter' }, [1, 2, 3, 4].map(i => h('i', { class: s.mastered || i < s.level || (i === s.level && s.streak > 0) ? 'on' : '' }))),
+      h('span', { class: 'small muted', text: s.mastered ? 'ใช้คล่องแล้ว · ทบทวนห่างขึ้น' : `${RC_LV[s.level]} · ถูก ${s.correct}/${s.seen}` }));
+  }));
+}
+function rcTagBars(st) {
+  const keys = rcTopTags(st).slice(0, 6); if (!keys.length) return h('p', { class: 'small muted', text: 'ยังไม่มีข้อมูล ฝึกข้อแรกแล้วจุดพลาดที่เกิดซ้ำจะมาแสดงที่นี่' });
+  const max = st.tags[keys[0]];
+  return h('div', { class: 'rctags' }, keys.map(k => h('div', { class: 'levelrow', style: 'grid-template-columns:minmax(0,10rem) 1fr auto' }, h('span', { class: 'small', text: RC_TAGS[k] }), h('div', { class: 'bar' }, h('i', { style: `width:${st.tags[k] / max * 100}%;background:linear-gradient(90deg,#FF8CC0,#E5468E)` })), h('span', { class: 'num small', text: String(st.tags[k]) }))));
+}
+function rcHomeCard() {
+  if (!loaded) return null;
+  const st = rcState(); const n = rcTodayN(st); const due = rcDue(st).length; const wk = rcWeek(st);
+  return h('div', { class: 'card', style: 'background:linear-gradient(150deg,var(--lav),var(--card) 72%)' },
+    h('div', { class: 'row between' }, h('h2', { text: 'ฝึกโครงสร้างวันนี้' }), h('span', { class: 'pill butter num', text: `${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY}` })),
+    h('p', { class: 'small', text: 'Active Recall 6 ข้อ ไล่จากเติมคำ → แปล → แต่งเอง → ตอบครูและถามกลับ ถูกต่อเนื่องจะขึ้นเลเวล ผิดจะกลับมาถามพรุ่งนี้' }),
+    h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, n / RC_PER_DAY * 100)}%` })),
+    h('div', { class: 'small muted', text: `รอทบทวน ${due} โครงสร้าง · ช่วงนี้โฟกัส ${wk.wk}: ${wk.t} · เหลือเรียนกับครู ${rcLeft(st)} ชม.` }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.rmode = 'recall'; ui.rc = null; go('review'); if (n < RC_PER_DAY) rcStart(false); }, text: n >= RC_PER_DAY ? 'ดูความคืบหน้า' : n ? 'ฝึกต่อ' : 'เริ่ม 6 ข้อ' }),
+      h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; go('review'); }, text: 'คู่มือ Tense' })));
+}
+function rcEntryCards() {
+  const st = rcState(); const n = rcTodayN(st);
+  return h('div', { class: 'acts', style: 'grid-template-columns:repeat(2,minmax(0,1fr))' },
+    h('button', { class: 'act', style: 'background:var(--lav)', onclick: () => { ui.rmode = 'recall'; ui.rc = null; render(true); } }, ico('learn'), 'ฝึกโครงสร้าง', h('small', { text: `วันนี้ ${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY} ข้อ` })),
+    h('button', { class: 'act', style: 'background:var(--sky)', onclick: () => { ui.rmode = 'tense'; render(true); } }, ico('book'), 'คู่มือ Tense', h('small', { text: '6 Tense ที่ใช้พูดจริง' })));
+}
+function vRecall() {
+  const st = rcState(); const R = ui.rc;
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.rmode = null; ui.rc = null; render(true); }, text: '‹ ห้องฝึกความจำ' });
+  if (R && R.phase === 'noai') return h('section', {}, back, aiNeeded());
+  if (R && (R.phase === 'load' || R.phase === 'grading')) return h('section', {}, back, loading(R.phase === 'load' ? `เจลลี่บูกำลังสร้างโจทย์ ${R.cur ? R.cur.k.th : ''}…` : 'เจลลี่บูกำลังตรวจ…'));
+  if (R && R.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: R.err }), h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => R.retry ? R.retry() : rcNext(), text: 'ลองอีกครั้ง' }), h('button', { class: 'btn ghost sm', onclick: () => { R.queue.shift(); rcNext(); }, text: 'ข้ามข้อนี้' }))));
+  if (R && (R.phase === 'q' || R.phase === 'res')) {
+    const c = R.cur; const num = R.total - R.queue.length + 1;
+    const top = h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: RC_LV[c.lv] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` }));
+    const bar = h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(num - (R.phase === 'q' ? 1 : 0)) / R.total * 100}%` })));
+    if (R.phase === 'q') {
+      return h('section', {}, back, h('div', { class: 'card' }, top, bar,
+        h('div', { class: 'wcard' }, h('div', { class: 'small', text: c.item.instruction_th }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: c.item.task })),
+        h('textarea', { id: 'rc-ans', rows: 3, 'aria-label': 'คำตอบภาษาอังกฤษ', placeholder: 'พิมพ์ (หรือพูด) คำตอบภาษาอังกฤษ…', oninput: e => { R.ans = e.target.value; } }, R.ans || ''),
+        R.hinted ? h('div', { class: 'small', text: 'ใบ้: ' + c.item.hint_th }) : null,
+        h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: rcGrade, text: 'ตรวจคำตอบ' }), micBtn(() => $('#rc-ans')),
+          R.hinted ? null : h('button', { class: 'btn ghost sm', onclick: () => { R.hinted = true; render(); }, text: 'ขอคำใบ้' }),
+          h('button', { class: 'btn ghost sm', onclick: () => { R.queue.shift(); rcNext(); }, text: 'ข้าม' })),
+        h('p', { class: 'small muted', text: 'อย่าเปิดคู่มือก่อนตอบ ผิดได้ ผิดแล้วแก้คือส่วนที่ทำให้จำได้นาน' })));
+    }
+    const s = st.skills[c.id];
+    return h('section', {}, back, h('div', { class: 'card' }, top, bar,
+      h('div', { class: 'ex', style: 'font-weight:600', text: c.item.task }),
+      rcResultBlock(c.res, R.ans, R.res),
+      c.res !== 'wrong' && c.item.model_answer ? h('div', { class: 'small muted', text: 'อีกแบบที่พูดได้: ' + c.item.model_answer }) : null,
+      c.levelUp ? h('div', { class: 'pill mint', style: 'align-self:flex-start', text: 'ขึ้นเป็น ' + RC_LV[s.level] }) : null,
+      c.mastered ? h('div', { class: 'pill mint', style: 'align-self:flex-start', text: c.k.th + ' ใช้คล่องแล้ว!' }) : null,
+      c.levelDown ? h('div', { class: 'small muted', text: 'ลดกลับไป ' + RC_LV[s.level] + ' เพื่อปูพื้นให้แน่นก่อน' }) : null,
+      c.res !== 'correct' ? h('div', { class: 'small muted', text: (c.card ? 'เก็บประโยคที่ถูกเป็นการ์ดทบทวนแล้ว · ' : '') + 'โครงสร้างนี้จะกลับมาพรุ่งนี้ ก่อนไปต่อ ลองพูดฉบับที่ถูกออกเสียง 1 รอบ' }) : null,
+      h('button', { class: 'btn primary', style: 'align-self:flex-end', onclick: () => { R.queue.shift(); R.done++; rcNext(); }, text: R.queue.length > 1 ? 'ข้อต่อไป' : 'จบวันนี้' })));
+  }
+  // landing / done
+  const n = rcTodayN(st); const due = rcDue(st).length;
+  const head = h('div', { class: 'card' },
+    R && R.phase === 'done' ? h('div', { class: 'hero' }, mascot('cheer'), h('div', { class: 'bubble', text: n >= RC_PER_DAY ? 'ครบ 6 ข้อแล้ววันนี้! พรุ่งนี้บูจะเลือกข้อที่ถึงรอบให้เอง' : 'จบรอบนี้แล้ว เก่งมาก!' })) : null,
+    h('div', { class: 'row between' }, h('h2', { text: 'ฝึกโครงสร้างประโยค' }), h('span', { class: 'pill butter num', text: `วันนี้ ${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY}` })),
+    h('p', { class: 'small muted', text: 'เลเวล 1 เติมคำ · 2 แปลไทยเป็นอังกฤษ · 3 แต่งประโยคเรื่องตัวเอง · 4 ตอบครูและถามกลับ ถูก 2 ครั้งติด = ขึ้นเลเวล และกลับมาห่างขึ้น 1 → 2 → 4 → 7 → 14 → 30 วัน' }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => rcStart(n >= RC_PER_DAY), text: n >= RC_PER_DAY ? 'ทบทวนเพิ่ม 3 ข้อ' : n ? `ฝึกต่อ (รอทบทวน ${due})` : 'เริ่ม 6 ข้อวันนี้' }),
+      h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; render(true); }, text: 'เปิดคู่มือ Tense' })));
+  const F = ui.rcFree || (ui.rcFree = {});
+  const free = h('div', { class: 'card' }, h('h3', { text: 'เขียนอิสระ · ประโยคที่อยากพูดกับครู' }),
+    h('p', { class: 'small muted', text: 'เล่าเรื่องเมื่อวาน ตอบคำถามจากคลาส หรือเรื่องงาน แล้วกดตรวจ จะได้ฉบับที่ถูกและแบบเจ้าของภาษา' }),
+    h('textarea', { id: 'rc-free', rows: 4, 'aria-label': 'ข้อความภาษาอังกฤษ', placeholder: 'Yesterday I went to work early because…', oninput: e => { F.text = e.target.value; } }, F.text || ''),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', disabled: F.busy ? true : null, onclick: rcFreeCheck }, F.busy ? [h('span', { class: 'spin' }), ' กำลังตรวจ…'] : 'ตรวจประโยค'), micBtn(() => $('#rc-free')), F.err ? h('span', { class: 'small', style: 'color:var(--pink-d)', text: F.err }) : null),
+    F.res ? rcResultBlock(Array.isArray(F.res.tags) && F.res.tags.length ? 'almost' : 'correct', F.text, F.res) : null,
+    F.res && F.res.follow_up ? h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'ครูอาจถามต่อ' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('b', { style: 'flex:1;min-width:0', text: String(F.res.follow_up) }), sayBtn(String(F.res.follow_up), 'sm'))) : null);
+  const ladder = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'บันไดทักษะ' }), h('span', { class: 'pill lav', text: `เปิดแล้ว ${st.unlocked}/4 กลุ่ม` })),
+    h('p', { class: 'small muted', text: 'เรียงตาม Roadmap 8 สัปดาห์ กลุ่มถัดไปเปิดเมื่อทุกทักษะในกลุ่มก่อนหน้าถึงเลเวล 2' }), rcSkillGrid(st),
+    st.unlocked < 4 ? h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { const s2 = rcState(); s2.unlocked++; RC_SKILLS.forEach(k => { if (k.g === s2.unlocked) s2.skills[k.id].due = today(); }); rcSave(s2); }, text: 'เปิดกลุ่มถัดไปเลย' }) : null);
+  const recentWrong = [...S.checks.values()].filter(c => c.kind === 'recall' && c.result && c.result !== 'correct').sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 10);
+  const bank = h('div', { class: 'card' }, h('h3', { text: 'คลังจุดพลาด' }), rcTagBars(st),
+    recentWrong.length ? h('div', { class: 'qt', style: 'margin-top:6px', text: 'ประโยคที่เคยผิด · นึกคำตอบก่อนแตะ' }) : null,
+    recentWrong.map(c => h('details', { class: 'block' }, h('summary', { class: 'small', text: c.skill === 'free' ? 'พูดให้เป็นธรรมชาติ: ' + String(c.answer || '').slice(0, 90) : c.task }), h('div', { style: 'color:var(--mint-d);font-weight:600;margin-top:4px', text: c.natural || c.corrected || '' }))));
+  return h('section', {}, back, head, free, ladder, bank);
+}
+
+// ---------- Tense guide (from Tanp's Tense Map) ----------
+const TENSES = [
+  { n: '1. Present Simple', tag: 'ทำเป็นประจำ / ความจริง', c: 'mint', when: 'กิจวัตร นิสัย ความจริงทั่วไป และ "มี / ชอบ / คิด / รู้"', f: [['+', 'I/you/we/they + V1 · he/she/it + V-s'], ['−', "don't / doesn't + V1"], ['?', 'Do / Does + ประธาน + V1 ?']], sig: 'always, usually, often, sometimes, never, every day, twice a week', ex: ['I brush my teeth three times a day.', 'I usually read two books a month.', 'How often do you speak English?'], trap: ['Does she brushes → Does she brush', "adverb อยู่หน้ากริยา: I usually read · อยู่หลัง be: I'm usually busy"] },
+  { n: '2. Present Continuous', tag: 'กำลังทำ / แผนที่นัดไว้', c: 'sky', when: 'สิ่งที่กำลังเกิดตอนนี้หรือช่วงนี้ และแผนที่นัดไว้แล้ว (ดูหัวข้อ "ตอนนี้ หรือ อนาคต?")', f: [['+', 'am / is / are + V-ing'], ['−', "am not / isn't / aren't + V-ing"], ['?', 'Am / Is / Are + ประธาน + V-ing ?']], sig: 'now, right now, at the moment, these days, this week', ex: ["I'm planning to take a round-the-world trip.", 'What are you reading right now?', "I'm looking for a new job these days."], trap: ["อย่าลืม be: I planning → I'm planning"] },
+  { n: '3. Past Simple', tag: 'เกิดแล้ว จบแล้ว', c: 'peach', when: 'เล่าเรื่องที่จบไปแล้ว เล่าอดีต = อดีตทุกกริยาทั้งเรื่อง', f: [['+', 'V2 (worked, met, left, spent)'], ['−', "didn't + V1"], ['?', 'Did + ประธาน + V1 ?'], ['be', 'was / were (I was born…, It was great.)']], sig: 'yesterday, last week, five years ago, in 2020, when I was young', ex: ['I woke up at 7:30 and washed my face.', 'I left my purse on the bus.', 'He met his wife five years ago.'], trap: ['I woke up… I wash… → I woke up… I washed…', 'Did he met → Did he meet'] },
+  { n: '4. Present Perfect', tag: 'ประสบการณ์ / เชื่อมถึงตอนนี้', c: 'lav', when: 'ประสบการณ์ (เคย…) โดยไม่บอกเวลาแน่นอน และสิ่งที่ผลยังอยู่ถึงตอนนี้', f: [['+', 'have / has + V3'], ['−', "haven't / hasn't + V3"], ['?', 'Have / Has + ประธาน + V3 ?']], sig: "ever, never, already, yet, just, so far, the best … I've ever …", ex: ["He's the most handsome man I've ever met.", 'Early retirement has always been my dream.', 'Have you ever ridden a motorcycle?'], trap: ["the handsomest man I ever met → …I've ever met", 'มีเวลาชัดเจน (yesterday, 2020) ให้ใช้ Past Simple'] },
+  { n: '5. Present Perfect Continuous', tag: 'เริ่มในอดีต ยังทำอยู่', c: 'pink', when: 'ตอบคำถาม "ทำมานานแค่ไหนแล้ว" ใช้บ่อยตอนแนะนำตัวและสัมภาษณ์งาน', f: [['+', 'have / has been + V-ing + for / since'], ['?', 'How long have you been + V-ing ?'], ['for', 'for + ระยะเวลา (for two years)'], ['since', 'since + จุดเริ่ม (since 2022, since middle school)']], sig: 'for, since, how long, all day', ex: ["I've been studying English since middle school.", "I've been working as a planner for almost four years.", 'How long have you been teaching English?'], trap: ["I live here for two years. → I've been living here for two years.", 'ถ้าจบแล้ว: I lived in Paris for five years.'] },
+  { n: '6. Future', tag: 'อนาคต 3 แบบ', c: 'butter', when: 'เลือกตามว่าตัดสินใจหรือวางแผนไว้แล้วหรือยัง', f: [['will', "ตัดสินใจตอนนั้น / คาดเดา → I'll call you back."], ['going to', "ตั้งใจไว้แล้ว → I'm going to change jobs."], ['be + V-ing', "นัดไว้แน่นอน → I'm meeting my teacher at 8."]], sig: 'tomorrow, next year, soon, in two years (อีก 2 ปี)', ex: ["I think I'll get a promotion in two years.", "When do you think you'll change jobs?"], trap: ['in five years = อีก 5 ปีข้างหน้า · five years ago = 5 ปีที่แล้ว', "When do you think will you → When do you think you'll"] },
+];
+const GOLDEN = [
+  ['be (am/is/are/was/were)', 'ย้าย be ไปหน้าประธาน', 'Her show is on Tuesday → Is her show on Tuesday?'],
+  ['modal (can/will/should)', 'ย้าย modal ไปหน้าประธาน', 'He can ride → Can you ride a motorcycle?'],
+  ['have/had (ตัวช่วย)', 'ย้าย have / had', "I've been living here → How long have you been living here?"],
+  ['กริยาธรรมดา', 'เติม do/does/did + V1', 'He met his wife → Where did he meet his wife?'],
+  ['ถาม who/what เป็นประธาน', 'ไม่สลับ ไม่เติม did', 'Who told you to be patient?'],
+  ['I wonder if / Ask him if', 'เรียงแบบบอกเล่า ไม่สลับ', 'I wonder if you are sociable.'],
+];
+const MY_MISTAKES = [
+  ['you not rich', "you're not rich", 'ภาษาอังกฤษต้องมีกริยาเสมอ'], ['I woke… I wash…', 'I woke… I washed…', 'เล่าอดีต = อดีตทั้งเรื่อง'],
+  ['enjoy exercise', 'enjoyed exercising', 'enjoy / finish / mind + V-ing'], ['20 minute', 'for 20 minutes', 'for + เวลา + s'],
+  ['brush teeth', 'brush my teeth', 'ร่างกายต้องมี my / your'], ['after than', 'After that,', 'หลังจากนั้น'],
+  ["It's used, so my friend gave it", 'because', 'so = ผล · because = เหตุ'], ['I Usually / for Us / skip+', 'usually / us / skip', 'ตัวใหญ่แค่ต้นประโยค, I, ชื่อเฉพาะ'],
+];
+function vTense() {
+  const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.rmode = null; render(true); }, text: '‹ ห้องฝึกความจำ' });
+  const intro = h('div', { class: 'card' }, h('h2', { text: 'คู่มือ Tense ของฉัน' }),
+    h('p', { class: 'small', text: 'ก่อนพูดทุกครั้ง ถาม 1 คำถาม: "เกิดเมื่อไหร่ และจบหรือยัง?" ภาษาไทยไม่เปลี่ยนรูปกริยาตามเวลา ภาษาอังกฤษเปลี่ยน' }),
+    h('div', { class: 'tw' }, h('div', { class: 'tl' }, [['อดีต จบแล้ว', 'Past Simple', 'peach'], ['เริ่มอดีต ยังทำอยู่', 'have been + V-ing', 'pink'], ['ทำเป็นประจำ', 'Present Simple', 'mint'], ['ตอนนี้', 'be + V-ing', 'sky'], ['อนาคต', 'will / going to', 'butter']].map(([a, b, c]) => h('div', { class: 'tl-i', style: `background:var(--${c})` }, h('b', { text: b }), h('span', { class: 'small', text: a }))))),
+    h('button', { class: 'btn primary', style: 'align-self:flex-start', onclick: () => { ui.rmode = 'recall'; ui.rc = null; render(true); rcStart(false); }, text: 'อ่านแล้ว ไปฝึก 6 ข้อ' }));
+  const gold = h('div', { class: 'card' }, h('h3', { text: 'กฎทองการตั้งคำถาม' }), h('p', { class: 'small muted', text: 'ดูว่าประโยคมี "ตัวช่วย" อะไร แล้วย้ายตัวนั้นไปข้างหน้า ถ้าไม่มี เติม do/does/did และกริยากลับเป็นรูปปกติ' }),
+    h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'ประโยคมีอะไร' }), h('th', { text: 'ทำอย่างไร' }), h('th', { text: 'ตัวอย่างจากคลาส' }))), h('tbody', {}, GOLDEN.map(([a, b, c]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b }), h('td', { text: c })))))));
+  const cards = TENSES.map(t => h('div', { class: 'card', style: `border-top:8px solid var(--${t.c}-d, var(--edge))` },
+    h('div', { class: 'row between' }, h('h3', { text: t.n }), h('span', { class: 'pill ' + t.c, text: t.tag })),
+    h('p', { class: 'small', text: t.when }),
+    h('div', { class: 'block', style: `background:var(--${t.c})` }, t.f.map(([k, v]) => h('div', { class: 'small', style: 'display:grid;grid-template-columns:4.5rem 1fr;gap:8px' }, h('b', { text: k }), h('span', { text: v })))),
+    h('div', { class: 'small muted', text: 'คำสัญญาณ: ' + t.sig }),
+    h('div', { class: 'plist' }, t.ex.map(e => h('div', { class: 'row', style: 'flex-wrap:nowrap;padding:4px 0' }, h('span', { style: 'flex:1;min-width:0', text: e }), sayBtn(e, 'sm')))),
+    h('div', { class: 'block', style: 'background:var(--pink)' }, t.trap.map(x => h('div', { class: 'small', text: '⚠ ' + x })))));
+  const same = h('div', { class: 'card' }, h('h3', { text: 'be + V-ing: ตอนนี้ หรือ อนาคต?' }),
+    h('p', { class: 'small', text: 'Present Continuous กับ be + V-ing แบบอนาคต คือรูปเดียวกัน (am/is/are + V-ing) ให้ดูคำบอกเวลาในประโยค' }),
+    h('div', { class: 'grid2' },
+      h('div', { class: 'block', style: 'background:var(--sky)' }, h('div', { class: 'lbl', text: 'ตอนนี้ · กำลังทำอยู่' }), h('div', { class: 'small muted', text: 'now, right now, these days' }), h('div', { class: 'small', text: "I'm meeting my teacher now." }), h('div', { class: 'small', text: "She's cooking dinner right now." })),
+      h('div', { class: 'block', style: 'background:var(--lav)' }, h('div', { class: 'lbl', text: 'อนาคต · นัดไว้แล้ว มีในปฏิทิน' }), h('div', { class: 'small muted', text: 'tonight, tomorrow, on Monday, next week' }), h('div', { class: 'small', text: "I'm meeting my teacher at 8 tonight." }), h('div', { class: 'small', text: "They're getting married next month." }))),
+    h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'อนาคต 3 แบบ' }), h('th', { text: 'ความแน่นอน' }), h('th', { text: 'ตัวอย่าง' }))), h('tbody', {},
+      [['be + V-ing', 'แน่นอนที่สุด นัดหรือจองไว้แล้ว', "I'm flying to Seoul tomorrow."], ['be going to', 'ตั้งใจไว้ แต่ยังไม่ได้จัดการ', "I'm going to visit Seoul next year."], ['will', 'ตัดสินใจตอนพูด หรือยังไม่แน่ใจ', "Maybe I'll visit Seoul someday."]].map(([a, b, c]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b }), h('td', { text: c })))))),
+    h('div', { class: 'small', text: "⚠ กริยาบอกสภาพ/ความรู้สึกใช้ V-ing ไม่ได้: I'm knowing / I'm liking / I'm having a car → I know / I like / I have a car" }));
+  const mist = h('div', { class: 'card' }, h('h3', { text: 'จุดพลาดของฉัน (เช็กก่อนส่งประโยค)' }),
+    h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, MY_MISTAKES.map(([a, b, c]) => h('tr', {}, h('td', {}, h('span', { class: 'wrong', text: a })), h('td', {}, h('span', { class: 'right', text: b })), h('td', { class: 'small', text: c })))))));
+  return h('section', {}, back, intro, gold, ...cards.slice(0, 2), same, ...cards.slice(2), mist);
+}
+
+// ---------- 20-hour class plan card (used inside "คลาสกับครู") ----------
+function rcClassBlock() {
+  const st = rcState(); const done = st.classDone || 0; const tot = st.classTotal || 30; const wk = rcWeek(st);
+  const set = v => { const s2 = rcState(); s2.classDone = Math.max(0, Math.min(tot, Math.round(v * 2) / 2)); rcSave(s2); };
+  return h('div', { class: 'block' },
+    h('div', { class: 'row between' }, h('div', { class: 'lbl', text: `ชั่วโมงเรียนกับครู ${done} / ${tot} · เหลือ ${rcLeft(st)} ชม.` }),
+      h('div', { class: 'row', style: 'gap:6px' }, h('button', { class: 'btn ghost sm', 'aria-label': 'ลบครึ่งชั่วโมง', onclick: () => set(done - .5), text: '−0.5' }), h('button', { class: 'btn sm primary', onclick: () => set(done + .5), text: '+0.5 เรียนแล้ว' }))),
+    h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, done / tot * 100)}%` })),
+    h('div', { class: 'small', style: 'margin-top:6px' }, h('b', { text: `ช่วงนี้ ${wk.wk}: ${wk.t}` }), ' · ' + wk.d),
+    h('div', { class: 'small muted', text: 'เป้า: ' + wk.goal }),
+    h('details', {}, h('summary', { class: 'small', text: 'Roadmap 8 สัปดาห์ + สิ่งที่ขอครูในคลาส' }),
+      RC_WEEKS.map(w => h('div', { class: 'small', style: 'margin-top:4px' + (w === wk ? ';font-weight:700' : '') }, `${w.wk} · ${w.t} — ${w.goal}`)),
+      h('div', { class: 'small', style: 'margin-top:8px' }, 'ในคลาสขอครู:'),
+      ['Please ask me follow-up questions.', 'Could you type my mistakes in the chat?'].map(p => h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('b', { class: 'small', style: 'flex:1;min-width:0', text: p }), sayBtn(p, 'sm'))),
+      h('div', { class: 'small muted', style: 'margin-top:6px', text: 'หลังคลาส: กด +0.5 แล้วพิมพ์ประโยคที่ครูแก้ลง "เขียนอิสระ" ในห้องฝึกความจำ · ที่ชั่วโมง 20 และ 30 อัดเสียง "Tell me about yourself and your day yesterday" 2 นาที แล้ววัดผลประจำเดือนเทียบกับวันแรก' })));
 }
 
 if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
