@@ -844,6 +844,7 @@ function markStep(step) { const t = today(); const d = S.days.get(t) || { steps:
 let questSheetReady = false; setTimeout(() => { questSheetReady = true; }, 2500); // skip quests already finished before this visit
 function questDoneSheet(step) {
   if (!loaded || !questSheetReady || document.querySelector('.overlay.qdone') || document.getElementById('splash')) return;
+  if (ui.rc && ['q', 'vq', 'res', 'load', 'grading'].includes(ui.rc.phase)) return; // don't interrupt a drill
   const stops = huntStops(); const me = stops.find(s => s.id === step); if (!me) return;
   const doneN = stops.filter(s => s.done).length; const next = stops.find(s => !s.done);
   const ov = h('div', { class: 'overlay qdone', onclick: e => { if (e.target === ov) ov.remove(); } });
@@ -2377,7 +2378,7 @@ function vStats() {
     h('button', { class: 'btn', style: 'align-self:flex-start', onclick: () => { const sec = Number(manual.seconds), w = Number(manual.words); if (!(sec > 0 && w > 0)) return; put('checkpoints', uid(), { date: manual.date || t, seconds: sec, words: w, wpm: Math.round(w / (sec / 60)), pauses: manual.pauses === '' ? null : Number(manual.pauses), created: Date.now() }); Object.assign(manual, { date: '', seconds: '', words: '', pauses: '' }); }, text: 'บันทึก' }));
   const why = h('details', { class: 'card' }, h('summary', { text: 'ทำไมแอปนี้ช่วยให้พูดได้จริง' }), h('div', { class: 'tw' }, h('table', {}, h('tbody', {}, [
     ['ตอบสั้นได้ แต่ต้องแปลในหัว', 'Active Recall 3 แบบ ฝึกดึงคำออกมาเองก่อนดูเฉลย'], ['พูดยาวไม่ได้', 'Shadowing บทสนทนาทุกบท + บอสที่ต้องพูดนานขึ้นทีละโลก'],
-    ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['Tense ผิด ดึงโครงสร้างมาใช้ไม่ทัน', 'ฝึกโครงสร้างวันละ 6 ข้อ ไล่ 4 เลเวลจนใช้คล่อง + คู่มือ Tense'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
+    ['ไม่รู้ว่าถูกหรือผิด', 'เจลลี่บูแก้ทุกประโยคที่คุยและทุกคำตอบ พร้อมเหตุผลภาษาไทย'], ['Tense ผิด ดึงโครงสร้างมาใช้ไม่ทัน', 'ฝึกโครงสร้างวันละ 8 ข้อ ไล่ 4 เลเวลจนใช้คล่อง + คู่มือ Tense'], ['ศัพท์น้อย ท่องแล้วลืม', 'คำศัพท์ 3,000+ คำเรียงจากง่ายไปยาก ทวนเว้นระยะอัตโนมัติ'],
     ['ไม่เห็นพัฒนาการ ท้อ', 'แถบ 3,000 คำ เลเวล สติกเกอร์ และกราฟคำต่อนาที'], ['เวลาน้อย', 'ภารกิจ 12 นาที โหมดมินิ 2 นาที และปรับความยากได้ทุกแพ็ก'],
   ].map(([a, b]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b })))))));
   return h('section', {}, big, insightCard(true), benchCompare(), tiles, chart, albumCard(), badges, heat, table, add, why);
@@ -2401,7 +2402,9 @@ const RC_SKILLS = [
 const RC_LV = ['', 'เลเวล 1 · เติมคำ', 'เลเวล 2 · แปล', 'เลเวล 3 · แต่งเอง', 'เลเวล 4 · ตอบและถามกลับ'];
 const RC_TAGS = { 'missing-be': 'ลืม verb to be', tense: 'Tense ไม่ตรงเวลา', 'verb-after-aux': 'กริยาหลัง did/does/can ไม่เป็น V1', 'third-s': 'ลืม s กับ he/she/it', plural: 'ลืม s พหูพจน์', 'for-since': 'for / since', ving: 'รูป V-ing / to + V1', article: 'a / an / the', preposition: 'คำบุพบท', 'word-order': 'ลำดับคำในคำถาม', 'caps-punct': 'ตัวใหญ่ / เครื่องหมาย', 'word-choice': 'เลือกคำไม่เป็นธรรมชาติ', connector: 'คำเชื่อม so/because', possessive: 'my / your / his' };
 const RC_INT = [1, 1, 2, 4, 7, 14, 30];
-const RC_PER_DAY = 6;
+const RC_PER_DAY = 8;
+const RC_VERBS_PER_DAY = 3;
+const RC_VLV = ['', 'เลือกรูปกริยา', 'ใช้ในประโยคของฉัน', 'แปลเรื่องจริง'];
 const RC_WEEKS = [
   { wk: 'สัปดาห์ 1–2', t: 'เล่าเรื่องอดีต', d: 'Past Simple + was/were · after that, then, finally', goal: 'เล่าเมื่อวาน 5 ประโยค ไม่ผิด tense' },
   { wk: 'สัปดาห์ 3–4', t: 'ถามกลับ ถามต่อ', d: 'กฎทอง be/modal/have/do · How often, How long', goal: 'ถามครูกลับ 3 คำถามต่อหัวข้อ' },
@@ -2417,7 +2420,7 @@ const RC_LEVEL_SPEC = {
 const rcNew = () => ({ level: 1, streak: 0, wrongRun: 0, box: 0, due: today(), seen: 0, correct: 0, mastered: false });
 function rcState() {
   const s = S.meta.get('recall') || {};
-  const st = { unlocked: 1, classDone: 9.5, classTotal: 30, ...s, skills: { ...(s.skills || {}) }, tags: { ...(s.tags || {}) }, recent: { ...(s.recent || {}) }, today: s.today || { date: '', n: 0 } };
+  const st = { unlocked: 1, classDone: 9.5, classTotal: 30, ...s, skills: { ...(s.skills || {}) }, tags: { ...(s.tags || {}) }, recent: { ...(s.recent || {}) }, today: s.today || { date: '', n: 0 }, verbs: { ...(s.verbs || {}) }, newVerbs: s.newVerbs || { date: '', n: 0 } };
   RC_SKILLS.forEach(k => { st.skills[k.id] = st.skills[k.id] ? { ...st.skills[k.id] } : rcNew(); });
   return st;
 }
@@ -2435,15 +2438,18 @@ function rcMaybeUnlock(st) {
   }
 }
 function rcQueue(st, n) {
-  const t = today();
-  return rcOpen(st).slice().sort((a, b) => {
+  n = n || RC_PER_DAY; const t = today(); const nv = Math.max(1, Math.round(n * RC_VERBS_PER_DAY / RC_PER_DAY));
+  const sk = rcOpen(st).slice().sort((a, b) => {
     const A = st.skills[a.id], B = st.skills[b.id]; const ad = A.due <= t ? 0 : 1, bd = B.due <= t ? 0 : 1;
     if (ad !== bd) return ad - bd; if (A.due !== B.due) return A.due < B.due ? -1 : 1; return A.box - B.box;
-  }).slice(0, n || RC_PER_DAY).map(k => k.id);
+  }).slice(0, n - nv).map(k => k.id);
+  const vb = rcVerbPick(st, n - sk.length).map(b => 'v:' + b); const out = [];
+  while (sk.length || vb.length) { if (sk.length) out.push(sk.shift()); if (sk.length) out.push(sk.shift()); if (vb.length) out.push(vb.shift()); }
+  return out;
 }
 function rcGenPrompt(k, lv, st) {
   const recent = (st.recent[k.id] || []).join(' | '); const tags = rcTopTags(st).slice(0, 4).map(x => RC_TAGS[x]);
-  return `${ME}\n\nCreate ONE active-recall exercise.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\n` + (recent ? `Do not repeat or closely copy these recent tasks: ${recent}\n` : '') + (tags.length ? `Her frequent mistakes (touch one of them if natural): ${tags.join(', ')}\n` : '') +
+  return `${ME}\n\nCreate ONE active-recall exercise.\nTarget pattern: ${k.pat}\nExercise type: ${RC_LEVEL_SPEC[lv]}\n${rcChalNote()}` + (recent ? `Do not repeat or closely copy these recent tasks: ${recent}\n` : '') + (tags.length ? `Her frequent mistakes (touch one of them if natural): ${tags.join(', ')}\n` : '') +
     'Use natural, everyday vocabulary. Thai text must be natural Thai.\nReply with ONLY JSON: {"instruction_th": "one short Thai line telling her what to do", "task": "the task", "hint_th": "short Thai hint naming the structure, not the answer", "model_answer": "one natural correct answer"}';
 }
 function rcGradePrompt(k, lv, item, ans) {
@@ -2463,15 +2469,47 @@ function rcStart(extra) {
   if (!extra && rcTodayN(st) >= RC_PER_DAY) q = q.slice(0, 3);
   ui.rc = { phase: 'load', queue: q, total: q.length, done: 0 }; rcNext();
 }
+const RC_CUES = [['Past Simple (yesterday / last week / ago) → V2', 3], ['Present Perfect (have/has + V3: already / ever / since / for)', 2], ['Present Simple routine (usually / every day; he/she + V-s)', 1], ['future (will / be going to + V1)', 1], ['be + V-ing (right now / these days / an arranged plan)', 1]];
+function rcCue() { const tot = RC_CUES.reduce((a, c) => a + c[1], 0); let r = Math.random() * tot; for (const [c, w] of RC_CUES) { if ((r -= w) < 0) return c; } return RC_CUES[0][0]; }
+function rcVerbPick(st, n) {
+  const t = today(); const byDue = (a, b) => st.verbs[a].due < st.verbs[b].due ? -1 : 1;
+  const due = Object.keys(st.verbs).filter(b => st.verbs[b].due <= t).sort(byDue);
+  const newOk = Math.max(0, 2 - (st.newVerbs && st.newVerbs.date === t ? st.newVerbs.n : 0));
+  let out = due.slice(0, n);
+  if (out.length < n) out = out.concat(VERBS.filter(v => !st.verbs[v.b]).slice(0, Math.min(newOk, n - out.length)).map(v => v.b));
+  if (out.length < n) out = out.concat(Object.keys(st.verbs).filter(b => !out.includes(b)).sort(byDue).slice(0, n - out.length));
+  if (out.length < n) out = out.concat(VERBS.filter(v => !st.verbs[v.b] && !out.includes(v.b)).slice(0, n - out.length).map(v => v.b));
+  return out;
+}
+function rcChalInfo() {
+  const xs = [...S.checks.values()].filter(c => c.kind === 'recall' && c.skill !== 'free').sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 12);
+  if (xs.length < 6) return { n: xs.length, acc: null, lv: 0 };
+  const acc = xs.reduce((a, c) => a + (c.result === 'correct' ? 1 : c.result === 'almost' ? .5 : 0), 0) / xs.length;
+  return { n: xs.length, acc, lv: acc >= .85 ? 1 : acc < .6 ? -1 : 0 };
+}
+const rcChal = () => rcChalInfo().lv;
+const rcChalNote = () => rcChal() > 0 ? 'She is doing well (over 85% correct lately): make it slightly more challenging, e.g. a longer sentence or a less common but useful everyday/work word, but keep it at the same grammar point.\n' : rcChal() < 0 ? 'She is struggling (under 60% correct lately): make it EASIER, very short sentence, very common words, and a very clear hint.\n' : '';
 async function rcNext() {
   const R = ui.rc; if (!R.queue.length) { R.phase = 'done'; render(true); confetti(120); return; }
-  const st = rcState(); const id = R.queue[0]; const k = RC_SKILLS.find(x => x.id === id); const s = st.skills[id];
-  const lv = s.mastered ? (Math.random() < .5 ? 3 : 4) : s.level;
-  Object.assign(R, { phase: 'load', cur: { id, k, lv }, ans: '', hinted: false, res: null, err: '' }); render(true);
+  const st = rcState(); const id = R.queue[0];
+  if (id.startsWith('v:')) {
+    const v = VERBS.find(x => x.b === id.slice(2)); if (!v) { R.queue.shift(); return rcNext(); }
+    const vs = st.verbs[v.b] || { level: 1 };
+    if (!verbKnown(v)) saveVerbs([v]);
+    if (vs.level <= 1 && !vs.mastered) { const q = verbQuestion(v); Object.assign(R, { phase: 'vq', cur: { id, verb: v, vlv: 1, mcq: q, k: { id, th: `กริยา ${v.b} · ${v.th}` }, item: { task: q.s, model_answer: '' } }, ans: '', res: null, err: '' }); render(true); return; }
+    const cue = rcCue(); const vlv = vs.mastered ? 3 : vs.level;
+    const k = { id, th: `กริยา ${v.b} · ${v.th}`, pat: `the verb "${v.b}" (forms: ${v.b} / ${v.p} / ${v.pp} / ${verbIng(v.b)}) used correctly in this form: ${cue}. Useful chunk: "${v.chunk}". Her life: maintenance planning engineer at a power plant in Bangkok, studies English after work` };
+    return rcGen(R, { id, k, lv: vlv >= 3 ? 2 : 3, verb: v, vlv }, st);
+  }
+  const k = RC_SKILLS.find(x => x.id === id); const s = st.skills[id];
+  return rcGen(R, { id, k, lv: s.mastered ? (Math.random() < .5 ? 3 : 4) : s.level }, st);
+}
+async function rcGen(R, cur, st) {
+  Object.assign(R, { phase: 'load', cur, ans: '', hinted: false, res: null, err: '' }); render(true);
   try {
-    const item = await sample.json(rcGenPrompt(k, lv, st), { modelTier: 'quick', cache: false });
+    const item = await sample.json(rcGenPrompt(cur.k, cur.lv, st), { modelTier: 'quick', cache: false });
     if (!item || !item.task) throw { code: 'bad_json' };
-    R.cur.item = { instruction_th: String(item.instruction_th || ''), task: String(item.task), hint_th: String(item.hint_th || ''), model_answer: String(item.model_answer || '') };
+    cur.item = { instruction_th: String(item.instruction_th || ''), task: String(item.task), hint_th: String(item.hint_th || ''), model_answer: String(item.model_answer || '') };
     R.phase = 'q';
   } catch (e) { R.phase = 'err'; R.err = aiErr(e) || 'สร้างโจทย์ไม่สำเร็จ'; R.retry = rcNext; }
   render(true);
@@ -2487,12 +2525,14 @@ async function rcGrade() {
   render(true);
 }
 function rcApply(c, ans, g) {
-  const st = rcState(); const s = st.skills[c.id]; const t = today();
+  const st = rcState(); const t = today(); const isNewVerb = c.verb && !st.verbs[c.verb.b];
+  const s = c.verb ? (st.verbs[c.verb.b] = st.verbs[c.verb.b] ? { ...st.verbs[c.verb.b] } : { level: 1, streak: 0, wrongRun: 0, box: 0, due: t, seen: 0, correct: 0, mastered: false }) : st.skills[c.id];
+  if (isNewVerb) st.newVerbs = st.newVerbs && st.newVerbs.date === t ? { date: t, n: st.newVerbs.n + 1 } : { date: t, n: 1 };
   let res = ['correct', 'almost', 'wrong'].includes(g.result) ? g.result : 'wrong'; if (res === 'correct' && ui.rc.hinted) res = 'almost';
   s.seen++;
   if (res === 'correct') {
     s.correct++; s.wrongRun = 0; s.streak++; s.box = Math.min(6, s.box + 1);
-    if (s.streak >= 2) { if (s.level < 4) { s.level++; s.streak = 0; c.levelUp = true; } else if (!s.mastered) { s.mastered = true; c.mastered = true; } }
+    if (s.streak >= 2) { if (s.level < (c.verb ? 3 : 4)) { s.level++; s.streak = 0; c.levelUp = true; } else if (!s.mastered) { s.mastered = true; c.mastered = true; } }
     s.due = addDays(t, RC_INT[s.box]);
   } else if (res === 'almost') { s.correct++; s.wrongRun = 0; s.due = addDays(t, 1); }
   else {
@@ -2560,13 +2600,13 @@ function rcTagBars(st) {
 }
 function rcHomeCard() {
   if (!loaded) return null;
-  const st = rcState(); const n = rcTodayN(st); const due = rcDue(st).length; const wk = rcWeek(st);
+  const st = rcState(); const n = rcTodayN(st); const due = rcDue(st).length + Object.values(st.verbs).filter(x => x.due <= today()).length; const wk = rcWeek(st);
   return h('div', { class: 'card', style: 'background:linear-gradient(150deg,var(--lav),var(--card) 72%)' },
     h('div', { class: 'row between' }, h('h2', { text: 'ฝึกโครงสร้างวันนี้' }), h('span', { class: 'pill butter num', text: `${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY}` })),
-    h('p', { class: 'small', text: 'Active Recall 6 ข้อ ไล่จากเติมคำ → แปล → แต่งเอง → ตอบครูและถามกลับ ถูกต่อเนื่องจะขึ้นเลเวล ผิดจะกลับมาถามพรุ่งนี้' }),
+    h('p', { class: 'small', text: 'วันละ 8 ข้อ: โครงสร้าง 5 + กริยา 3 คำ ไล่จากง่ายไปยาก ระบบปรับความยากให้อยู่ในโซนพอดี ถูกต่อเนื่องจะขึ้นเลเวล ผิดจะกลับมาถามพรุ่งนี้' }),
     h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, n / RC_PER_DAY * 100)}%` })),
     h('div', { class: 'small muted', text: `รอทบทวน ${due} โครงสร้าง · ช่วงนี้โฟกัส ${wk.wk}: ${wk.t} · เหลือเรียนกับครู ${rcLeft(st)} ชม.` }),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.rmode = 'recall'; ui.rc = null; go('review'); if (n < RC_PER_DAY) rcStart(false); }, text: n >= RC_PER_DAY ? 'ดูความคืบหน้า' : n ? 'ฝึกต่อ' : 'เริ่ม 6 ข้อ' }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.rmode = 'recall'; ui.rc = null; go('review'); if (n < RC_PER_DAY) rcStart(false); }, text: n >= RC_PER_DAY ? 'ดูความคืบหน้า' : n ? 'ฝึกต่อ' : 'เริ่ม 8 ข้อ' }),
       h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; go('review'); }, text: 'คู่มือ Tense' })));
 }
 function rcEntryCards() {
@@ -2581,38 +2621,54 @@ function vRecall() {
   if (R && R.phase === 'noai') return h('section', {}, back, aiNeeded());
   if (R && (R.phase === 'load' || R.phase === 'grading')) return h('section', {}, back, loading(R.phase === 'load' ? `เจลลี่บูกำลังสร้างโจทย์ ${R.cur ? R.cur.k.th : ''}…` : 'เจลลี่บูกำลังตรวจ…'));
   if (R && R.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: R.err }), h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => R.retry ? R.retry() : rcNext(), text: 'ลองอีกครั้ง' }), h('button', { class: 'btn ghost sm', onclick: () => { R.queue.shift(); rcNext(); }, text: 'ข้ามข้อนี้' }))));
+  if (R && R.phase === 'vq') {
+    const c = R.cur; const q = c.mcq; const v = c.verb; const num = R.total - R.queue.length + 1;
+    const pick = o => {
+      const ok = o === q.a; const filled = q.s.replace('___', o); const right = q.s.replace('___', q.a);
+      const g = { result: ok ? 'correct' : 'wrong', corrected: right, natural: '', feedback_th: ok ? `ถูกต้อง! โจทย์บอกว่า "${q.cue}" จึงใช้ ${q.a}` : `❌ ${o} → ✅ ${q.a}\nเพราะโจทย์บอกว่า "${q.cue}"`, tip_th: 'อดีต → V2 · have/has → V3 · will/can → V1 · he/she ทำประจำ → เติม s · am/is/are → V-ing', tags: ok ? [] : ['tense'],
+        pattern: { name_th: `${v.b} = ${v.th}`, formula: `${v.b} → ${v.p} → ${v.pp}   ·   ${verbIng(v.b)}`, use_th: 'วลีที่ใช้คู่กันบ่อย: ' + v.chunk, examples: [{ en: v.ex, th: '' }] } };
+      rcApply(c, filled, g); R.res = g; R.ans = filled; R.phase = 'res'; render(true); if (canTTS) say(right, ui.rate);
+    };
+    return h('section', {}, back, h('div', { class: 'card' },
+      h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: 'กริยา · ' + RC_VLV[1] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` })),
+      h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(num - 1) / R.total * 100}%` }))),
+      h('div', { class: 'wcard' }, h('span', { class: 'pill butter', text: q.cue }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: q.s })),
+      h('div', { class: 'opts' }, q.opts.map(o => h('button', { class: 'opt', onclick: () => pick(o), text: o }))),
+      h('p', { class: 'small muted', text: 'ดูคำบอกเวลาในโจทย์ก่อนเลือก แล้วพูดทั้งประโยคออกเสียง' })));
+  }
   if (R && (R.phase === 'q' || R.phase === 'res')) {
     const c = R.cur; const num = R.total - R.queue.length + 1;
-    const top = h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: RC_LV[c.lv] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` }));
+    const top = h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: c.verb ? 'กริยา · ' + RC_VLV[c.vlv] : RC_LV[c.lv] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` }));
     const bar = h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(num - (R.phase === 'q' ? 1 : 0)) / R.total * 100}%` })));
     if (R.phase === 'q') {
       return h('section', {}, back, h('div', { class: 'card' }, top, bar,
         h('div', { class: 'wcard' }, h('div', { class: 'small', text: c.item.instruction_th }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: c.item.task })),
         h('textarea', { id: 'rc-ans', rows: 3, 'aria-label': 'คำตอบภาษาอังกฤษ', placeholder: 'พิมพ์ (หรือพูด) คำตอบภาษาอังกฤษ…', oninput: e => { R.ans = e.target.value; } }, R.ans || ''),
-        R.hinted ? h('div', { class: 'small', text: 'ใบ้: ' + c.item.hint_th }) : null,
+        R.hinted || rcChal() < 0 ? h('div', { class: 'small', text: 'ใบ้: ' + c.item.hint_th }) : null,
         h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: rcGrade, text: 'ตรวจคำตอบ' }), micBtn(() => $('#rc-ans')),
           R.hinted ? null : h('button', { class: 'btn ghost sm', onclick: () => { R.hinted = true; render(); }, text: 'ขอคำใบ้' }),
           h('button', { class: 'btn ghost sm', onclick: () => { R.queue.shift(); rcNext(); }, text: 'ข้าม' })),
         h('p', { class: 'small muted', text: 'อย่าเปิดคู่มือก่อนตอบ ผิดได้ ผิดแล้วแก้คือส่วนที่ทำให้จำได้นาน' })));
     }
-    const s = st.skills[c.id];
+    const s = c.verb ? (st.verbs[c.verb.b] || { level: 1 }) : st.skills[c.id]; const LVN = c.verb ? RC_VLV : RC_LV;
     return h('section', {}, back, h('div', { class: 'card' }, top, bar,
       h('div', { class: 'ex', style: 'font-weight:600', text: c.item.task }),
       rcResultBlock(c.res, R.ans, R.res),
       c.res !== 'wrong' && c.item.model_answer ? h('div', { class: 'small muted', text: 'อีกแบบที่พูดได้: ' + c.item.model_answer }) : null,
-      c.levelUp ? h('div', { class: 'pill mint', style: 'align-self:flex-start', text: 'ขึ้นเป็น ' + RC_LV[s.level] }) : null,
+      c.levelUp ? h('div', { class: 'pill mint', style: 'align-self:flex-start', text: 'ขึ้นเป็น ' + LVN[s.level] }) : null,
       c.mastered ? h('div', { class: 'pill mint', style: 'align-self:flex-start', text: c.k.th + ' ใช้คล่องแล้ว!' }) : null,
-      c.levelDown ? h('div', { class: 'small muted', text: 'ลดกลับไป ' + RC_LV[s.level] + ' เพื่อปูพื้นให้แน่นก่อน' }) : null,
+      c.levelDown ? h('div', { class: 'small muted', text: 'ลดกลับไป ' + LVN[s.level] + ' เพื่อปูพื้นให้แน่นก่อน' }) : null,
       c.res !== 'correct' ? h('div', { class: 'small muted', text: (c.card ? 'เก็บประโยคที่ถูกเป็นการ์ดทบทวนแล้ว · ' : '') + 'โครงสร้างนี้จะกลับมาพรุ่งนี้ ก่อนไปต่อ ลองพูดฉบับที่ถูกออกเสียง 1 รอบ' }) : null,
       h('button', { class: 'btn primary', style: 'align-self:flex-end', onclick: () => { R.queue.shift(); R.done++; rcNext(); }, text: R.queue.length > 1 ? 'ข้อต่อไป' : 'จบวันนี้' })));
   }
   // landing / done
-  const n = rcTodayN(st); const due = rcDue(st).length;
+  const n = rcTodayN(st); const due = rcDue(st).length + Object.values(st.verbs).filter(x => x.due <= today()).length;
   const head = h('div', { class: 'card' },
-    R && R.phase === 'done' ? h('div', { class: 'hero' }, mascot('cheer'), h('div', { class: 'bubble', text: n >= RC_PER_DAY ? 'ครบ 6 ข้อแล้ววันนี้! พรุ่งนี้บูจะเลือกข้อที่ถึงรอบให้เอง' : 'จบรอบนี้แล้ว เก่งมาก!' })) : null,
+    R && R.phase === 'done' ? h('div', { class: 'hero' }, mascot('cheer'), h('div', { class: 'bubble', text: n >= RC_PER_DAY ? 'ครบ 8 ข้อแล้ววันนี้! พรุ่งนี้บูจะเลือกข้อที่ถึงรอบให้เอง' : 'จบรอบนี้แล้ว เก่งมาก!' })) : null,
     h('div', { class: 'row between' }, h('h2', { text: 'ฝึกโครงสร้างประโยค' }), h('span', { class: 'pill butter num', text: `วันนี้ ${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY}` })),
-    h('p', { class: 'small muted', text: 'เลเวล 1 เติมคำ · 2 แปลไทยเป็นอังกฤษ · 3 แต่งประโยคเรื่องตัวเอง · 4 ตอบครูและถามกลับ ถูก 2 ครั้งติด = ขึ้นเลเวล และกลับมาห่างขึ้น 1 → 2 → 4 → 7 → 14 → 30 วัน' }),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => rcStart(n >= RC_PER_DAY), text: n >= RC_PER_DAY ? 'ทบทวนเพิ่ม 3 ข้อ' : n ? `ฝึกต่อ (รอทบทวน ${due})` : 'เริ่ม 6 ข้อวันนี้' }),
+    h('p', { class: 'small muted', text: 'โครงสร้าง: เลเวล 1 เติมคำ · 2 แปล · 3 แต่งเรื่องตัวเอง · 4 ตอบครูและถามกลับ · กริยา: เลือกรูป → ใช้ในประโยคของฉัน → แปลเรื่องจริง (วันละไม่เกิน 2 คำใหม่) · ถูก 2 ครั้งติด = ขึ้นเลเวล และกลับมาห่างขึ้น 1 → 2 → 4 → 7 → 14 → 30 วัน' }),
+    (() => { const ci = rcChalInfo(); return h('div', { class: 'block', style: 'background:var(--sky)' }, h('div', { class: 'lbl', text: '🎯 โซนพอดี (เป้า ถูก 70–85%)' }), h('div', { class: 'small', text: ci.acc == null ? `ทำอีก ${6 - ci.n} ข้อ บูจะเริ่มปรับความยากให้พอดีกับคุณ` : `ถูก ${Math.round(ci.acc * 100)}% ใน ${ci.n} ข้อล่าสุด · ` + (ci.lv > 0 ? 'เก่งขึ้นแล้ว! โจทย์จะท้าทายขึ้นนิดหนึ่ง' : ci.lv < 0 ? 'ช่วงนี้ยากไปนิด โจทย์จะง่ายลงและมีคำใบ้ให้เลย' : 'กำลังพอดี ไปต่อแบบนี้') })); })(),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => rcStart(n >= RC_PER_DAY), text: n >= RC_PER_DAY ? 'ทบทวนเพิ่ม 3 ข้อ' : n ? `ฝึกต่อ (รอทบทวน ${due})` : 'เริ่ม 8 ข้อวันนี้' }),
       h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; render(true); }, text: 'เปิดคู่มือ Tense' })));
   const F = ui.rcFree || (ui.rcFree = {});
   const free = h('div', { class: 'card' }, h('h3', { text: 'เขียนอิสระ · ประโยคที่อยากพูดกับครู' }),
@@ -2623,6 +2679,7 @@ function vRecall() {
     F.res && F.res.follow_up ? h('div', { class: 'block' }, h('div', { class: 'lbl', text: 'ครูอาจถามต่อ' }), h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('b', { style: 'flex:1;min-width:0', text: String(F.res.follow_up) }), sayBtn(String(F.res.follow_up), 'sm'))) : null);
   const ladder = h('div', { class: 'card' }, h('div', { class: 'row between' }, h('h3', { text: 'บันไดทักษะ' }), h('span', { class: 'pill lav', text: `เปิดแล้ว ${st.unlocked}/4 กลุ่ม` })),
     h('p', { class: 'small muted', text: 'เรียงตาม Roadmap 8 สัปดาห์ กลุ่มถัดไปเปิดเมื่อทุกทักษะในกลุ่มก่อนหน้าถึงเลเวล 2' }), rcSkillGrid(st),
+    (() => { const vk = Object.values(st.verbs); return h('div', { class: 'block' }, h('div', { class: 'lbl', text: `กริยาพลังสูง ${VERBS.length} คำ` }), h('div', { class: 'small', text: `เริ่มแล้ว ${vk.length} · ใช้ในประโยคได้ ${vk.filter(x => x.level >= 2 || x.mastered).length} · ใช้คล่อง ${vk.filter(x => x.mastered).length}` }), h('div', { class: 'qbar' }, h('i', { style: `width:${vk.filter(x => x.level >= 2 || x.mastered).length / VERBS.length * 100}%` }))); })(),
     st.unlocked < 4 ? h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { const s2 = rcState(); s2.unlocked++; RC_SKILLS.forEach(k => { if (k.g === s2.unlocked) s2.skills[k.id].due = today(); }); rcSave(s2); }, text: 'เปิดกลุ่มถัดไปเลย' }) : null);
   const recentWrong = [...S.checks.values()].filter(c => c.kind === 'recall' && c.result && c.result !== 'correct').sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 10);
   const bank = h('div', { class: 'card' }, h('h3', { text: 'คลังจุดพลาด' }), rcTagBars(st),
@@ -2659,7 +2716,7 @@ function vTense() {
   const intro = h('div', { class: 'card' }, h('h2', { text: 'คู่มือ Tense ของฉัน' }),
     h('p', { class: 'small', text: 'ก่อนพูดทุกครั้ง ถาม 1 คำถาม: "เกิดเมื่อไหร่ และจบหรือยัง?" ภาษาไทยไม่เปลี่ยนรูปกริยาตามเวลา ภาษาอังกฤษเปลี่ยน' }),
     h('div', { class: 'tw' }, h('div', { class: 'tl' }, [['อดีต จบแล้ว', 'Past Simple', 'peach'], ['เริ่มอดีต ยังทำอยู่', 'have been + V-ing', 'pink'], ['ทำเป็นประจำ', 'Present Simple', 'mint'], ['ตอนนี้', 'be + V-ing', 'sky'], ['อนาคต', 'will / going to', 'butter']].map(([a, b, c]) => h('div', { class: 'tl-i', style: `background:var(--${c})` }, h('b', { text: b }), h('span', { class: 'small', text: a }))))),
-    h('button', { class: 'btn primary', style: 'align-self:flex-start', onclick: () => { ui.rmode = 'recall'; ui.rc = null; render(true); rcStart(false); }, text: 'อ่านแล้ว ไปฝึก 6 ข้อ' }));
+    h('button', { class: 'btn primary', style: 'align-self:flex-start', onclick: () => { ui.rmode = 'recall'; ui.rc = null; render(true); rcStart(false); }, text: 'อ่านแล้ว ไปฝึก 8 ข้อ' }));
   const gold = h('div', { class: 'card' }, h('h3', { text: 'กฎทองการตั้งคำถาม' }), h('p', { class: 'small muted', text: 'ดูว่าประโยคมี "ตัวช่วย" อะไร แล้วย้ายตัวนั้นไปข้างหน้า ถ้าไม่มี เติม do/does/did และกริยากลับเป็นรูปปกติ' }),
     h('div', { class: 'tw' }, h('table', {}, h('thead', {}, h('tr', {}, h('th', { text: 'ประโยคมีอะไร' }), h('th', { text: 'ทำอย่างไร' }), h('th', { text: 'ตัวอย่างจากคลาส' }))), h('tbody', {}, GOLDEN.map(([a, b, c]) => h('tr', {}, h('td', { style: 'font-weight:600', text: a }), h('td', { text: b }), h('td', { text: c })))))));
   const cards = TENSES.map(t => h('div', { class: 'card', style: `border-top:8px solid var(--${t.c}-d, var(--edge))` },
