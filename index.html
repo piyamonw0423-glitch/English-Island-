@@ -3074,25 +3074,42 @@ function jbInit() {
   const T = THREE; Object.assign(JB, mini3D(38, 6.2)); JB.cam.position.set(0, .25, 6.2); JB.cam.lookAt(0, 0, 0);
   const pl = new T.PointLight(0xff8cc2, 1, 12); pl.position.set(-2, 1.5, 3); JB.scene.add(pl);
   const station = new T.Group(); JB.scene.add(station);
-  const ring = new T.Mesh(new T.TorusGeometry(2.1, .07, 12, 96), new T.MeshStandardMaterial({ color: 0xB9A0FF, emissive: 0x8B5CF6, emissiveIntensity: .35, metalness: .3, roughness: .3 })); station.add(ring);
-  JB.segs = []; for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + k * Math.PI * 2 / 5; const m = new T.Mesh(new T.SphereGeometry(.16, 20, 14), new T.MeshStandardMaterial({ color: 0x45387A, emissive: 0x000000, roughness: .3 })); m.position.set(Math.cos(a) * 2.1, Math.sin(a) * 2.1, .05); station.add(m); JB.segs.push(m); }
+  const ring = new T.Mesh(new T.TorusGeometry(2.25, .07, 12, 96), new T.MeshStandardMaterial({ color: 0xB9A0FF, emissive: 0x8B5CF6, emissiveIntensity: .35, metalness: .3, roughness: .3 })); station.add(ring);
+  JB.segs = []; for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + k * Math.PI * 2 / 5; const m = new T.Mesh(new T.SphereGeometry(.16, 20, 14), new T.MeshStandardMaterial({ color: 0x45387A, emissive: 0x000000, roughness: .3 })); m.position.set(Math.cos(a) * 2.25, Math.sin(a) * 2.25, -.4); station.add(m); JB.segs.push(m); }
   station.rotation.x = .25; JB.station = station;
   const ghost = new T.Group(); JB.scene.add(ghost); JB.ghost = ghost;
-  const jelly = new T.MeshStandardMaterial({ color: 0xFFB8D8, emissive: 0xFF6FB5, emissiveIntensity: .22, transparent: true, opacity: .88, roughness: .3 });
-  ghost.add(new T.Mesh(new T.SphereGeometry(1, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2), jelly));
-  const cyl = new T.Mesh(new T.CylinderGeometry(1, 1, .85, 48, 1, true), jelly); cyl.position.y = -.425; ghost.add(cyl);
-  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const b = new T.Mesh(new T.SphereGeometry(.27, 20, 14), jelly); b.position.set(Math.cos(a) * .82, -.86, Math.sin(a) * .82); ghost.add(b); }
-  const eyeM = new T.MeshStandardMaterial({ color: 0xB0306E, roughness: .2 }), wM = new T.MeshBasicMaterial({ color: 0xffffff });
-  JB.eyes = new T.Group(); [-1, 1].forEach(s => { const e = new T.Mesh(new T.SphereGeometry(.12, 20, 14), eyeM); e.position.set(s * .33, .14, .93); JB.eyes.add(e); const w = new T.Mesh(new T.SphereGeometry(.04, 10, 8), wM); w.position.set(s * .33 + .04, .19, 1.03); JB.eyes.add(w); }); ghost.add(JB.eyes);
-  const blushM = new T.MeshBasicMaterial({ color: 0xFF7EB6, transparent: true, opacity: .65 });
-  [-1, 1].forEach(s => { const b = new T.Mesh(new T.CircleGeometry(.14, 24), blushM); b.position.set(s * .58, -.07, .83); b.rotation.y = s * .55; b.scale.y = .6; ghost.add(b); });
-  JB.mouth = new T.Mesh(new T.TorusGeometry(.09, .025, 8, 20, Math.PI), new T.MeshStandardMaterial({ color: 0xE2559A })); JB.mouth.position.set(0, -.04, .97); JB.mouth.rotation.z = Math.PI; ghost.add(JB.mouth);
+  
+  JB.scene.add(new T.HemisphereLight(0xFFF4FB, 0x8B5CF6, .3));
+  const rim = new T.DirectionalLight(0xFF9ECF, 1.1); rim.position.set(-3, 2, -4); JB.scene.add(rim);
+  const softTex = (stops) => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); stops.forEach(([o, col]) => g.addColorStop(o, col)); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new T.CanvasTexture(c); };
+  const prof = new T.SplineCurve([[0, -.8], [.6, -.82], [.9, -.66], [1, -.36], [1.02, 0], [.97, .34], [.84, .64], [.6, .92], [.34, 1.08], [.15, 1.17], [0, 1.22]].map(([a, b]) => new T.Vector2(a, b))).getPoints(60);
+  prof[0].x = 0; prof[prof.length - 1].x = 0;
+  const clay = new T.MeshPhysicalMaterial({ color: 0xFF86BC, roughness: .45, metalness: 0, clearcoat: .5, clearcoatRoughness: .3, emissive: 0xFF5FA8, emissiveIntensity: .1 });
+  const body = new T.Mesh(new T.LatheGeometry(prof, 72), clay); ghost.add(body);
+  const glow = new T.Mesh(new T.LatheGeometry(prof, 48), new T.MeshBasicMaterial({ color: 0xFF8CC8, transparent: true, opacity: .28, side: T.BackSide, depthWrite: false, blending: T.AdditiveBlending })); glow.scale.setScalar(1.06); ghost.add(glow);
+  for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + .26; const f = new T.Mesh(new T.SphereGeometry(.3, 28, 20), clay); f.scale.set(1, .72, 1); f.position.set(Math.cos(a) * .66, -.8, Math.sin(a) * .66); ghost.add(f); }
+  const curl = new T.Mesh(new T.TorusGeometry(.13, .055, 14, 28, Math.PI * 1.35), clay); curl.position.set(.04, 1.26, 0); curl.rotation.z = -.4; ghost.add(curl);
+  const plum = new T.MeshPhysicalMaterial({ color: 0x5A1E45, roughness: .15, clearcoat: 1, clearcoatRoughness: .05 });
+  const iris = new T.MeshPhysicalMaterial({ color: 0xB0306E, roughness: .2, clearcoat: 1 });
+  const shine = new T.MeshBasicMaterial({ color: 0xffffff });
+  JB.eyes = new T.Group(); ghost.add(JB.eyes);
+  [-1, 1].forEach(s => {
+    const e = new T.Group(); e.position.set(s * .36, .16, .935); e.rotation.y = s * .38; JB.eyes.add(e);
+    const ball = new T.Mesh(new T.SphereGeometry(.19, 32, 24), plum); ball.scale.set(.86, 1.08, .42); e.add(ball);
+    const ir = new T.Mesh(new T.SphereGeometry(.1, 28, 20), iris); ir.scale.set(.9, .6, .2); ir.position.set(0, -.1, .07); e.add(ir);
+    const h1 = new T.Mesh(new T.SphereGeometry(.055, 16, 12), shine); h1.position.set(.05, .08, .1); e.add(h1);
+    const h2 = new T.Mesh(new T.SphereGeometry(.024, 12, 10), shine); h2.position.set(-.05, -.06, .1); e.add(h2);
+  });
+  const blushTex = softTex([[0, 'rgba(255,70,140,.9)'], [.55, 'rgba(255,140,180,.35)'], [1, 'rgba(255,160,190,0)']]);
+  [-1, 1].forEach(s => { const b = new T.Mesh(new T.PlaneGeometry(.42, .28), new T.MeshBasicMaterial({ map: blushTex, transparent: true, depthWrite: false })); b.position.set(s * .58, -.1, .86); b.rotation.y = s * .6; ghost.add(b); });
+  JB.mouth = new T.Mesh(new T.TubeGeometry(new T.QuadraticBezierCurve3(new T.Vector3(-.08, -.05, 1.02), new T.Vector3(0, -.13, 1.05), new T.Vector3(.08, -.05, 1.02)), 16, .016, 8, false), plum); ghost.add(JB.mouth);
   const hs = new T.Shape(); hs.moveTo(0, -.6); hs.bezierCurveTo(-.9, -.1, -.7, .6, 0, .25); hs.bezierCurveTo(.7, .6, .9, -.1, 0, -.6);
-  const heart = new T.Mesh(new T.ExtrudeGeometry(hs, { depth: .2, bevelEnabled: true, bevelSize: .06, bevelThickness: .06, bevelSegments: 3 }), new T.MeshStandardMaterial({ color: 0xFF7EB6, emissive: 0xFF4F9A, emissiveIntensity: .45 }));
-  heart.scale.setScalar(.28); heart.position.set(0, -.5, .55); ghost.add(heart); JB.heart = heart;
-  JB.arms = [-1, 1].map(s => { const a = new T.Mesh(new T.SphereGeometry(.2, 16, 12), jelly); a.scale.set(1, 1.4, 1); a.position.set(s * 1.02, -.2, 0); ghost.add(a); return a; });
-  ghost.scale.setScalar(.82);
-  JB.q = textSprite('?', '#FFD24A'); JB.q.scale.set(.7, .7, 1); JB.q.position.set(1.15, 1.05, 0); JB.scene.add(JB.q);
+  const heart = new T.Mesh(new T.ExtrudeGeometry(hs, { depth: .12, bevelEnabled: true, bevelSize: .08, bevelThickness: .08, bevelSegments: 4 }), new T.MeshPhysicalMaterial({ color: 0xFF5C9E, roughness: .25, clearcoat: 1, emissive: 0xFF3D8A, emissiveIntensity: .3 }));
+  heart.scale.setScalar(.15); heart.position.set(0, -.46, .97); heart.rotation.x = -.2; ghost.add(heart); JB.heart = heart; JB.heartBase = .15;
+  JB.arms = [-1, 1].map(s => { const a = new T.Mesh(new T.SphereGeometry(.2, 24, 18), clay); a.scale.set(.82, 1.12, .82); a.position.set(s * .98, -.25, .05); ghost.add(a); return a; });
+  const sh = new T.Mesh(new T.PlaneGeometry(2.2, 2.2), new T.MeshBasicMaterial({ map: softTex([[0, 'rgba(20,8,50,.55)'], [1, 'rgba(20,8,50,0)']]), transparent: true, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = -1.18; JB.scene.add(sh); JB.shadow = sh;
+  JB.base = .9; ghost.scale.setScalar(JB.base);
+  JB.q = textSprite('?', '#FFD24A'); JB.q.scale.set(.7, .7, 1); JB.q.position.set(1.2, 1.25, 0); JB.scene.add(JB.q);
   JB.dots = textSprite('…', '#FFFFFF', 70); JB.dots.scale.set(.8, .8, 1); JB.dots.position.set(1.05, .95, 0); JB.scene.add(JB.dots);
   JB.spark = burstPoints(90); JB.scene.add(JB.spark);
   JB.hud = document.createElement('div'); JB.hud.className = 'rr-hud'; JB.t0 = performance.now(); JB.mood = 'happy';
@@ -3122,13 +3139,13 @@ function jbFrame(now) {
   G.position.y = -.15 + bob + (m === 'cheer' && !still ? Math.abs(Math.sin(t * 5)) * .25 : 0);
   G.rotation.z += ((m === 'think' ? .22 : still ? 0 : Math.sin(t * 1.2) * .05) - G.rotation.z) * .1;
   G.rotation.y += ((m === 'busy' && !still ? Math.sin(t * 2.5) * .5 : Math.sin(t * .7) * .15) - G.rotation.y) * .08;
-  const sq = still ? 1 : 1 + Math.sin(t * 4) * .025; G.scale.set(.82 * sq, .82 / sq, .82 * sq);
+  const sq = still ? 1 : 1 + Math.sin(t * 4) * .025; G.scale.set(JB.base * sq, JB.base / sq, JB.base * sq); if (JB.shadow) JB.shadow.scale.setScalar(1 - (G.position.y + .15) * .35);
   JB.eyes.position.y += ((m === 'think' ? .06 : 0) - JB.eyes.position.y) * .1;
   JB.eyes.scale.y = (Math.floor(t * 10) % 45 === 0 && !still) ? .1 : 1;
   JB.arms.forEach((a, i) => { const s = i ? 1 : -1; const up = m === 'cheer'; a.position.y += ((up ? .45 : -.2) - a.position.y) * .15; a.rotation.z = up ? s * -.6 : (i && !still ? Math.sin(t * 6) * .3 : 0); });
-  JB.mouth.scale.set(m === 'cheer' ? 1.5 : 1, m === 'cheer' ? 1.5 : m === 'think' ? .5 : 1, 1);
-  JB.heart.scale.setScalar(.28 * (still ? 1 : 1 + Math.max(0, Math.sin(t * 6)) * .15));
-  JB.q.visible = m === 'think'; JB.q.position.y = 1.05 + (still ? 0 : Math.sin(t * 3) * .08);
+  JB.mouth.scale.set(m === 'cheer' ? 1.3 : 1, m === 'cheer' ? 1.6 : m === 'think' ? .4 : 1, 1);
+  JB.heart.scale.setScalar(JB.heartBase * (still ? 1 : 1 + Math.max(0, Math.sin(t * 6)) * .15));
+  JB.q.visible = m === 'think'; JB.q.position.y = 1.25 + (still ? 0 : Math.sin(t * 3) * .08);
   JB.dots.visible = m === 'busy';
   JB.station.rotation.z = still ? 0 : t * .15;
   JB.stars.rotation.z = t * .01;
