@@ -552,6 +552,41 @@ tr.known td{background:var(--mint)}
 .mini3d{position:relative;height:190px;border-radius:22px;overflow:hidden;border:2.5px solid var(--edge);background:radial-gradient(ellipse at 50% 35%,#3B1A78,#1A1250 78%);flex:none}
 .mini3d.jb3d{height:210px;background:radial-gradient(ellipse at 50% 45%,#5B2A86,#1A1250 80%)}
 .mini3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* 3D UI layer: clay depth tokens */
+:root{--hi:rgba(255,255,255,.65);--shade:rgba(86,44,150,.34);--thick:#C9B4EC}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--hi:rgba(255,255,255,.12);--shade:rgba(0,0,0,.55);--thick:#0B0720}}
+:root[data-theme="dark"]{--hi:rgba(255,255,255,.12);--shade:rgba(0,0,0,.55);--thick:#0B0720}
+.card{box-shadow:0 7px 0 var(--edge),0 26px 40px -16px var(--shade),inset 0 3px 0 var(--hi),inset 0 -7px 0 var(--line)!important;margin-bottom:4px;transform-style:preserve-3d}
+.btn{box-shadow:inset 0 3px 0 var(--hi),inset 0 -4px 0 rgba(0,0,0,.1),0 5px 0 var(--edge),0 12px 18px -8px var(--shade)!important;transition:transform .18s var(--spring),box-shadow .18s}
+.btn:active{transform:translateY(4px)!important;box-shadow:inset 0 3px 0 var(--hi),0 1px 0 var(--edge)!important}
+.btn.ghost{box-shadow:none!important}
+.btn.primary,.btn.pink,.btn.mint{text-shadow:0 1.5px 0 rgba(0,0,0,.18)}
+.pill{box-shadow:inset 0 2px 0 var(--hi),0 2px 0 var(--edge)}
+.act,.opt,.unit,.world,.story-tile,.rcsk,.quest .qi,.tile,.say,.mic-boo{box-shadow:inset 0 3px 0 var(--hi),inset 0 -5px 0 rgba(0,0,0,.07),0 5px 0 var(--edge),0 14px 22px -12px var(--shade)!important}
+.act:active,.opt:active,.say:active{transform:translateY(4px)!important;box-shadow:0 1px 0 var(--edge)!important}
+.quest{box-shadow:inset 0 2px 0 var(--hi),0 4px 0 var(--line)}
+.quest .qi{background-image:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,0) 55%)}
+.bar,.qbar{box-shadow:inset 0 3px 4px rgba(0,0,0,.12)}
+.bar i,.qbar i{box-shadow:inset 0 3px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(0,0,0,.08)}
+.hud{box-shadow:0 6px 0 var(--edge),0 22px 34px -14px var(--shade),inset 0 3px 0 var(--hi)!important}
+.lvl{box-shadow:inset 0 -5px 0 rgba(0,0,0,.14),inset 0 4px 0 rgba(255,255,255,.6),0 4px 0 var(--edge)}
+.nav .in{box-shadow:0 7px 0 var(--edge),0 26px 40px -14px var(--shade),inset 0 3px 0 var(--hi)!important}
+.nav button{transition:transform .3s var(--spring),background .2s}
+.nav button[aria-current="page"]{background:linear-gradient(180deg,var(--lav),var(--pink));box-shadow:inset 0 3px 0 var(--hi),0 4px 0 var(--edge);transform:translateY(-6px) scale(1.06)}
+.nav button[aria-current="page"] .ico{filter:drop-shadow(0 3px 0 rgba(74,53,102,.35))}
+.banner{box-shadow:0 7px 0 var(--edge),0 28px 44px -16px var(--shade),inset 0 3px 0 var(--hi)!important}
+.wcard,.face{box-shadow:inset 0 4px 0 var(--hi),inset 0 -8px 0 rgba(0,0,0,.06),0 6px 0 var(--edge)!important}
+.modal,.sp-card{box-shadow:0 8px 0 #4A3566,0 34px 60px -18px var(--shade),inset 0 4px 0 var(--hi)!important}
+.mascot.jelly3d{display:grid;place-items:center;filter:drop-shadow(0 10px 10px rgba(74,40,120,.28))}
+.mascot.jelly3d img{width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}
+.mic-boo .mascot.jelly3d{width:36px;height:38px;filter:none}
+.banner .mascot.jelly3d{width:104px;height:110px}
+.banner.big .mascot.jelly3d{width:132px;height:140px}
+.skybg .orb{position:absolute;border-radius:50%;background:radial-gradient(circle at 32% 28%,#fff 0 7%,var(--c) 32%,var(--c2) 100%);box-shadow:inset -8px -12px 22px rgba(0,0,0,.14),0 18px 30px -12px rgba(86,44,150,.35);opacity:.6;animation:orbf 16s ease-in-out infinite}
+@keyframes orbf{0%,100%{transform:translate(0,0) rotate(0)}33%{transform:translate(18px,-26px) rotate(20deg)}66%{transform:translate(-14px,14px) rotate(-12deg)}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .skybg .orb{opacity:.22}}
+:root[data-theme="dark"] .skybg .orb{opacity:.22}
+@media (prefers-reduced-motion: reduce){.skybg .orb{animation:none}}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -3216,6 +3251,41 @@ function acFrame(now) {
   AC.r.render(AC.scene, AC.cam); AC.raf = requestAnimationFrame(acFrame);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) return; [[JB, jbFrame], [AC, acFrame]].forEach(([S3, f]) => { if (S3.r && !S3.raf && S3.r.domElement.isConnected) S3.raf = requestAnimationFrame(f); }); });
+
+// ---------- 3D UI: baked 3D Jelly Boo for every mascot + floating orbs ----------
+const JELLY_IMG = {};
+function jellyBake() {
+  if (!webgl3D()) return;
+  try {
+    if (!JB.r) jbInit();
+    const T = THREE, G = JB.ghost, r = JB.r;
+    const hide = [JB.station, JB.stars, JB.q, JB.dots, JB.spark, JB.shadow].filter(Boolean); const vis = hide.map(o => o.visible); hide.forEach(o => { o.visible = false; });
+    const cam = new T.PerspectiveCamera(36, 1, .1, 50); cam.position.set(0, .12, 4.3); cam.lookAt(0, -.02, 0);
+    r.setSize(360, 380, false); cam.aspect = 360 / 380; cam.updateProjectionMatrix();
+    const pose = m => {
+      G.position.set(0, m === 'cheer' ? .08 : 0, 0); G.rotation.set(0, m === 'shy' ? -.25 : m === 'think' ? .2 : -.12, m === 'think' ? .2 : m === 'shy' ? .1 : 0); G.scale.setScalar(JB.base);
+      JB.eyes.position.y = m === 'think' ? .06 : m === 'shy' ? -.03 : 0; JB.eyes.scale.set(1, m === 'sleepy' ? .14 : 1, 1);
+      JB.arms.forEach((a, i) => { const s = i ? 1 : -1; const up = m === 'cheer'; a.position.y = up ? .45 : -.25; a.rotation.z = up ? s * -.6 : m === 'shy' ? s * .5 : 0; });
+      JB.mouth.scale.set(m === 'cheer' ? 1.3 : 1, m === 'cheer' ? 1.7 : m === 'think' || m === 'sleepy' ? .4 : m === 'shy' ? .6 : 1, 1);
+      JB.q.visible = m === 'think'; if (m === 'think') JB.q.position.set(1.05, 1.15, 0);
+    };
+    ['happy', 'cheer', 'think', 'sleepy', 'shy'].forEach(m => { pose(m); r.render(JB.scene, cam); JELLY_IMG[m] = r.domElement.toDataURL('image/png'); });
+    JB.q.visible = false; hide.forEach((o, i) => { o.visible = vis[i]; }); pose('happy'); JB.q.position.set(1.2, 1.25, 0);
+  } catch (e) { for (const k in JELLY_IMG) delete JELLY_IMG[k]; }
+}
+const mascot2D = mascot;
+mascot = function (mood) {
+  const m = mood || 'happy'; const src = JELLY_IMG[m] || JELLY_IMG.happy; if (!src) return mascot2D(mood);
+  const el = document.createElement('div'); el.className = 'mascot jelly3d ' + m; el.setAttribute('role', 'img'); el.setAttribute('aria-label', 'เจลลี่บู ผีเยลลี่ผู้ช่วยฝึกภาษา');
+  const img = new Image(); img.src = src; img.alt = ''; img.draggable = false; el.append(img); return el;
+};
+jellyBake();
+(function orbs() {
+  const s = document.getElementById('sky'); if (!s) return;
+  [['#FFB8D6', '#EC5B9C', 8, 18, 120, 0], ['#D9C7FF', '#8B5CF6', 78, 30, 90, -4], ['#BFF3E0', '#1FA97A', 12, 70, 70, -8], ['#FFE3B8', '#F07A2E', 84, 76, 56, -2], ['#CDE9FF', '#2D8FD8', 52, 8, 44, -6]].forEach(([c, c2, x, y, z, d]) => {
+    const o = document.createElement('div'); o.className = 'orb'; o.style.cssText = `left:${x}%;top:${y}%;width:${z}px;height:${z}px;--c:${c};--c2:${c2};animation-delay:${d}s`; s.append(o);
+  });
+})();
 
 if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
 splash();
