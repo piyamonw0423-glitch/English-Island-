@@ -541,6 +541,14 @@ tr.known td{background:var(--mint)}
 .g3-lbl.now span{background:#E5468E;border-color:#fff}
 .g3-lbl:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .g3-hint{position:absolute;left:12px;bottom:8px;font-size:11px;color:rgba(255,255,255,.72);pointer-events:none}
+.rr3d{position:relative;height:170px;border-radius:22px;overflow:hidden;border:2.5px solid var(--edge);background:radial-gradient(ellipse at 50% 30%,#3B1A78,#1A1250 75%);flex:none}
+.rr3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.rr-hud{position:absolute;left:10px;right:10px;top:8px;bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;pointer-events:none}
+.rr-pill{font-family:var(--display);font-weight:700;font-size:12px;color:#fff;background:rgba(26,18,80,.72);border:1.5px solid rgba(255,255,255,.4);padding:2px 10px;border-radius:999px}
+.rr-pill.hot{background:#F07A2E}
+.rr-pop{position:absolute;left:50%;top:52px;transform:translateX(-50%);white-space:nowrap;font-family:var(--num);font-weight:700;font-size:24px;color:#fff;-webkit-text-stroke:1.5px #1A1250;paint-order:stroke fill;animation:rrpop .9s var(--spring) both}
+.rr-pop.correct{color:#5FE3B4}.rr-pop.almost{color:#FFD24A}.rr-pop.wrong{color:#FF9FB4;font-size:17px}
+@keyframes rrpop{0%{transform:translate(-50%,12px) scale(.5);opacity:0}30%{transform:translate(-50%,0) scale(1.15);opacity:1}100%{transform:translate(-50%,0) scale(1);opacity:1}}
 </style>
 
 <div class="skybg" id="sky" aria-hidden="true"></div>
@@ -2479,7 +2487,7 @@ function rcStart(extra) {
   if (!sample || aiOff) { ui.rc = { phase: 'noai' }; render(true); return; }
   const st = rcState(); let q = rcQueue(st, extra ? 3 : RC_PER_DAY);
   if (!extra && rcTodayN(st) >= RC_PER_DAY) q = q.slice(0, 3);
-  ui.rc = { phase: 'load', queue: q, total: q.length, done: 0 }; rcNext();
+  ui.rc = { phase: 'load', queue: q, total: q.length, done: 0, results: [] }; rcNext();
 }
 const RC_CUES = [['Past Simple (yesterday / last week / ago) → V2', 3], ['Present Perfect (have/has + V3: already / ever / since / for)', 2], ['Present Simple routine (usually / every day; he/she + V-s)', 1], ['future (will / be going to + V1)', 1], ['be + V-ing (right now / these days / an arranged plan)', 1]];
 function rcCue() { const tot = RC_CUES.reduce((a, c) => a + c[1], 0); let r = Math.random() * tot; for (const [c, w] of RC_CUES) { if ((r -= w) < 0) return c; } return RC_CUES[0][0]; }
@@ -2563,7 +2571,7 @@ function rcApply(c, ans, g) {
   rcAddTags(st, g.tags);
   st.recent[c.id] = (st.recent[c.id] || []).concat(c.item.task).slice(-5);
   if (!st.today || st.today.date !== t) st.today = { date: t, n: 0 }; st.today.n++;
-  rcMaybeUnlock(st); c.res = res;
+  rcMaybeUnlock(st); c.res = res; if (ui.rc) (ui.rc.results = ui.rc.results || []).push(res);
   if (res !== 'correct') { const nat = String(g.corrected || c.item.model_answer || g.natural || ''); c.card = addFixCard(ans, nat, String(g.tip_th || '')); }
   put('checks', uid(), { kind: 'recall', skill: c.id, level: c.lv, task: c.item.task, answer: ans, result: res, corrected: String(g.corrected || ''), natural: String(g.natural || ''), tags: Array.isArray(g.tags) ? g.tags.slice(0, 6).map(String) : [], created: Date.now() }, true);
   rcLogDay(); rcSave(st);
@@ -2627,7 +2635,7 @@ function rcHomeCard() {
     h('p', { class: 'small', text: 'วันละ 8 ข้อ: โครงสร้าง 5 + กริยา 3 คำ ไล่จากง่ายไปยาก ระบบปรับความยากให้อยู่ในโซนพอดี ถูกต่อเนื่องจะขึ้นเลเวล ผิดจะกลับมาถามพรุ่งนี้' }),
     h('div', { class: 'qbar', style: 'height:12px' }, h('i', { style: `width:${Math.min(100, n / RC_PER_DAY * 100)}%` })),
     h('div', { class: 'small muted', text: `รอทบทวน ${due} โครงสร้าง · ช่วงนี้โฟกัส ${wk.wk}: ${wk.t} · เหลือเรียนกับครู ${rcLeft(st)} ชม.` }),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.rmode = 'recall'; ui.rc = null; go('review'); if (n < RC_PER_DAY) rcStart(false); }, text: n >= RC_PER_DAY ? 'ดูความคืบหน้า' : n ? 'ฝึกต่อ' : 'เริ่ม 8 ข้อ' }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => { ui.rmode = 'recall'; ui.rc = null; go('review'); if (n < RC_PER_DAY) rcStart(false); }, text: n >= RC_PER_DAY ? 'ดูความคืบหน้า' : n ? 'ฝึกต่อ' : '🚀 เริ่ม Rocket Run' }),
       h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; go('review'); }, text: 'คู่มือ Tense' })));
 }
 function rcEntryCards() {
@@ -2640,7 +2648,7 @@ function vRecall() {
   const st = rcState(); const R = ui.rc;
   const back = h('button', { class: 'btn ghost sm', style: 'align-self:flex-start', onclick: () => { ui.rmode = null; ui.rc = null; render(true); }, text: '‹ ห้องฝึกความจำ' });
   if (R && R.phase === 'noai') return h('section', {}, back, aiNeeded());
-  if (R && (R.phase === 'load' || R.phase === 'grading')) return h('section', {}, back, loading(R.phase === 'load' ? `เจลลี่บูกำลังสร้างโจทย์ ${R.cur ? R.cur.k.th : ''}…` : 'เจลลี่บูกำลังตรวจ…'));
+  if (R && (R.phase === 'load' || R.phase === 'grading')) { const msg = R.phase === 'load' ? `เจลลี่บูกำลังเตรียมประตูถัดไป: ${R.cur ? R.cur.k.th : ''}…` : 'เจลลี่บูกำลังตรวจ…'; const rr = R.total ? rrMount(R) : null; return h('section', {}, back, rr ? h('div', { class: 'card' }, rr, h('p', { class: 'small', style: 'text-align:center;font-family:var(--display);font-weight:600' }, h('span', { class: 'spin', style: 'color:var(--lav-d);border-color:var(--lav)' }), ' ' + msg)) : loading(msg)); }
   if (R && R.phase === 'err') return h('section', {}, back, h('div', { class: 'card' }, h('p', { text: R.err }), h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => R.retry ? R.retry() : rcNext(), text: 'ลองอีกครั้ง' }), h('button', { class: 'btn ghost sm', onclick: () => { R.queue.shift(); rcNext(); }, text: 'ข้ามข้อนี้' }))));
   if (R && R.phase === 'vq') {
     const c = R.cur; const q = c.mcq; const v = c.verb; const num = R.total - R.queue.length + 1;
@@ -2650,7 +2658,7 @@ function vRecall() {
         pattern: { name_th: `${v.b} = ${v.th}`, formula: `${v.b} → ${v.p} → ${v.pp}   ·   ${verbIng(v.b)}`, use_th: 'วลีที่ใช้คู่กันบ่อย: ' + v.chunk, examples: [{ en: v.ex, th: '' }] } };
       rcApply(c, filled, g); R.res = g; R.ans = filled; R.phase = 'res'; render(true); if (canTTS) say(right, ui.rate);
     };
-    return h('section', {}, back, h('div', { class: 'card' },
+    return h('section', {}, back, h('div', { class: 'card' }, rrMount(R),
       h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: 'กริยา · ' + RC_VLV[1] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` })),
       h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(num - 1) / R.total * 100}%` }))),
       h('div', { class: 'wcard' }, h('span', { class: 'pill butter', text: q.cue }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: q.s })),
@@ -2662,7 +2670,7 @@ function vRecall() {
     const top = h('div', { class: 'row between' }, h('div', { class: 'row', style: 'gap:6px' }, h('span', { class: 'pill lav', text: c.k.th }), h('span', { class: 'pill butter', text: c.verb ? 'กริยา · ' + RC_VLV[c.vlv] : RC_LV[c.lv] })), h('span', { class: 'small muted num', text: `ข้อ ${num}/${R.total}` }));
     const bar = h('div', { class: 'gtop' }, h('div', { class: 'bar' }, h('i', { style: `width:${(num - (R.phase === 'q' ? 1 : 0)) / R.total * 100}%` })));
     if (R.phase === 'q') {
-      return h('section', {}, back, h('div', { class: 'card' }, top, bar,
+      return h('section', {}, back, h('div', { class: 'card' }, rrMount(R), top, bar,
         h('div', { class: 'wcard' }, h('div', { class: 'small', text: c.item.instruction_th }), h('div', { class: 'ex', style: 'font-size:20px;font-weight:600', text: c.item.task })),
         h('textarea', { id: 'rc-ans', rows: 3, 'aria-label': 'คำตอบภาษาอังกฤษ', placeholder: 'พิมพ์ (หรือพูด) คำตอบภาษาอังกฤษ…', oninput: e => { R.ans = e.target.value; } }, R.ans || ''),
         R.hinted || rcChal() < 0 ? h('div', { class: 'small', text: 'ใบ้: ' + c.item.hint_th }) : null,
@@ -2672,7 +2680,7 @@ function vRecall() {
         h('p', { class: 'small muted', text: 'อย่าเปิดคู่มือก่อนตอบ ผิดได้ ผิดแล้วแก้คือส่วนที่ทำให้จำได้นาน' })));
     }
     const s = c.verb ? (st.verbs[c.verb.b] || { level: 1 }) : st.skills[c.id]; const LVN = c.verb ? RC_VLV : RC_LV;
-    return h('section', {}, back, h('div', { class: 'card' }, top, bar,
+    return h('section', {}, back, h('div', { class: 'card' }, rrMount(R), top, bar,
       h('div', { class: 'ex', style: 'font-weight:600', text: c.item.task }),
       rcResultBlock(c.res, R.ans, R.res),
       c.res !== 'wrong' && c.item.model_answer ? h('div', { class: 'small muted', text: 'อีกแบบที่พูดได้: ' + c.item.model_answer }) : null,
@@ -2685,11 +2693,13 @@ function vRecall() {
   // landing / done
   const n = rcTodayN(st); const due = rcDue(st).length + Object.values(st.verbs).filter(x => x.due <= today()).length;
   const head = h('div', { class: 'card' },
+    R && R.phase === 'done' && R.results && R.results.length ? rrMount(R) : null,
+    R && R.phase === 'done' && R.results && R.results.length ? h('div', { class: 'row', style: 'justify-content:center' }, h('span', { class: 'pill mint', text: `BOOST ${R.results.filter(x => x === 'correct').length}` }), h('span', { class: 'pill butter', text: `เกือบ ${R.results.filter(x => x === 'almost').length}` }), h('span', { class: 'pill pink', text: `ชน ${R.results.filter(x => x === 'wrong').length}` })) : null,
     R && R.phase === 'done' ? h('div', { class: 'hero' }, mascot('cheer'), h('div', { class: 'bubble', text: n >= RC_PER_DAY ? 'ครบ 8 ข้อแล้ววันนี้! พรุ่งนี้บูจะเลือกข้อที่ถึงรอบให้เอง' : 'จบรอบนี้แล้ว เก่งมาก!' })) : null,
     h('div', { class: 'row between' }, h('h2', { text: 'ฝึกโครงสร้างประโยค' }), h('span', { class: 'pill butter num', text: `วันนี้ ${Math.min(n, RC_PER_DAY)}/${RC_PER_DAY}` })),
     h('p', { class: 'small muted', text: 'โครงสร้าง: เลเวล 1 เติมคำ · 2 แปล · 3 แต่งเรื่องตัวเอง · 4 ตอบครูและถามกลับ · กริยา: เลือกรูป → ใช้ในประโยคของฉัน → แปลเรื่องจริง (วันละไม่เกิน 2 คำใหม่) · ถูก 2 ครั้งติด = ขึ้นเลเวล และกลับมาห่างขึ้น 1 → 2 → 4 → 7 → 14 → 30 วัน' }),
     (() => { const ci = rcChalInfo(); return h('div', { class: 'block', style: 'background:var(--sky)' }, h('div', { class: 'lbl', text: '🎯 โซนพอดี (เป้า ถูก 70–85%)' }), h('div', { class: 'small', text: ci.acc == null ? `ทำอีก ${6 - ci.n} ข้อ บูจะเริ่มปรับความยากให้พอดีกับคุณ` : `ถูก ${Math.round(ci.acc * 100)}% ใน ${ci.n} ข้อล่าสุด · ` + (ci.lv > 0 ? 'เก่งขึ้นแล้ว! โจทย์จะท้าทายขึ้นนิดหนึ่ง' : ci.lv < 0 ? 'ช่วงนี้ยากไปนิด โจทย์จะง่ายลงและมีคำใบ้ให้เลย' : 'กำลังพอดี ไปต่อแบบนี้') })); })(),
-    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => rcStart(n >= RC_PER_DAY), text: n >= RC_PER_DAY ? 'ทบทวนเพิ่ม 3 ข้อ' : n ? `ฝึกต่อ (รอทบทวน ${due})` : 'เริ่ม 8 ข้อวันนี้' }),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onclick: () => rcStart(n >= RC_PER_DAY), text: n >= RC_PER_DAY ? 'ทบทวนเพิ่ม 3 ข้อ' : n ? `ฝึกต่อ (รอทบทวน ${due})` : '🚀 เริ่ม Rocket Run (8 ข้อ)' }),
       h('button', { class: 'btn ghost sm', onclick: () => { ui.rmode = 'tense'; render(true); }, text: 'เปิดคู่มือ Tense' })));
   const F = ui.rcFree || (ui.rcFree = {});
   const free = h('div', { class: 'card' }, h('h3', { text: 'เขียนอิสระ · ประโยคที่อยากพูดกับครู' }),
@@ -2902,6 +2912,123 @@ function space3D(stops, cur, all, d) {
   return wrap;
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && G3.r && !G3.raf && G3.r.domElement.isConnected) G3.raf = requestAnimationFrame(frame3D); });
+
+// ---------- ROCKET RUN: 3D game layer for Daily Recall (one gate per question) ----------
+const RR = { ok: null };
+const RR_GAP = 4.2;
+const rrGatePos = i => [Math.sin(i * .9) * 1.3, Math.cos(i * .7) * .55, -i * RR_GAP];
+function rrInit() {
+  const T = THREE;
+  const r = new T.WebGLRenderer({ antialias: true, alpha: true }); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  r.domElement.className = 'rr-canvas'; r.domElement.setAttribute('aria-hidden', 'true');
+  const scene = new T.Scene(); scene.fog = new T.Fog(0x1A1250, 10, 34);
+  const cam = new T.PerspectiveCamera(55, 2.4, .1, 80);
+  scene.add(new T.AmbientLight(0xffffff, .6)); const dl = new T.DirectionalLight(0xffffff, .9); dl.position.set(3, 5, 4); scene.add(dl);
+  const pl = new T.PointLight(0xff8cc2, 1.2, 14); scene.add(pl);
+  const N = 700, pos = new Float32Array(N * 3); for (let i = 0; i < N; i++) { pos[i * 3] = (Math.random() - .5) * 30; pos[i * 3 + 1] = (Math.random() - .5) * 16; pos[i * 3 + 2] = -Math.random() * 70 + 6; }
+  const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.BufferAttribute(pos, 3));
+  const stars = new T.Points(sg, new T.PointsMaterial({ color: 0xffffff, size: .07, transparent: true, opacity: .85 })); scene.add(stars);
+  const gates = []; for (let i = 0; i < 12; i++) {
+    const g = new T.Group(); const [x, y, z] = rrGatePos(i); g.position.set(x, y, z);
+    const mat = new T.MeshStandardMaterial({ color: 0xB9A0FF, emissive: 0x8B5CF6, emissiveIntensity: .45, roughness: .3, metalness: .2 });
+    const ring = new T.Mesh(new T.TorusGeometry(1.05, .09, 14, 64), mat); g.add(ring);
+    const lights = []; for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; const b = new T.Mesh(new T.SphereGeometry(.06, 10, 8), new T.MeshBasicMaterial({ color: 0xFFE27A })); b.position.set(Math.cos(a) * 1.05, Math.sin(a) * 1.05, .08); g.add(b); lights.push(b); }
+    const num = rrNumSprite(i + 1); num.position.set(0, 1.45, 0); g.add(num);
+    scene.add(g); gates.push({ g, mat, lights, num });
+  }
+  const finish = new T.Mesh(new T.SphereGeometry(1.6, 40, 28), new T.MeshStandardMaterial({ color: 0x5FE3B4, emissive: 0x1FA97A, emissiveIntensity: .3, roughness: .5 })); scene.add(finish);
+  const fring = new T.Mesh(new T.TorusGeometry(2.4, .08, 10, 80), new T.MeshStandardMaterial({ color: 0xFFF0B4, emissive: 0xFFE27A, emissiveIntensity: .3 })); fring.rotation.x = Math.PI / 2.3; finish.add(fring);
+  const rocket = new T.Group();
+  const white = new T.MeshStandardMaterial({ color: 0xffffff, roughness: .35 }), pink = new T.MeshStandardMaterial({ color: 0xFF6FB5, roughness: .4 });
+  rocket.add(new T.Mesh(new T.CylinderGeometry(.16, .21, .7, 24), white));
+  const nose = new T.Mesh(new T.ConeGeometry(.16, .34, 24), pink); nose.position.y = .52; rocket.add(nose);
+  const win = new T.Mesh(new T.SphereGeometry(.085, 16, 12), new T.MeshStandardMaterial({ color: 0xFFD3E6, emissive: 0xFF8CC2, emissiveIntensity: .4 })); win.position.set(0, .12, .17); rocket.add(win);
+  for (let k = 0; k < 3; k++) { const fin = new T.Mesh(new T.BoxGeometry(.04, .26, .2), pink); const a = k * Math.PI * 2 / 3; fin.position.set(Math.cos(a) * .21, -.26, Math.sin(a) * .21); fin.rotation.y = -a; rocket.add(fin); }
+  const flame = new T.Mesh(new T.ConeGeometry(.13, .5, 16), new T.MeshBasicMaterial({ color: 0xFFB347, transparent: true, opacity: .9 })); flame.rotation.x = Math.PI; flame.position.y = -.6; rocket.add(flame);
+  rocket.rotation.x = -Math.PI / 2; scene.add(rocket);
+  const PN = 160, ppos = new Float32Array(PN * 3), pcol = new Float32Array(PN * 3);
+  const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.BufferAttribute(ppos, 3)); pg.setAttribute('color', new T.BufferAttribute(pcol, 3));
+  const parts = new T.Points(pg, new T.PointsMaterial({ size: .14, vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: T.AdditiveBlending })); scene.add(parts);
+  const hud = document.createElement('div'); hud.className = 'rr-hud';
+  Object.assign(RR, { r, scene, cam, pl, stars, gates, finish, rocket, flame, parts, pv: new Float32Array(PN * 3), plife: 0, hud, pos: 0, target: 0, shake: 0, boost: 0, raf: 0, t0: performance.now(), total: 8 });
+}
+function rrNumSprite(n) {
+  const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+  x.fillStyle = 'rgba(26,18,80,.75)'; x.beginPath(); x.arc(32, 32, 28, 0, 7); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 3; x.stroke();
+  x.fillStyle = '#fff'; x.font = 'bold 30px Fredoka, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(n), 32, 34);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true })); s.scale.set(.5, .5, 1); return s;
+}
+function rrBurst(kind) {
+  const T = THREE; const i = Math.max(0, RR.target - 1); const [x, y, z] = rrGatePos(i);
+  const col = kind === 'wrong' ? [1, .45, .55] : kind === 'almost' ? [1, .85, .3] : [.37, .89, .7];
+  const p = RR.parts.geometry.attributes.position.array, c = RR.parts.geometry.attributes.color.array;
+  for (let k = 0; k < p.length / 3; k++) {
+    const a = Math.random() * Math.PI * 2, b = Math.random() * Math.PI, sp = .04 + Math.random() * .09;
+    p[k * 3] = x; p[k * 3 + 1] = y; p[k * 3 + 2] = z;
+    RR.pv[k * 3] = Math.cos(a) * Math.sin(b) * sp; RR.pv[k * 3 + 1] = Math.cos(b) * sp; RR.pv[k * 3 + 2] = Math.sin(a) * Math.sin(b) * sp;
+    const tw = k % 3 === 0 ? [1, 1, 1] : col; c[k * 3] = tw[0]; c[k * 3 + 1] = tw[1]; c[k * 3 + 2] = tw[2];
+  }
+  RR.parts.geometry.attributes.position.needsUpdate = true; RR.parts.geometry.attributes.color.needsUpdate = true; RR.plife = 1;
+  if (kind === 'wrong') RR.shake = 1; else RR.boost = 1;
+}
+function rrUpdate(R) {
+  const res = R.results || []; RR.total = R.total || 8; RR.target = res.length;
+  RR.gates.forEach((G, i) => {
+    G.g.visible = i < RR.total; const r = res[i];
+    const col = r === 'correct' ? 0x5FE3B4 : r === 'almost' ? 0xFFD24A : r === 'wrong' ? 0xFF6F8E : 0xB9A0FF;
+    G.mat.color.setHex(col); G.mat.emissive.setHex(col); G.mat.emissiveIntensity = r ? .55 : i === res.length ? .8 : .35;
+    G.cur = i === res.length && R.phase !== 'done';
+  });
+  const [fx, fy] = rrGatePos(RR.total); RR.finish.position.set(fx * .4, fy + .2, -RR.total * RR_GAP - 4);
+  let combo = 0; for (let i = res.length - 1; i >= 0 && res[i] !== 'wrong'; i--) combo++;
+  const last = res[res.length - 1]; const justAnswered = R.phase === 'res';
+  RR.hud.replaceChildren(...[
+    h('span', { class: 'rr-pill', text: `ประตู ${Math.min(res.length + (justAnswered ? 0 : 1), RR.total)}/${RR.total}` }),
+    combo >= 2 ? h('span', { class: 'rr-pill hot', text: `🔥 คอมโบ x${combo}` }) : null,
+    justAnswered ? h('span', { class: 'rr-pop ' + last, text: last === 'correct' ? (combo >= 3 ? 'SUPER BOOST!' : 'BOOST!') : last === 'almost' ? 'เกือบแล้ว ผ่านได้!' : 'ชนอุกกาบาต! พรุ่งนี้มาลองใหม่' }) : null].filter(Boolean));
+  if (justAnswered && R._burstFor !== res.length) { R._burstFor = res.length; rrBurst(last); }
+}
+function rrFrame(now) {
+  if (!RR.r.domElement.isConnected || document.hidden) { RR.raf = 0; return; }
+  const t = (now - RR.t0) / 1000; const still = reduced;
+  RR.pos += (RR.target - RR.pos) * (still ? 1 : .04 + RR.boost * .05);
+  RR.boost *= .96;
+  const i = RR.pos; const i0 = Math.floor(i), f = i - i0;
+  const a = rrGatePos(i0), b = rrGatePos(i0 + 1);
+  const rx = a[0] + (b[0] - a[0]) * f, ry = a[1] + (b[1] - a[1]) * f, rz = a[2] + (b[2] - a[2]) * f + 2.2;
+  RR.rocket.position.set(rx, ry + (still ? 0 : Math.sin(t * 2.2) * .07), rz);
+  RR.rocket.rotation.z = still ? 0 : Math.sin(t * 1.3) * .15 + (b[0] - a[0]) * -.15;
+  RR.flame.scale.set(1, .8 + RR.boost * 1.6 + (still ? 0 : Math.random() * .4), 1);
+  const sh = RR.shake > .01 && !still ? (Math.random() - .5) * .25 * RR.shake : 0; RR.shake *= .9;
+  RR.cam.position.set(rx * .6 + sh, ry + 1.25, rz + 3.6); RR.cam.lookAt(rx * .4, ry + .1, rz - 6);
+  RR.pl.position.set(rx, ry + .5, rz + .5);
+  RR.gates.forEach((G, k) => { G.g.rotation.z = still ? 0 : t * .4 + k; const s = G.cur && !still ? 1 + Math.sin(t * 4) * .06 : 1; G.g.scale.setScalar(s); G.lights.forEach((L, j) => { L.visible = !G.cur || still || ((Math.floor(t * 8) + j) % 2 === 0); }); });
+  RR.finish.rotation.y = t * .3;
+  if (RR.plife > 0) { const p = RR.parts.geometry.attributes.position.array; for (let k = 0; k < p.length; k++) p[k] += RR.pv[k]; RR.parts.geometry.attributes.position.needsUpdate = true; RR.plife -= .016; RR.parts.material.opacity = Math.max(0, RR.plife); }
+  RR.r.render(RR.scene, RR.cam);
+  RR.raf = requestAnimationFrame(rrFrame);
+}
+function rrMount(R) {
+  if (!webgl3D()) return null;
+  if (!RR.r) rrInit();
+  const wrap = h('div', { class: 'rr3d' }); wrap.append(RR.r.domElement, RR.hud);
+  rrUpdate(R);
+  requestAnimationFrame(() => { const w = wrap.clientWidth, hh = wrap.clientHeight; if (w && hh) { RR.r.setSize(w, hh, false); RR.cam.aspect = w / hh; RR.cam.updateProjectionMatrix(); } if (!RR.raf) RR.raf = requestAnimationFrame(rrFrame); });
+  return wrap;
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && RR.r && !RR.raf && RR.r.domElement.isConnected) RR.raf = requestAnimationFrame(rrFrame); });
+// ---------- 3D tilt for cards (mouse only, respects reduced motion) ----------
+if (!reduced) {
+  let tiltEl = null;
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return; const c = e.target.closest && e.target.closest('.card, .act, .story-tile, .rcsk');
+    if (tiltEl && tiltEl !== c) { tiltEl.style.transform = ''; tiltEl = null; }
+    if (!c || c.closest('.space3d') || c.querySelector('.rr3d, .space3d')) return; const r = c.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; const k = c.classList.contains('card') ? 3.5 : 7;
+    c.style.transform = `perspective(900px) rotateX(${(-y * k).toFixed(2)}deg) rotateY(${(x * k).toFixed(2)}deg) translateY(-2px)`; tiltEl = c;
+  }, { passive: true });
+  document.addEventListener('pointerleave', () => { if (tiltEl) { tiltEl.style.transform = ''; tiltEl = null; } });
+}
 
 if (canTTS) { try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch {} }
 splash();
